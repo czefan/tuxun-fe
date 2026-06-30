@@ -1,0 +1,47 @@
+import { mockImageAssets } from '@/mocks/assets'
+import type { PastActivity } from './types'
+
+export const pastActivityList: PastActivity[] = [
+  {
+    id: 202601,
+    title: '银杏大道光影季',
+    period: '2026 春季',
+    count: 18,
+    desc: '围绕主校区主干道与老建筑的机位解密。',
+    heat: 2680,
+    heatLabel: '2.7k',
+    createdAt: 20260401,
+    coverTone: 'linear-gradient(145deg, #f5c542 0%, #f1dcc0 100%)',
+    cover: mockImageAssets.campus.building.src,
+    coverWidth: mockImageAssets.campus.building.width,
+    coverHeight: mockImageAssets.campus.building.height,
+  },
+  {
+    id: 202502,
+    title: '镜湖边的夏天',
+    period: '2025 夏季',
+    count: 24,
+    desc: '湖面倒影、桥边视角和傍晚光线组成的主题活动。',
+    heat: 3160,
+    heatLabel: '3.2k',
+    createdAt: 20250701,
+    coverTone: 'linear-gradient(145deg, #69b7ae 0%, #d9eee8 100%)',
+    cover: mockImageAssets.campus.lake.src,
+    coverWidth: mockImageAssets.campus.lake.width,
+    coverHeight: mockImageAssets.campus.lake.height,
+  },
+  {
+    id: 202501,
+    title: '校史记忆路线',
+    period: '2025 春季',
+    count: 15,
+    desc: '从校史广场出发，寻找校园历史线索。',
+    heat: 1890,
+    heatLabel: '1.9k',
+    createdAt: 20250301,
+    coverTone: 'linear-gradient(145deg, #9b82d9 0%, #efe4f5 100%)',
+    cover: mockImageAssets.campus.poster.src,
+    coverWidth: mockImageAssets.campus.poster.width,
+    coverHeight: mockImageAssets.campus.poster.height,
+  },
+]

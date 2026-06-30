@@ -1,0 +1,164 @@
+.answer-records {
+  padding: 0 28rpx 44rpx;
+  background: #ffffff;
+}
+
+.answer-records__tab-title,
+.answer-records__tab-count,
+.answer-record__avatar-text,
+.answer-record__name,
+.answer-record__time,
+.answer-record__meta,
+.answer-record__heart,
+.answer-record__like-count {
+  display: block;
+}
+
+.answer-records__tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 48rpx;
+  padding: 8rpx 0 26rpx;
+}
+
+.answer-records__tab {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+  min-width: 0;
+  padding: 0 0 16rpx;
+  box-sizing: border-box;
+}
+
+.answer-records__tab-title {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #8f8679;
+}
+
+.answer-records__tab-count {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #aaa39a;
+}
+
+.answer-records__tab--active .answer-records__tab-title {
+  color: #1f1b14;
+}
+
+.answer-records__tab--active .answer-records__tab-count {
+  color: #9b7621;
+}
+
+.answer-records__tab-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 52rpx;
+  height: 6rpx;
+  background: #f5c542;
+  border-radius: 999rpx;
+}
+
+.answer-record {
+  position: relative;
+  padding: 20rpx 0 26rpx;
+  border-top: 1rpx solid #eeeeee;
+}
+
+.answer-records__tabs + .answer-record {
+  border-top: 0;
+}
+
+.answer-records__empty {
+  padding: 64rpx 0 72rpx;
+}
+
+.answer-record__top {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  min-height: 58rpx;
+}
+
+.answer-record__status {
+  display: flex;
+  align-items: center;
+  transform: translateY(1rpx);
+}
+
+.answer-record__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 58rpx;
+  height: 58rpx;
+  background: #1f1b14;
+  border-radius: 999rpx;
+}
+
+.answer-record__avatar-text {
+  font-size: 22rpx;
+  font-weight: 900;
+  color: #f5c542;
+}
+
+.answer-record__avatar--mine {
+  background: #f5c542;
+}
+
+.answer-record__avatar--mine .answer-record__avatar-text {
+  color: #1f1b14;
+}
+
+.answer-record__user {
+  flex: 1;
+  min-width: 0;
+}
+
+.answer-record__name {
+  overflow: hidden;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f1f1f;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.answer-record__body {
+  margin-left: 72rpx;
+}
+
+.answer-record__time {
+  font-size: 26rpx;
+  color: #8b8b8b;
+}
+
+.answer-record__meta {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 10rpx;
+}
+
+.answer-record__likes {
+  position: absolute;
+  right: 10rpx;
+  bottom: 28rpx;
+}
+
+.answer-record__image-wrap {
+  max-width: 100%;
+  margin-top: 10rpx;
+  overflow: hidden;
+  border-radius: 12rpx;
+}
+
+.answer-record__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #f1f1f1;
+}

@@ -1,0 +1,81 @@
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.like-button--readonly {
+  /* 只读模式下取消点击反馈 */
+  pointer-events: none;
+}
+
+/* 胶囊背景样式 */
+.like-button--pill {
+  padding: 5rpx 14rpx;
+  background: rgba(31, 27, 20, 0.08);
+  border-radius: 999rpx;
+}
+
+/* 各尺寸间距和字号 */
+.like-button--sm,
+.like-button--md {
+  gap: 6rpx;
+}
+
+.like-button--lg {
+  gap: 8rpx;
+  min-width: 120rpx;
+}
+
+.like-button__text {
+  font-weight: 700;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.like-button--sm .like-button__text,
+.like-button--md .like-button__text {
+  font-size: 24rpx;
+}
+
+.like-button--lg .like-button__text {
+  font-size: 28rpx;
+}
+
+/* 动效 */
+.like-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease-in-out;
+}
+
+.like-button .wd-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.like-button--sm .wd-icon,
+.like-button--md .wd-icon {
+  font-size: 28rpx;
+  line-height: 28rpx;
+  color: #777777;
+}
+
+.like-button--lg .wd-icon {
+  font-size: 42rpx;
+  line-height: 42rpx;
+  color: #222222;
+}
+
+.like-button__icon--active {
+  transform: scale(1.18);
+}
+
+.like-button__icon--active {
+  color: #e54d42;
+}

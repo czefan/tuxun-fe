@@ -1,0 +1,210 @@
+/* ==========================================================================
+   全局复用：基础样式重置与通用原子类 (Base & Common Styles)
+   ========================================================================== */
+
+/* 1. 统一重置移动端 Button 的自带框线（小程序及H5端特有） */
+button {
+  box-sizing: border-box;
+
+  &::after {
+    border: 0; /* 清除默认伪元素框线 */
+  }
+}
+
+/* 2. 隐藏滚动条通用工具类 */
+.hide-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent;
+  }
+}
+
+/* 3. 全局统一重置 page 高度，防止带导航栏或内容较少时容器高度超过视口导致无内容却能滚动的问题 */
+page {
+  height: 100%;
+}
+
+/* 4. 页面级根容器通用工具类：统一控制最小高度为 100%、盒模型以及底部的优雅留白与安全区 */
+.safe-bottom-page {
+  min-height: 100%;
+  box-sizing: border-box;
+  /* 针对无固定底栏的普通页面，默认基础留白设为较小的 80rpx */
+  padding-bottom: calc(var(--safe-bottom-padding, 80rpx) + env(safe-area-inset-bottom)) !important;
+}
+
+.safe-bottom-page--fixed-bar {
+  min-height: 100%;
+  box-sizing: border-box;
+  /* 针对带有底部固定栏（Tab栏、详情操作栏、表单提交栏等）的页面，默认基础留白设为 150rpx 以避开遮挡 */
+  padding-bottom: calc(var(--safe-bottom-padding, 150rpx) + env(safe-area-inset-bottom)) !important;
+}
+
+/* #ifdef H5 */
+html,
+body,
+#app,
+uni-app,
+uni-page,
+uni-page-wrapper,
+uni-page-body {
+  background: var(--tx-page-bg, #f6f4ef) !important;
+}
+
+uni-page:has(.page-home),
+uni-page-wrapper:has(.page-home),
+uni-page-body:has(.page-home) {
+  --tx-page-bg: #f8f7f4;
+  background: #f8f7f4 !important;
+}
+
+uni-page:has(.page-history),
+uni-page:has(.page-activity),
+uni-page:has(.page-mall),
+uni-page:has(.page-answers),
+uni-page:has(.page-contributions),
+uni-page-wrapper:has(.page-history),
+uni-page-wrapper:has(.page-activity),
+uni-page-wrapper:has(.page-mall),
+uni-page-wrapper:has(.page-answers),
+uni-page-wrapper:has(.page-contributions),
+uni-page-body:has(.page-history),
+uni-page-body:has(.page-activity),
+uni-page-body:has(.page-mall),
+uni-page-body:has(.page-answers),
+uni-page-body:has(.page-contributions) {
+  --tx-page-bg: #f6f4ef;
+  background: #f6f4ef !important;
+}
+
+uni-page:has(.page-submit),
+uni-page:has(.page-answer),
+uni-page-wrapper:has(.page-submit),
+uni-page-wrapper:has(.page-answer),
+uni-page-body:has(.page-submit),
+uni-page-body:has(.page-answer) {
+  --tx-page-bg: #f7f4ee;
+  background: #f7f4ee !important;
+}
+
+uni-page:has(.page-profile-text),
+uni-page:has(.page-feedback),
+uni-page-wrapper:has(.page-profile-text),
+uni-page-wrapper:has(.page-feedback),
+uni-page-body:has(.page-profile-text),
+uni-page-body:has(.page-feedback) {
+  --tx-page-bg: #fffaf0;
+  background: #fffaf0 !important;
+}
+
+uni-page:has(.page-profile-sub),
+uni-page-wrapper:has(.page-profile-sub),
+uni-page-body:has(.page-profile-sub) {
+  --tx-page-bg: #f5f5f5;
+  background: #f5f5f5 !important;
+}
+
+uni-page:has(.page-notice),
+uni-page:has(.page-my),
+uni-page:has(.page-notice-detail),
+uni-page:has(.page-question-detail),
+uni-page:has(.page-auth-callback),
+uni-page-wrapper:has(.page-notice),
+uni-page-wrapper:has(.page-my),
+uni-page-wrapper:has(.page-notice-detail),
+uni-page-wrapper:has(.page-question-detail),
+uni-page-wrapper:has(.page-auth-callback),
+uni-page-body:has(.page-notice),
+uni-page-body:has(.page-my),
+uni-page-body:has(.page-notice-detail),
+uni-page-body:has(.page-question-detail),
+uni-page-body:has(.page-auth-callback) {
+  --tx-page-bg: #ffffff;
+  background: #ffffff !important;
+}
+/* #endif */
+
+/* 5. 通用原子工具类（提高复用性且不限制自定义） */
+.u-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.u-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.u-line-clamp-2 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* 通用圆形小按钮（例如搜索按钮）：仅控制核心宽高与居中，不限制额外定制 */
+.u-circle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 62rpx;
+  height: 62rpx;
+  background: #ffffff;
+  border: 2rpx solid rgba(31, 27, 20, 0.08);
+  border-radius: 999rpx;
+  box-shadow: 0 8rpx 20rpx rgba(31, 26, 18, 0.05);
+  box-sizing: border-box;
+}
+
+/* wot-ui 搜索框统一适配旧业务的紧凑胶囊外观 */
+.tx-search {
+  flex: 1;
+  min-width: 0;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.tx-search .wd-search__block {
+  min-height: 72rpx;
+  margin-right: 0 !important;
+  overflow: hidden;
+  background: #ffffff !important;
+  border-radius: 999rpx !important;
+  box-shadow: 0 8rpx 20rpx rgba(31, 26, 18, 0.04);
+}
+
+.tx-search .wd-search__field {
+  min-height: 72rpx;
+  padding: 0 24rpx !important;
+}
+
+.tx-search .wd-search__input {
+  height: 72rpx !important;
+  font-size: 28rpx !important;
+  color: #1f1b14 !important;
+}
+
+.tx-search .wd-search__search-left-icon,
+.tx-search .wd-search__search-icon {
+  color: #9a9286 !important;
+  font-size: 30rpx !important;
+}
+
+.tx-search .wd-search__placeholder-txt {
+  color: #a09688 !important;
+  font-size: 28rpx !important;
+}
+
+/* 通用段落排版类：用于关于我们、帮助中心、消息详情等纯文本说明页面 */
+.u-paragraph {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 33rpx;
+  line-height: 1.75;
+  color: #3a342c;
+}

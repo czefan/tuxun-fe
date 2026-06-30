@@ -1,0 +1,133 @@
+@import '@/styles/_mixins.scss';
+@import '@/components/activity-waterfall-list/activity-card.scss';
+@import '@/components/like-button/like-button.scss';
+@import '@/subPages/question/detail.scss';
+@import '@/subPages/question/components/AnswerRecords.scss';
+
+.question-global-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  overflow: hidden;
+  pointer-events: auto;
+  touch-action: none;
+
+  &__backdrop,
+  &__frame {
+    position: fixed;
+    inset: 0;
+  }
+
+  &__backdrop {
+    z-index: 0;
+    background: #ffffff;
+    opacity: 0;
+    will-change: opacity;
+  }
+
+  &__frame,
+  &__page,
+  &__clone {
+    overflow: hidden;
+    backface-visibility: hidden;
+  }
+
+  &__frame {
+    z-index: 1;
+    width: 100vw;
+    height: 100vh;
+    transform-origin: top left;
+    box-sizing: border-box;
+    will-change: transform;
+  }
+
+  &__page {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: #ffffff;
+    opacity: 0;
+    box-sizing: border-box;
+    will-change: opacity;
+  }
+
+  &__clone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    background: #ffffff;
+    transform-origin: top left;
+    will-change: transform, opacity;
+  }
+
+  &__scroll {
+    min-height: 100vh;
+    background: #ffffff;
+    will-change: transform;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0;
+    background: #ffffff;
+    box-sizing: content-box;
+  }
+
+  &__back {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    padding-left: 16px;
+    box-sizing: border-box;
+  }
+
+  &__back-arrow {
+    @include nav-back-arrow;
+  }
+
+  &__title {
+    display: block;
+    overflow: hidden;
+    flex: 1;
+    padding: 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 44px;
+    color: #1f1b14;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__nav-side {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+  }
+
+  &__bottom {
+    position: fixed;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    z-index: 3;
+    background: #ffffff;
+    box-sizing: border-box;
+    will-change: transform;
+  }
+
+  &__button {
+    min-width: 0;
+  }
+
+  &__like-mount {
+    display: inline-flex;
+  }
+}

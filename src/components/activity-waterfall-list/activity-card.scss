@@ -1,0 +1,138 @@
+.activity-card {
+  overflow: hidden;
+  margin-bottom: 8rpx;
+  background: #ffffff;
+  border-radius: 10rpx;
+}
+
+.activity-card--opening {
+  opacity: 0;
+}
+
+.activity-card__title,
+.activity-card__overlay-text,
+.activity-card__author-name,
+.activity-card__heat-text {
+  display: block;
+}
+
+.activity-card__cover {
+  position: relative;
+  overflow: hidden;
+  background: #f1f1f1;
+}
+
+.activity-card__image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.activity-card__cover-mask {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 100rpx;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.42));
+}
+
+.activity-card__overlay-text {
+  position: absolute;
+  right: 10rpx;
+  bottom: 8rpx;
+  left: 10rpx;
+  overflow: hidden;
+  font-size: 20rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #ffffff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-card__video {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34rpx;
+  height: 34rpx;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 999rpx;
+}
+
+.activity-card__play {
+  display: block;
+  font-size: 20rpx;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.activity-card__body {
+  padding: 14rpx 16rpx 20rpx;
+}
+
+.activity-card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 30rpx;
+  font-weight: 500;
+  line-height: 1.42;
+  color: #202020;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.activity-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8rpx;
+  margin-top: 14rpx;
+}
+
+.activity-card__author {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.activity-card__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38rpx;
+  height: 38rpx;
+  background: #f5c542;
+  border-radius: 999rpx;
+}
+
+.activity-card__avatar-text {
+  display: block;
+  font-size: 18rpx;
+  font-weight: 800;
+  color: #1f1b14;
+}
+
+.activity-card__author-name {
+  overflow: hidden;
+  max-width: 170rpx;
+  font-size: 24rpx;
+  color: #777777;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-card__like-btn {
+  transform: translateY(3rpx);
+}

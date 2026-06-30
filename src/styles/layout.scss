@@ -1,0 +1,15 @@
+/* ==========================================================================
+   全局复用：布局类样式 (Layout Styles)
+   ========================================================================== */
+
+/* 底部固定定位底栏（防 1px 缝隙、带上边框与白色背景） */
+.fixed-bottom-bar {
+  position: fixed;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  z-index: 99;
+  background: #ffffff;
+  border-top: 1rpx solid rgba(31, 27, 20, 0.06);
+  box-sizing: border-box;
+}

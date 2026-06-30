@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "plugins": ["typescript", "unicorn", "oxc", "vue"],
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "**/uni_modules/**",
+    "**/nativeplugins/**",
+    "auto-import.d.ts",
+    "uni-pages.d.ts",
+    "src/pages.json",
+    "src/manifest.json",
+    "src/service/**",
+    "src/typings.d.ts"
+  ],
+  "rules": {
+    "eslint/no-shadow": "off",
+    "eslint/no-underscore-dangle": "off",
+    "eslint/no-unreachable": "off",
+    "eslint/no-unused-expressions": "off",
+    "eslint/no-unused-vars": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-array-reverse": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/prefer-add-event-listener": "off",
+    "unicorn/require-module-specifiers": "off"
+  }
+}
