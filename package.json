@@ -220,6 +220,6 @@
       "oxlint --fix",
       "eslint --fix"
     ],
-    "*.{scss,css,html,json,md}": "oxfmt --write"
+    "*.{scss,css,html,json,md}": "oxfmt --write --no-error-on-unmatched-pattern"
   }
 }
