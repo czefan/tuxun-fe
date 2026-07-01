@@ -22,10 +22,10 @@ globs: src/**/*.vue, src/**/*.scss, src/**/*.css
 
 ## 样式组织
 
-- 全局样式在 [src/style/](file:///home/chai_/Club/tuxun/tuxun-fe/src/style) 目录下
+- 全局样式在 [src/styles/](file:///home/chai_/Club/tuxun/tuxun-fe/src/styles) 目录下
 - 组件样式使用 scoped 作用域
-- 图标字体在 [src/style/iconfont.css](file:///home/chai_/Club/tuxun/tuxun-fe/src/style/iconfont.css)
-- 主题变量在 [src/uni_modules/uni-scss/](file:///home/chai_/Club/tuxun/tuxun-fe/src/uni_modules/uni-scss) 目录下
+- 图标字体在 [src/styles/iconfont.css](file:///home/chai_/Club/tuxun/tuxun-fe/src/styles/iconfont.css) (若有)
+- 全局主题色使用 CSS 变量（在 [src/styles/common.scss](file:///home/chai_/Club/tuxun/tuxun-fe/src/styles/common.scss) 中定义），或使用 [src/styles/constants.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/styles/constants.ts) 定义的 JS/TS 颜色常量
 
 ## 示例代码结构
 

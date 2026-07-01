@@ -22,18 +22,14 @@
 
 - **Node.js**：建议使用 `v20.19.0` 或更高版本（LTS 版本）。
 - **包管理工具**：必须使用 [pnpm](https://pnpm.io/) (`>= v11.0.0`)。项目配置有首选包管理器检测（`only-allow pnpm`），请避免使用 npm / yarn 以防锁文件冲突。
-- **编辑器推荐**：[Visual Studio Code](https://code.visualstudio.com/)（须安装 Vue - Official 等官方推荐插件，请参考项目中的 `.vscode/extensions.json`）。
 
-## &#x1F4C2; 快速开始
+## 🚀 快速开始
 
-- 执行 `pnpm i` 安装依赖
-- 执行 `pnpm dev` 运行 `H5`
-- 执行 `pnpm dev:mp` 运行 `微信小程序`
+1. **安装依赖**：`pnpm i`
 
-## 📦 运行（支持热更新）
-
-- **Web 平台**：执行 `pnpm dev/pnpm dev:h5`，然后打开 [http://localhost:9000/](http://localhost:9000/)。
-- **微信小程序**：执行 `pnpm dev:mp`，然后打开微信开发者工具，导入本地文件夹，选择本项目的 `dist/dev/mp-weixin` 文件夹。
+2. **运行项目**：
+   - **Web 平台**：执行 `pnpm dev` (或 `pnpm dev:h5`)，然后浏览器打开 [http://localhost:9000/](http://localhost:9000/)。
+   - **微信小程序**：执行 `pnpm dev:mp`，然后打开微信开发者工具导入本项目，导入目录选择本项目的 `dist/dev/mp-weixin` 文件夹。
 
 ## 🔗 发布
 

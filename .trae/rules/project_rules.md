@@ -14,14 +14,17 @@
 - [pages.config.ts](mdc:pages.config.ts) - 页面路由配置
 - [manifest.config.ts](mdc:manifest.config.ts) - 应用清单配置
 - [uno.config.ts](mdc:uno.config.ts) - UnoCSS 配置
+- [eslint.config.mjs](mdc:eslint.config.mjs) - ESLint 代码检查与格式化配置
+- [openapi-ts-request.config.ts](mdc:openapi-ts-request.config.ts) - OpenAPI 客户端代码生成配置
 
 ## 主要目录结构
 - `src/pages/` - 页面文件
 - `src/components/` - 组件文件
 - `src/layouts/` - 布局文件
-- `src/api/` - API 接口
-- `src/http/` - HTTP 请求封装
+- `src/service/api/` - 业务 API 接口服务
+- `src/service/request/` - 底层 HTTP 请求封装与拦截器
 - `src/store/` - 状态管理
+- `src/styles/` - 全局公共样式与混入配置
 - `src/tabbar/` - 底部导航栏
 - `src/App.ku.vue` - 全局根组件（类似 App.vue 里面的 template作用）
 

@@ -1,27 +1,25 @@
 ---
 trigger: glob
-description: HTTP request configurations and API specs for Alova, vue-query, and interceptors
-globs: src/api/**/*.ts, src/http/**/*.ts
+description: HTTP request configurations and API specs for request, vue-query, and interceptors
+globs: src/service/api/**/*.ts, src/service/request/**/*.ts
 ---
 
 # API 和 HTTP 请求规范
 
 ## HTTP 请求封装
 
-- 可以使用 `简单http` 或者 `alova` 或者 `@tanstack/vue-query` 进行请求管理
-- HTTP 配置在 [src/http/](file:///home/chai_/Club/tuxun/tuxun-fe/src/http) 目录下
-- `简单http` - [src/http/http.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/http/http.ts)
-- `alova` - [src/http/alova.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/http/alova.ts)
-- `vue-query` - [src/http/vue-query.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/http/vue-query.ts)
-- 请求拦截器在 [src/http/interceptor.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/http/interceptor.ts)
-- 支持请求重试、缓存、错误处理
+- 业务请求底层适配在 [src/service/request/](file:///home/chai_/Club/tuxun/tuxun-fe/src/service/request) 目录下
+- `基础请求适配` - [src/service/request/http.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/service/request/http.ts)
+- `vue-query` - [src/service/request/vue-query.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/service/request/vue-query.ts)
+- 请求拦截器在 [src/service/request/interceptor.ts](file:///home/chai_/Club/tuxun/tuxun-fe/src/service/request/interceptor.ts)
+- 对外统一仅通过 `src/service/request/index.ts` 暴露 `request`
+- 支持请求重试、统一异常捕获和错误处理
 
 ## API 接口规范
 
-- API 接口定义在 [src/api/](file:///home/chai_/Club/tuxun/tuxun-fe/src/api) 目录下
-- 按功能模块组织 API 文件
-- 使用 TypeScript 定义请求和响应类型
-- 支持 `简单http`、`alova` 和 `vue-query` 三种请求方式
+- API 接口定义在 [src/service/api/](file:///home/chai_/Club/tuxun/tuxun-fe/src/service/api) 目录下
+- OpenAPI 客户端代码自动生成输出至 `src/service/api/generated/`
+- 按功能模块组织 API 文件，使用 TypeScript 定义请求和响应类型
 
 ## 示例代码结构
 
@@ -37,19 +35,17 @@ export interface LoginResponse {
   userInfo: UserInfo;
 }
 
-// alova 方式
-export const login = (params: LoginParams) => http.Post<LoginResponse>("/api/login", params);
-
-// vue-query 方式
-export const useLogin = () => {
-  return useMutation({
-    mutationFn: (params: LoginParams) => http.post<LoginResponse>("/api/login", params),
+// 统一请求链路方式
+export const login = (params: LoginParams) =>
+  request<LoginResponse>({
+    url: "/api/login",
+    method: "POST",
+    data: params,
   });
-};
 ```
 
 ## 错误处理
 
 - 统一错误处理在拦截器中配置
-- 支持 network 错误、业务错误、认证错误等
+- 支持网络错误、业务错误、认证错误等
 - 自动处理 token 过期和刷新
