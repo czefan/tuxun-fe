@@ -2,6 +2,11 @@ import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { useUserStore } from './user'
 
+interface TokenInfoInput {
+  token?: string
+  accessToken?: string
+}
+
 export const useTokenStore = defineStore(
   'token',
   () => {
@@ -33,14 +38,14 @@ export const useTokenStore = defineStore(
     }))
 
     // 适配 setTokenInfo
-    const setTokenInfo = (val: any) => {
+    const setTokenInfo = (val: string | TokenInfoInput | null | undefined) => {
       if (typeof val === 'string') {
         userStore.setToken(val)
       }
-      else if (val && val.token) {
+      else if (typeof val?.token === 'string') {
         userStore.setToken(val.token)
       }
-      else if (val && val.accessToken) {
+      else if (typeof val?.accessToken === 'string') {
         userStore.setToken(val.accessToken)
       }
     }

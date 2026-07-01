@@ -1,7 +1,7 @@
+import { ApiRequestError } from './error'
+import { ResultEnum } from './http-status'
 import type { CustomRequestOptions, IResponse } from './types'
 import { handleUnauthorized } from './shared'
-import { ResultEnum } from './tools/enum'
-import { ApiRequestError } from './types'
 
 export function http<T>(options: CustomRequestOptions) {
   return new Promise<T>((resolve, reject) => {
@@ -36,7 +36,7 @@ export function http<T>(options: CustomRequestOptions) {
         }
 
         // 处理其他错误
-        const message = (res.data as any).msg || (res.data as any).message || '请求错误'
+        const message = getResponseMessage(res.data)
         showErrorToast(message, options.hideErrorToast)
         reject(new ApiRequestError(message, { code, statusCode: res.statusCode, data: res.data }))
       },
@@ -59,4 +59,18 @@ function showErrorToast(message: string, hideErrorToast?: boolean) {
     icon: 'none',
     title: message,
   })
+}
+
+function getResponseMessage(data: unknown) {
+  if (data && typeof data === 'object') {
+    const response = data as { msg?: unknown, message?: unknown }
+    if (typeof response.msg === 'string' && response.msg) {
+      return response.msg
+    }
+    if (typeof response.message === 'string' && response.message) {
+      return response.message
+    }
+  }
+
+  return '请求错误'
 }

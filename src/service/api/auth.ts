@@ -2,6 +2,7 @@
  * 认证 / 登录相关接口（OAuth 统一认证）
  */
 import { request } from '../request'
+import { ApiEndpoint } from './endpoints'
 import type { UserInfo } from '@/types/business'
 
 export interface AuthSession {
@@ -38,7 +39,7 @@ export interface UpdateUserProfilePayload {
 /** 获取 OAuth 授权地址 */
 export function getOAuthLoginUrl(params: OAuthLoginUrlParams) {
   return request<OAuthLoginUrlResult>({
-    url: '/api/auth/oauth/login-url',
+    url: ApiEndpoint.auth.oauthLoginUrl,
     method: 'POST',
     data: params as unknown as Record<string, unknown>,
     auth: false,
@@ -48,7 +49,7 @@ export function getOAuthLoginUrl(params: OAuthLoginUrlParams) {
 /** 使用 OAuth authorization code 换取本系统登录态 */
 export function loginByOAuthCode(data: OAuthCodePayload) {
   return request<AuthSession>({
-    url: '/api/auth/oauth/code',
+    url: ApiEndpoint.auth.oauthCode,
     method: 'POST',
     data: data as unknown as Record<string, unknown>,
     auth: false,
@@ -58,14 +59,14 @@ export function loginByOAuthCode(data: OAuthCodePayload) {
 /** 获取当前用户信息 */
 export function getUserInfo() {
   return request<UserInfo>({
-    url: '/api/auth/userinfo',
+    url: ApiEndpoint.auth.userInfo,
   })
 }
 
 /** 更新当前用户资料 */
 export function updateUserProfile(data: UpdateUserProfilePayload) {
   return request<UserInfo>({
-    url: '/api/auth/userinfo',
+    url: ApiEndpoint.auth.userInfo,
     method: 'PUT',
     data: data as unknown as Record<string, unknown>,
   })
@@ -74,7 +75,7 @@ export function updateUserProfile(data: UpdateUserProfilePayload) {
 /** 退出登录 */
 export function logout() {
   return request<void>({
-    url: '/api/auth/logout',
+    url: ApiEndpoint.auth.logout,
     method: 'POST',
   })
 }

@@ -5,6 +5,7 @@ import { isMp } from '@uni-helper/uni-env'
  */
 import { useTokenStore } from '@/store/token'
 import { isPageTabbar, tabbarStore } from '@/tabbar/store'
+import { stringifyQuery } from '@/utils/queryString'
 import { EXCLUDE_LOGIN_PATH_LIST, isNeedLoginMode, LOGIN_PAGE, LOGIN_PAGE_ENABLE_IN_MP } from './auth'
 import { getAllPages, getLastPage, HOME_PAGE, parseUrlToObj } from './page'
 
@@ -37,10 +38,7 @@ export const navigateToInterceptor = {
 
     // 处理相对路径
     if (!path.startsWith('/')) {
-      const currentPath = getLastPage()?.route || ''
-      const normalizedCurrentPath = currentPath.startsWith('/') ? currentPath : `/${currentPath}`
-      const baseDir = normalizedCurrentPath.substring(0, normalizedCurrentPath.lastIndexOf('/'))
-      path = `${baseDir}/${path}`
+      path = resolveRelativeRoutePath(path)
     }
 
     // // 处理路由不存在的情况
@@ -72,7 +70,7 @@ export const navigateToInterceptor = {
         return true // 明确表示允许路由继续执行
       }
       else {
-        console.log('已经登录，但是还在登录页', myQuery.redirect)
+        FG_LOG_ENABLE && console.log('已经登录，但是还在登录页', myQuery.redirect)
         const url = myQuery.redirect || HOME_PAGE
         if (isPageTabbar(url)) {
           uni.switchTab({ url })
@@ -85,8 +83,9 @@ export const navigateToInterceptor = {
     }
     let fullPath = path
 
-    if (Object.keys(myQuery).length) {
-      fullPath += `?${Object.keys(myQuery).map(key => `${key}=${myQuery[key]}`).join('&')}`
+    const queryString = stringifyQuery(myQuery)
+    if (queryString) {
+      fullPath += `?${queryString}`
     }
     const redirectUrl = `${LOGIN_PAGE}?redirect=${encodeURIComponent(fullPath)}`
 
@@ -122,9 +121,32 @@ export const navigateToInterceptor = {
   },
 }
 
+function resolveRelativeRoutePath(path: string) {
+  const currentPath = getLastPage()?.route || ''
+  const normalizedCurrentPath = currentPath.startsWith('/') ? currentPath : `/${currentPath}`
+  const baseSegments = normalizedCurrentPath.split('/').slice(0, -1)
+
+  path.split('/').forEach((segment) => {
+    if (!segment || segment === '.') {
+      return
+    }
+
+    if (segment === '..') {
+      if (baseSegments.length > 1) {
+        baseSegments.pop()
+      }
+      return
+    }
+
+    baseSegments.push(segment)
+  })
+
+  return baseSegments.join('/') || HOME_PAGE
+}
+
 // 针对 chooseLocation 的特殊处理
 export const chooseLocationInterceptor = {
-  invoke(options: any) {
+  invoke(options: unknown) {
     // 直接放行 chooseLocation 调用
     FG_LOG_ENABLE && console.log('chooseLocation 调用，直接放行:', options)
     return true

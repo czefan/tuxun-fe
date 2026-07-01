@@ -2,6 +2,7 @@
  * 活动相关接口（当期/往期活动、题目、作答、评论）
  */
 import { request, uploadFile } from '../request'
+import { ApiEndpoint } from './endpoints'
 import type { PageParams, PageResult } from './types'
 
 export type SortType = 'hot' | 'latest'
@@ -130,14 +131,14 @@ export interface LikeResult {
 /** 获取当期活动 */
 export function getCurrentActivity() {
   return request<Activity>({
-    url: '/api/activity/current',
+    url: ApiEndpoint.activity.current,
   })
 }
 
 /** 获取往期活动列表 */
 export function getHistoryActivities(params: PageParams) {
   return request<PageResult<Activity>>({
-    url: '/api/activity/history',
+    url: ApiEndpoint.activity.history,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -145,7 +146,7 @@ export function getHistoryActivities(params: PageParams) {
 /** 获取当期活动题目列表 */
 export function getCurrentActivityQuestions(params: QuestionListParams) {
   return request<PageResult<Question>>({
-    url: '/api/activity/current/questions',
+    url: ApiEndpoint.activity.currentQuestions,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -153,7 +154,7 @@ export function getCurrentActivityQuestions(params: QuestionListParams) {
 /** 获取某期活动题目列表 */
 export function getActivityQuestions(activityId: number, params: QuestionListParams) {
   return request<PageResult<Question>>({
-    url: `/api/activity/${activityId}/questions`,
+    url: ApiEndpoint.activity.questions(activityId),
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -161,14 +162,14 @@ export function getActivityQuestions(activityId: number, params: QuestionListPar
 /** 获取题目详情 */
 export function getQuestionDetail(id: number) {
   return request<Question>({
-    url: `/api/question/${id}`,
+    url: ApiEndpoint.question.detail(id),
   })
 }
 
 /** 上传题目/作答图片 */
 export function uploadQuestionImage(filePath: string) {
   return uploadFile<UploadResult>({
-    url: '/api/upload/question-image',
+    url: ApiEndpoint.upload.questionImage,
     filePath,
   })
 }
@@ -176,7 +177,7 @@ export function uploadQuestionImage(filePath: string) {
 /** 投稿题目 */
 export function createQuestionContribution(data: CreateQuestionPayload) {
   return request<QuestionContribution>({
-    url: '/api/question/contributions',
+    url: ApiEndpoint.question.contributions,
     method: 'POST',
     data: data as unknown as Record<string, unknown>,
   })
@@ -185,7 +186,7 @@ export function createQuestionContribution(data: CreateQuestionPayload) {
 /** 获取我的投稿记录 */
 export function getMyQuestionContributions(params: PageParams & { status?: ReviewStatus | 'all' }) {
   return request<PageResult<QuestionContribution>>({
-    url: '/api/question/contributions/mine',
+    url: ApiEndpoint.question.myContributions,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -193,7 +194,7 @@ export function getMyQuestionContributions(params: PageParams & { status?: Revie
 /** 提交作答 */
 export function submitAnswer(data: SubmitAnswerPayload) {
   return request<MyAnswerRecord>({
-    url: '/api/answer/submit',
+    url: ApiEndpoint.answer.submit,
     method: 'POST',
     data: data as unknown as Record<string, unknown>,
   })
@@ -202,7 +203,7 @@ export function submitAnswer(data: SubmitAnswerPayload) {
 /** 获取题目的公开作答记录 */
 export function getQuestionAnswerRecords(questionId: number, params: PageParams) {
   return request<PageResult<AnswerRecord>>({
-    url: `/api/question/${questionId}/answers`,
+    url: ApiEndpoint.question.answers(questionId),
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -210,7 +211,7 @@ export function getQuestionAnswerRecords(questionId: number, params: PageParams)
 /** 获取当前用户对某题的作答记录 */
 export function getMyQuestionAnswerRecords(questionId: number, params: PageParams) {
   return request<PageResult<MyAnswerRecord>>({
-    url: `/api/question/${questionId}/answers/mine`,
+    url: ApiEndpoint.question.myAnswers(questionId),
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -218,7 +219,7 @@ export function getMyQuestionAnswerRecords(questionId: number, params: PageParam
 /** 获取我的答题题目记录 */
 export function getMyAnswerQuestions(params: PageParams & { status?: AnswerStatus | 'all' }) {
   return request<PageResult<MyAnswerQuestionRecord>>({
-    url: '/api/answers/mine',
+    url: ApiEndpoint.answer.mine,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -226,7 +227,7 @@ export function getMyAnswerQuestions(params: PageParams & { status?: AnswerStatu
 /** 获取评论列表 */
 export function getComments(questionId: number, params: PageParams) {
   return request<PageResult<Comment>>({
-    url: `/api/question/${questionId}/comments`,
+    url: ApiEndpoint.comment.list(questionId),
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -234,7 +235,7 @@ export function getComments(questionId: number, params: PageParams) {
 /** 发表评论 */
 export function postComment(data: { questionId: number, content: string }) {
   return request({
-    url: '/api/comment',
+    url: ApiEndpoint.comment.create,
     method: 'POST',
     data: data as unknown as Record<string, unknown>,
   })
@@ -243,7 +244,7 @@ export function postComment(data: { questionId: number, content: string }) {
 /** 点赞 / 取消点赞 */
 export function toggleQuestionLike(questionId: number) {
   return request<LikeResult>({
-    url: `/api/question/${questionId}/like`,
+    url: ApiEndpoint.question.like(questionId),
     method: 'POST',
   })
 }
@@ -251,7 +252,7 @@ export function toggleQuestionLike(questionId: number) {
 /** 作答记录点赞 / 取消点赞 */
 export function toggleAnswerRecordLike(answerRecordId: number) {
   return request<LikeResult>({
-    url: `/api/answer-records/${answerRecordId}/like`,
+    url: ApiEndpoint.answer.recordLike(answerRecordId),
     method: 'POST',
   })
 }

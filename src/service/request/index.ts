@@ -1,7 +1,7 @@
 import { http } from './http'
+import { ApiRequestError } from './error'
 import { handleUnauthorized } from './shared'
-import { ResultEnum } from './tools/enum'
-import { ApiRequestError } from './types'
+import { ResultEnum } from './http-status'
 import type { RequestOptions, UploadFileOptions, UploadResponsePayload } from './types'
 
 export { ApiRequestError }

@@ -1,24 +1,9 @@
-export class ApiRequestError extends Error {
-  code?: number
-  statusCode?: number
-  data?: unknown
-  isSilent?: boolean
+import type { QueryParams } from '@/utils/queryString'
 
-  constructor(
-    message: string,
-    options: { code?: number, statusCode?: number, data?: unknown, isSilent?: boolean } = {},
-  ) {
-    super(message)
-    this.name = 'ApiRequestError'
-    this.code = options.code
-    this.statusCode = options.statusCode
-    this.data = options.data
-    this.isSilent = options.isSilent
-  }
-}
+export { ApiRequestError } from './error'
 
 export type RequestMethod = NonNullable<UniApp.RequestOptions['method']>
-export type RequestData = Record<string, unknown>
+export type RequestData = QueryParams
 
 export interface RequestOptions {
   url: string
@@ -51,6 +36,14 @@ export interface UploadResponsePayload<T> {
   message?: string
 }
 
+export interface ApiResponseEnvelope<T = unknown> {
+  code: number
+  data: T
+  msg?: string
+  message?: string
+  [key: string]: unknown
+}
+
 /**
  * 在 uniapp 的 RequestOptions 和 IUniUploadFileOptions 基础上，添加自定义参数
  */
@@ -63,7 +56,14 @@ export type CustomRequestOptions = UniApp.RequestOptions & {
 } & IUniUploadFileOptions // 添加uni.uploadFile参数类型
 
 /** 主要提供给 openapi-ts-request 生成的代码使用 */
-export type OpenApiRequestOptions = Omit<CustomRequestOptions, 'url'>
+export type OpenApiRequestOptions = Omit<RequestOptions, 'url' | 'query' | 'header'> & {
+  params?: RequestData
+  query?: RequestData
+  headers?: UniApp.RequestOptions['header']
+  header?: UniApp.RequestOptions['header']
+}
+
+export type OpenApiResponseData<T> = T extends ApiResponseEnvelope<infer Data> ? Data : T
 
 export interface HttpRequestResult<T> {
   promise: Promise<T>
@@ -71,14 +71,4 @@ export interface HttpRequestResult<T> {
 }
 
 // 通用响应格式（兼容 msg + message 字段）
-export type IResponse<T = any> = {
-  code: number
-  data: T
-  message: string
-  [key: string]: any // 允许额外属性
-} | {
-  code: number
-  data: T
-  msg: string
-  [key: string]: any // 允许额外属性
-}
+export type IResponse<T = unknown> = ApiResponseEnvelope<T>

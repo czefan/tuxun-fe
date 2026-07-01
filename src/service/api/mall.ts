@@ -2,6 +2,7 @@
  * 积分商城相关接口（商品列表、兑换、核销）
  */
 import { request } from '../request'
+import { ApiEndpoint } from './endpoints'
 import type { PageParams, PageResult } from './types'
 
 /** 商品 */
@@ -43,7 +44,7 @@ export interface VerifyOrderPayload {
 /** 获取商品列表 */
 export function getProducts(params: ProductListParams) {
   return request<PageResult<Product>>({
-    url: '/api/mall/products',
+    url: ApiEndpoint.mall.products,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -51,7 +52,7 @@ export function getProducts(params: ProductListParams) {
 /** 获取商品详情 */
 export function getProductDetail(productId: number) {
   return request<Product>({
-    url: `/api/mall/products/${productId}`,
+    url: ApiEndpoint.mall.productDetail(productId),
   })
 }
 
@@ -60,7 +61,7 @@ export function exchangeProduct(data: number | ExchangeProductPayload) {
   const payload = typeof data === 'number' ? { productId: data, count: 1 } : data
 
   return request<Order>({
-    url: '/api/mall/exchange',
+    url: ApiEndpoint.mall.exchange,
     method: 'POST',
     data: payload as unknown as Record<string, unknown>,
   })
@@ -69,7 +70,7 @@ export function exchangeProduct(data: number | ExchangeProductPayload) {
 /** 获取我的订单 / 账单 */
 export function getMyOrders(params: PageParams) {
   return request<PageResult<Order>>({
-    url: '/api/mall/orders',
+    url: ApiEndpoint.mall.orders,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -82,7 +83,7 @@ export function verifyOrder(data: number | VerifyOrderPayload) {
   const payload = typeof data === 'number' ? { orderId: data } : data
 
   return request({
-    url: '/api/mall/orders/verify',
+    url: ApiEndpoint.mall.verifyOrder,
     method: 'POST',
     data: payload as unknown as Record<string, unknown>,
   })

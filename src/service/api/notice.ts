@@ -2,6 +2,7 @@
  * 通知相关接口（消息列表、详情、已读状态）
  */
 import { request } from '../request'
+import { ApiEndpoint } from './endpoints'
 import type { PageParams, PageResult } from './types'
 
 export type NoticeType = 'system' | 'activity' | 'review' | 'points'
@@ -34,7 +35,7 @@ export interface NoticeUnreadCountDto {
 /** 获取通知列表 */
 export function getNotices(params: NoticeListParams) {
   return request<PageResult<NoticeDto>>({
-    url: '/api/notices',
+    url: ApiEndpoint.notice.list,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -42,21 +43,21 @@ export function getNotices(params: NoticeListParams) {
 /** 获取通知详情 */
 export function getNoticeDetail(noticeId: number) {
   return request<NoticeDetailDto>({
-    url: `/api/notices/${noticeId}`,
+    url: ApiEndpoint.notice.detail(noticeId),
   })
 }
 
 /** 获取未读通知数量 */
 export function getNoticeUnreadCount() {
   return request<NoticeUnreadCountDto>({
-    url: '/api/notices/unread-count',
+    url: ApiEndpoint.notice.unreadCount,
   })
 }
 
 /** 标记单条通知已读 */
 export function markNoticeRead(noticeId: number) {
   return request<void>({
-    url: `/api/notices/${noticeId}/read`,
+    url: ApiEndpoint.notice.markRead(noticeId),
     method: 'POST',
   })
 }
@@ -64,7 +65,7 @@ export function markNoticeRead(noticeId: number) {
 /** 标记全部通知已读 */
 export function markAllNoticesRead(type?: NoticeType) {
   return request<void>({
-    url: '/api/notices/read-all',
+    url: ApiEndpoint.notice.markAllRead,
     method: 'POST',
     data: type ? { type } : undefined,
   })

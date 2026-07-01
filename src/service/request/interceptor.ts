@@ -1,6 +1,6 @@
 import { useUserStore } from '@/store/user'
+import { stringifyQuery } from '@/utils/queryString'
 import { getEnvBaseUrl } from './env'
-import { stringifyQuery } from './tools/queryString'
 import type { CustomRequestOptions } from './types'
 
 // 请求基准地址
@@ -13,11 +13,13 @@ const httpInterceptor = {
     // 接口请求支持通过 query 参数配置 queryString
     if (options.query) {
       const queryStr = stringifyQuery(options.query)
-      if (options.url.includes('?')) {
-        options.url += `&${queryStr}`
-      }
-      else {
-        options.url += `?${queryStr}`
+      if (queryStr) {
+        if (options.url.includes('?')) {
+          options.url += `&${queryStr}`
+        }
+        else {
+          options.url += `?${queryStr}`
+        }
       }
     }
     // 非 http 开头需拼接地址

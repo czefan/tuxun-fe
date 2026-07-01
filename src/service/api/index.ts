@@ -1,5 +1,7 @@
 export * from './activity'
 export * from './auth'
+export * from './endpoints'
+export * from './generated'
 export * from './mall'
 export * from './notice'
 export * from './types'

@@ -2,6 +2,7 @@
  * 用户相关接口（积分、反馈）
  */
 import { request, uploadFile } from '../request'
+import { ApiEndpoint } from './endpoints'
 import type { PageParams, PageResult } from './types'
 
 export type PointLedgerType = 'answer' | 'contribution' | 'exchange' | 'adjustment'
@@ -71,14 +72,14 @@ export interface FeedbackRecordDto {
 /** 获取当前用户积分概览 */
 export function getPointSummary() {
   return request<PointSummaryDto>({
-    url: '/api/user/points/summary',
+    url: ApiEndpoint.user.pointSummary,
   })
 }
 
 /** 获取当前用户积分流水 */
 export function getPointLedger(params: PointLedgerParams) {
   return request<PageResult<PointLedgerDto>>({
-    url: '/api/user/points/ledger',
+    url: ApiEndpoint.user.pointLedger,
     data: params as unknown as Record<string, unknown>,
   })
 }
@@ -86,20 +87,20 @@ export function getPointLedger(params: PointLedgerParams) {
 /** 获取积分规则 */
 export function getPointRules() {
   return request<PointRuleDto[]>({
-    url: '/api/user/points/rules',
+    url: ApiEndpoint.user.pointRules,
   })
 }
 
 /** 上传反馈图片 */
 export function uploadFeedbackImage(filePath: string) {
   return uploadFile<FeedbackImageUploadResultDto>({
-    url: '/api/upload/feedback-image',
+    url: ApiEndpoint.upload.feedbackImage,
     filePath,
   })
 }
 
 /** 上传用户头像，返回可写入用户资料的头像 URL */
-export async function uploadAvatarImage(filePath: string, uploadUrl = '/api/upload/avatar') {
+export async function uploadAvatarImage(filePath: string, uploadUrl = ApiEndpoint.upload.avatar) {
   const result = await uploadFile<AvatarUploadResultDto>({
     url: uploadUrl,
     filePath,
@@ -111,7 +112,7 @@ export async function uploadAvatarImage(filePath: string, uploadUrl = '/api/uplo
 /** 提交用户反馈 */
 export function submitFeedback(data: SubmitFeedbackPayload) {
   return request<FeedbackRecordDto>({
-    url: '/api/user/feedback',
+    url: ApiEndpoint.user.feedback,
     method: 'POST',
     data: data as unknown as Record<string, unknown>,
   })
@@ -120,7 +121,7 @@ export function submitFeedback(data: SubmitFeedbackPayload) {
 /** 获取我的反馈记录 */
 export function getMyFeedback(params: PageParams & { status?: FeedbackStatus | 'all' }) {
   return request<PageResult<FeedbackRecordDto>>({
-    url: '/api/user/feedback',
+    url: ApiEndpoint.user.feedback,
     data: params as unknown as Record<string, unknown>,
   })
 }
