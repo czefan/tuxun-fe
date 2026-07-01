@@ -8,6 +8,7 @@ allowBuilds:
   esbuild: true
   less: true
   protobufjs: true
+  simple-git-hooks: true
   vue-demi: true
 
 overrides:

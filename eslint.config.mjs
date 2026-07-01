@@ -17,8 +17,8 @@ export default uniHelper({
     // 插件生成的文件
     'src/pages.json',
     'src/manifest.json',
-    // 忽略自动生成文件
-    'src/service/**',
+    // 只忽略明确的自动生成目录；手写 service/request 与 service/api 需要进入 lint。
+    'src/service/api/generated/**',
   ],
   // https://eslint-config.antfu.me/rules
   rules: {
@@ -32,6 +32,9 @@ export default uniHelper({
     'jsdoc/require-returns-description': 'off',
     'ts/no-empty-object-type': 'off',
     'no-extend-native': 'off',
+    // build.target 是 es6，Object.hasOwn 在旧 WebView / 小程序 JSCore 里可能不可用。
+    'e18e/prefer-object-has-own': 'off',
+    'pnpm/yaml-enforce-settings': 'off',
     // uni 条件编译注释可能包裹 import，自动排序会破坏平台条件边界
     'perfectionist/sort-imports': 'off',
     'vue/singleline-html-element-content-newline': [

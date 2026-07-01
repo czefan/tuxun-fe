@@ -26,6 +26,7 @@ import dayjs from 'dayjs'
 import { visualizer } from 'rollup-plugin-visualizer'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
+import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import ViteRestart from 'vite-plugin-restart'
 import openDevTools from './scripts/open-dev-tools'
@@ -33,14 +34,16 @@ import vitePluginEruda from './scripts/vite-plugin-eruda'
 import { createCopyNativeResourcesPlugin } from './vite-plugins/copy-native-resources'
 import syncManifestPlugin from './vite-plugins/sync-manifest-plugins'
 
+type PagesJsonItem = Record<string, unknown>
+
 interface GeneratedPagesJson {
-  pages?: Record<string, any>[]
-  subPackages?: Array<Record<string, any> & { pages?: Record<string, any>[] }>
-  tabBar?: Record<string, any> & { list?: Record<string, any>[] }
-  [key: string]: any
+  pages?: PagesJsonItem[]
+  subPackages?: Array<PagesJsonItem & { pages?: PagesJsonItem[] }>
+  tabBar?: PagesJsonItem & { list?: PagesJsonItem[] }
+  [key: string]: unknown
 }
 
-function dedupeByKey<T extends Record<string, any>>(items: T[] | undefined, key: string) {
+function dedupeByKey<T extends PagesJsonItem>(items: T[] | undefined, key: string) {
   if (!Array.isArray(items)) {
     return items
   }
@@ -69,8 +72,8 @@ function dedupeByKey<T extends Record<string, any>>(items: T[] | undefined, key:
   return result
 }
 
-function normalizeGeneratedPagesJson() {
-  const pagesJsonPath = path.resolve(process.cwd(), 'src/pages.json')
+function normalizeGeneratedPagesJson(rootDir: string) {
+  const pagesJsonPath = path.resolve(rootDir, 'src/pages.json')
 
   if (!fs.existsSync(pagesJsonPath)) {
     return
@@ -107,6 +110,35 @@ function normalizeGeneratedPagesJson() {
   }
 }
 
+function normalizePagesJsonPlugin(): Plugin {
+  return {
+    name: 'normalize-pages-json',
+    configResolved(config) {
+      normalizeGeneratedPagesJson(config.root)
+    },
+    buildStart() {
+      normalizeGeneratedPagesJson(process.cwd())
+    },
+  }
+}
+
+function warnMissingProductionBaseUrl(env: Record<string, string>, platform: string | undefined, mode: string) {
+  if (mode !== 'production') {
+    return
+  }
+
+  const baseUrl = env.VITE_SERVER_BASEURL?.trim()
+
+  if ((platform === 'mp-weixin' || platform === 'mp') && !baseUrl && !env.VITE_SERVER_BASEURL__WEIXIN_RELEASE?.trim()) {
+    console.warn('[env] VITE_SERVER_BASEURL__WEIXIN_RELEASE is empty. Weixin release requests need an explicit HTTPS API domain.')
+    return
+  }
+
+  if (platform && platform !== 'h5' && !baseUrl) {
+    console.warn(`[env] VITE_SERVER_BASEURL is empty for production ${platform} build. Confirm this platform can request relative API paths.`)
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
   // @see https://unocss.dev/
@@ -122,8 +154,6 @@ export default defineConfig(({ command, mode }) => {
   // pnpm build:app 时得到 => build production
   // dev 和 build 命令可以分别使用 .env.development 和 .env.production 的环境变量
   // 非 H5 端 dev 也是 build command，最终加载哪个 env 文件以实际 mode 为准。
-
-  normalizeGeneratedPagesJson()
 
   const { UNI_PLATFORM, SKIP_OPEN_DEVTOOLS } = process.env
 
@@ -141,6 +171,12 @@ export default defineConfig(({ command, mode }) => {
     VITE_COPY_NATIVE_RES_ENABLE,
   } = env
   const { WECHAT_DEVTOOLS_CLI_PATH } = localEnv
+  const bundleAnalyze = (process.env.VITE_BUNDLE_ANALYZE || env.VITE_BUNDLE_ANALYZE) === 'true'
+  const bundleAnalyzeOpen = (process.env.VITE_BUNDLE_ANALYZE_OPEN || env.VITE_BUNDLE_ANALYZE_OPEN) === 'true'
+  const bundleAnalyzePlatform = UNI_PLATFORM || 'h5'
+
+  warnMissingProductionBaseUrl(env, UNI_PLATFORM, mode)
+  normalizeGeneratedPagesJson(process.cwd())
 
   return defineConfig({
     envDir: './env', // 自定义env目录
@@ -167,12 +203,10 @@ export default defineConfig(({ command, mode }) => {
         subPackages: ['src/subPages'],
         dts: 'src/types/uni-pages.d.ts',
       }),
+      normalizePagesJsonPlugin(),
       // UniOptimization 插件需要 page.json 文件，故应在 UniPages 插件之后执行
       UniOptimization({
         enable: isMpWeixin,
-        dts: {
-          base: 'src/types',
-        },
         logger: false,
       }),
       // 若存在改变 pages.json 的插件，请将 UniKuRoot 放置其后
@@ -245,12 +279,12 @@ export default defineConfig(({ command, mode }) => {
             .replace('%VITE_APP_TITLE%', VITE_APP_TITLE)
         },
       },
-      // 打包分析插件，h5 + 生产环境才弹出
-      UNI_PLATFORM === 'h5'
+      // 打包分析插件，显式开启后输出到 node_modules/.cache/visualizer
+      bundleAnalyze
       && mode === 'production'
       && visualizer({
-        filename: './node_modules/.cache/visualizer/stats.html',
-        open: true,
+        filename: `./node_modules/.cache/visualizer/${bundleAnalyzePlatform}-stats.html`,
+        open: bundleAnalyzeOpen,
         gzipSize: true,
         brotliSize: true,
       }),
@@ -296,6 +330,8 @@ export default defineConfig(({ command, mode }) => {
       alias: {
         '@': path.join(process.cwd(), './src'),
         '@img': path.join(process.cwd(), './src/static/images'),
+        '@intlify/message-compiler': path.join(process.cwd(), './node_modules/@intlify/message-compiler'),
+        '@intlify/shared': path.join(process.cwd(), './node_modules/@intlify/shared'),
       },
     },
     server: {
