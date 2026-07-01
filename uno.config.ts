@@ -11,6 +11,7 @@ import {
   transformerDirectives,
   transformerVariantGroup,
 } from 'unocss'
+import { BRAND_PRIMARY_COLOR, BRAND_PRIMARY_DARK_COLOR, BRAND_PRIMARY_LIGHT_COLOR } from './src/styles/constants'
 
 export default defineConfig({
   presets: [
@@ -96,7 +97,10 @@ export default defineConfig({
   theme: {
     colors: {
       /** 主题色，用法如: text-primary */
-      primary: 'var(--wot-color-theme,#0957DE)',
+      'primary': 'var(--wot-color-theme,#0957DE)',
+      'brand': BRAND_PRIMARY_COLOR,
+      'brand-dark': BRAND_PRIMARY_DARK_COLOR,
+      'brand-light': BRAND_PRIMARY_LIGHT_COLOR,
     },
     fontSize: {
       /** 提供更小号的字体，用法如：text-2xs */

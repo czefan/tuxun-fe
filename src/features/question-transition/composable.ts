@@ -7,6 +7,7 @@ import {
 import type { QuestionTransitionQuestion, QuestionTransitionRect } from './store'
 import { getPageScrollTop, runAfterPaint } from '@/utils'
 import { AppRoute, withQuery } from '@/router/routes'
+import { useTimer } from '@/composables/useTimer'
 
 interface QuestionTransitionSource {
   id: number
@@ -32,6 +33,7 @@ export function useQuestionTransitionFlight(
   findQuestionInList: (id: number) => QuestionTransitionSource | null | undefined,
 ) {
   const transitionStore = useQuestionTransitionStore()
+  const timer = useTimer()
   const openingQuestionId = ref<number | null>(null)
   const activeReturnQuestionId = ref<number | null>(null)
 
@@ -57,7 +59,7 @@ export function useQuestionTransitionFlight(
       lockPageScroll()
       runAfterPaint(() => {
         transitionStore.playFlight()
-        setTimeout(() => {
+        timer.setTimeout(() => {
           uni.navigateTo({
             url: getQuestionDetailUrl(item),
             fail: () => {
@@ -98,7 +100,7 @@ export function useQuestionTransitionFlight(
 
         runAfterPaint(() => {
           transitionStore.playFlight()
-          setTimeout(() => {
+          timer.setTimeout(() => {
             openingQuestionId.value = null
             activeReturnQuestionId.value = null
             transitionStore.clearPendingReturn()

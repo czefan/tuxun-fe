@@ -3,38 +3,6 @@
    注意：此文件只应存放纯变量、宏、方法，不能包含产生实际 CSS 输出的类名选择器。
    ========================================================================== */
 
-// 1. Flex 水平垂直居中
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-// 2. 单行文本超出隐藏并显示省略号 (...)
-@mixin ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// 3. 多行文本超出隐藏并显示省略号 (...)
-@mixin line-clamp($lines: 2) {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: $lines;
-  line-clamp: $lines;
-}
-
-// 4. 绝对定位完整覆盖/铺满
-@mixin cover-all {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
 // 5. 原生风格自定义返回键折角箭头
 @mixin nav-back-arrow($color: rgba(31, 27, 20, 0.95)) {
   width: 12px;

@@ -9,6 +9,7 @@
       <image
         class="activity-card__image"
         :src="item.cover"
+        lazy-load
         mode="aspectFill"
       />
       <view v-if="hasCoverBadge" class="activity-card__cover-mask" />

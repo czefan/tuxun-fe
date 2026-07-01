@@ -138,11 +138,18 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useAvatarEditor } from './composables/useAvatarEditor'
 import { isMockLoginEnabled, useAuth } from '@/composables/useAuth'
-import { uploadAvatarImage } from '@/service/api'
+import { useTimer } from '@/composables/useTimer'
 import { useUserStore } from '@/store/user'
 import { getMyMenuGroups } from './features'
 import type { MyMenuItem } from './features'
+
+interface InputValueEvent {
+  detail?: {
+    value?: string
+  }
+}
 
 definePage({
   style: {
@@ -152,175 +159,28 @@ definePage({
 
 const userStore = useUserStore()
 const { ensureLogin, setMockLogin, startOAuthLogin } = useAuth()
+const timer = useTimer()
 
 const menuGroups = computed(() => getMyMenuGroups(userStore.userInfo?.points ?? 0))
-
-const isAvatarSaving = ref(false)
-const avatarUploadUrl = import.meta.env.VITE_AVATAR_UPLOAD_URL || ''
-
-const editAvatarVisible = ref(false)
-
-function onAvatarTap() {
-  if (!userStore.isLoggedIn()) {
-    return
-  }
-  editAvatarVisible.value = true
-}
-
-function closeEditAvatar() {
-  editAvatarVisible.value = false
-}
-
-function confirmEditAvatar() {
-  closeEditAvatar()
-  openAvatarCropper()
-}
-
-function openAvatarCropper() {
-  if (!userStore.isLoggedIn()) {
-    return
-  }
-
-  // #ifdef H5
-  chooseH5AvatarImage()
-  // #endif
-
-  // #ifndef H5
-  chooseNativeAvatarImage()
-  // #endif
-}
-
-// 微信选择头像回调
-function onChooseAvatar(e: any) {
-  const avatarUrl = e.detail?.avatarUrl
-  if (avatarUrl) {
-    // 微信真机自带裁剪，直接进入上传骨架
-    uploadAvatar(avatarUrl)
-  }
-}
-
-function onChooseAvatarWithClose(e: any) {
-  closeEditAvatar()
-  onChooseAvatar(e)
-}
-
-function chooseNativeAvatarImage() {
-  if (isAvatarSaving.value) {
-    return
-  }
-
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: (res) => {
-      const tempPath = res.tempFilePaths[0]
-      if (tempPath) {
-        uploadAvatar(tempPath)
-      }
-    },
-  })
-}
-
-// #ifdef H5
-function chooseH5AvatarImage() {
-  if (isAvatarSaving.value) {
-    return
-  }
-
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: (res) => {
-      const tempPath = readChosenImagePath(res)
-
-      if (!tempPath) {
-        uni.showToast({ title: '未选择图片', icon: 'none' })
-        return
-      }
-
-      uploadAvatar(tempPath)
-    },
-    fail: (error) => {
-      const message = typeof error?.errMsg === 'string' ? error.errMsg : ''
-
-      if (!message.toLowerCase().includes('cancel')) {
-        uni.showToast({ title: '选择图片失败', icon: 'none' })
-      }
-    },
-  })
-}
-
-function readChosenImagePath(res: UniApp.ChooseImageSuccessCallbackResult) {
-  const tempFilePaths = res.tempFilePaths
-
-  if (Array.isArray(tempFilePaths) && tempFilePaths[0]) {
-    return tempFilePaths[0]
-  }
-
-  const tempFiles = res.tempFiles
-  const firstTempFile = Array.isArray(tempFiles) ? tempFiles[0] : tempFiles
-  const path = (firstTempFile as { path?: string } | undefined)?.path
-
-  return typeof path === 'string' ? path : ''
-}
-// #endif
-
-async function uploadAvatar(filePath: string, shouldToggleSaving = true) {
-  if (shouldToggleSaving) {
-    if (isAvatarSaving.value) {
-      return
-    }
-
-    isAvatarSaving.value = true
-  }
-
-  let loadingShown = false
-
-  try {
-    if (!avatarUploadUrl) {
-      updateAvatar(filePath)
-      return
-    }
-
-    loadingShown = true
-    uni.showLoading({ title: '正在上传头像...' })
-
-    const avatar = await uploadAvatarImage(filePath, avatarUploadUrl)
-    updateAvatar(avatar || filePath)
-  }
-  catch (error) {
-    console.error('头像上传失败：', error)
-    updateAvatar(filePath, '上传失败，已保留预览')
-  }
-  finally {
-    if (loadingShown) {
-      uni.hideLoading()
-    }
-
-    if (shouldToggleSaving) {
-      isAvatarSaving.value = false
-    }
-  }
-}
-
-function updateAvatar(avatar: string, title = '头像修改成功') {
-  userStore.updateUserInfo({ avatar })
-  uni.showToast({ title, icon: title.includes('失败') ? 'none' : 'success' })
-}
+const {
+  editAvatarVisible,
+  onAvatarTap,
+  closeEditAvatar,
+  confirmEditAvatar,
+  onChooseAvatarWithClose,
+} = useAvatarEditor()
 
 // 昵称修改状态
 const editNameVisible = ref(false)
 const newNickname = ref('')
 
-function onNicknameBlur(e: any) {
+function onNicknameBlur(e: InputValueEvent) {
   if (e.detail && typeof e.detail.value === 'string') {
     newNickname.value = e.detail.value
   }
 }
 
-function onNicknameInput(e: any) {
+function onNicknameInput(e: InputValueEvent) {
   if (e.detail && typeof e.detail.value === 'string') {
     newNickname.value = e.detail.value
   }
@@ -330,7 +190,7 @@ function keepNicknameModalPosition() {
   const restoreDelays = [0, 50, 150, 300]
 
   restoreDelays.forEach((delay) => {
-    setTimeout(() => {
+    timer.setTimeout(() => {
       uni.pageScrollTo({
         scrollTop: 0,
         duration: 0,
@@ -489,7 +349,7 @@ async function goPage(item: MyMenuItem) {
 .profile-avatar__text {
   font-size: 54rpx;
   font-weight: 900;
-  color: #f5c542;
+  color: var(--tx-color-primary);
 }
 
 .profile-name-wrapper {
@@ -700,7 +560,7 @@ button.profile-avatar {
   }
 
   &--confirm {
-    background: #f5c542;
+    background: var(--tx-color-primary);
     color: #1f1b14;
   }
 

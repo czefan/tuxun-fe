@@ -1,7 +1,7 @@
 <template>
   <view class="page-notice-detail safe-bottom-page">
     <view class="notice-detail__header">
-      <wd-avatar text="官" size="88rpx" bg-color="#f5c542" color="#1f1b14" />
+      <wd-avatar text="官" size="88rpx" :bg-color="BRAND_PRIMARY_COLOR" color="#1f1b14" />
       <view class="notice-detail__title-wrap">
         <text class="notice-detail__eyebrow">官方通知</text>
         <text class="notice-detail__title">{{ title }}</text>
@@ -20,6 +20,7 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getNoticeById } from '@/features/notice'
 import { getNoticeDetailContentById } from './features'
+import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 
 definePage({
   style: {

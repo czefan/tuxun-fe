@@ -1,6 +1,3 @@
-/**
- * 根据点赞状态计算并格式化显示的点赞数。
- */
 export function getDisplayedHeat(heat: string, liked: boolean): string {
   if (liked) {
     if (heat.endsWith('万')) {
@@ -16,9 +13,6 @@ export function getDisplayedHeat(heat: string, liked: boolean): string {
   return heat
 }
 
-/**
- * 按最大比例缩放作答记录图片。
- */
 export interface ImageSize {
   width: number
   height: number

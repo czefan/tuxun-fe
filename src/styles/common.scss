@@ -21,6 +21,13 @@ button {
   }
 }
 
+:root,
+page {
+  --tx-color-primary: #f5c542; /* 品牌主色 (米黄色) */
+  --tx-color-primary-dark: #d4a017; /* 品牌深色 (按下态) */
+  --tx-color-primary-light: #fdf3d7; /* 品牌浅色 */
+}
+
 /* 3. 全局统一重置 page 高度，防止带导航栏或内容较少时容器高度超过视口导致无内容却能滚动的问题 */
 page {
   height: 100%;
@@ -124,27 +131,6 @@ uni-page-body:has(.page-auth-callback) {
   background: #ffffff !important;
 }
 /* #endif */
-
-/* 5. 通用原子工具类（提高复用性且不限制自定义） */
-.u-flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.u-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.u-line-clamp-2 {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
 
 /* 通用圆形小按钮（例如搜索按钮）：仅控制核心宽高与居中，不限制额外定制 */
 .u-circle-btn {

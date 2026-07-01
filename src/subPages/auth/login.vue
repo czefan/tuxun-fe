@@ -148,7 +148,7 @@ function normalizeRedirectUrl(value: unknown) {
 
 .auth-panel__button {
   color: #1f1b14;
-  background: #f5c542;
+  background: var(--tx-color-primary);
 }
 
 .auth-panel__ghost {

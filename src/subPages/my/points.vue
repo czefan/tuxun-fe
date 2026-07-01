@@ -2,7 +2,7 @@
   <view class="page-profile-sub safe-bottom-page">
     <view class="score-card">
       <view class="score-card__rules-btn" @tap="openRules">
-        <wd-icon name="question-circle" color="#f5c542" size="26rpx" />
+        <wd-icon name="question-circle" :color="BRAND_PRIMARY_COLOR" size="26rpx" />
         <text class="score-card__rules-btn-text">积分规则</text>
       </view>
       <text class="score-card__label">当前总积分</text>
@@ -92,6 +92,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import { pointLedgerList } from './features'
 import { usePrivateList } from '@/composables/usePrivateList'
 import { useUserStore } from '@/store/user'
@@ -153,7 +154,7 @@ function closeRules() {
 .score-card__rules-btn-text {
   font-size: 22rpx;
   font-weight: 700;
-  color: #f5c542;
+  color: var(--tx-color-primary);
 }
 
 .score-card__label,
@@ -166,7 +167,7 @@ function closeRules() {
 
 .score-card__label {
   font-size: 26rpx;
-  color: #f5c542;
+  color: var(--tx-color-primary);
 }
 
 .score-card__value {
@@ -286,7 +287,7 @@ function closeRules() {
   font-size: 28rpx;
   font-weight: 900;
   color: #1f1b14;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border: 0;
   border-radius: 999rpx;
   line-height: 88rpx;

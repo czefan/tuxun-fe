@@ -50,6 +50,7 @@
                 <image
                   class="contribution-card__cover"
                   :src="item.cover"
+                  lazy-load
                   mode="aspectFill"
                 />
                 <view class="contribution-card__main">

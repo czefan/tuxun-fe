@@ -6,12 +6,13 @@ import { useUserStore } from '@/store/user'
 import type { UserInfo } from '@/types/business'
 import { StorageKey } from '@/constants'
 import { AppRoute } from '@/router/routes'
+import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 
 const oauthRedirectTtl = 10 * 60 * 1000
 const oauthRedirectWindow = 5 * 1000
 const oauthRedirectLimit = 2
 
-export const isMockLoginEnabled = import.meta.env.VITE_USE_MOCK_LOGIN !== 'false'
+export const isMockLoginEnabled = import.meta.env.MODE !== 'production' && import.meta.env.VITE_USE_MOCK_LOGIN === 'true'
 
 export interface StartOAuthLoginOptions {
   redirectUri?: string
@@ -202,7 +203,7 @@ function confirmLogin() {
       content: '该操作需要登录，是否立即前往登录？',
       cancelText: '取消',
       confirmText: '去登录',
-      confirmColor: '#f5c542',
+      confirmColor: BRAND_PRIMARY_COLOR,
       success: res => resolve(Boolean(res.confirm)),
       fail: () => resolve(false),
     })
@@ -338,7 +339,7 @@ function showOAuthRecoveryModal() {
     content: '登录跳转过于频繁，可能存在过期登录缓存。是否自助修复并重启？',
     cancelText: '取消',
     confirmText: '修复',
-    confirmColor: '#f5c542',
+    confirmColor: BRAND_PRIMARY_COLOR,
     success: (res) => {
       if (!res.confirm) {
         return

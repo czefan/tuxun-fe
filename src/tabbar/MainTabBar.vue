@@ -53,8 +53,9 @@
 
 <script setup lang="ts">
 import type { CustomTabBarItem } from '@/tabbar/types'
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { triggerTabBarFeedback } from '@/composables/useTabBarFeedback'
+import { useTimer } from '@/composables/useTimer'
 import { getI18nText } from '@/tabbar/i18n'
 import { tabbarCacheEnable } from '@/tabbar/config'
 import { normalizeRoutePath, tabbarList, tabbarStore } from '@/tabbar/store'
@@ -71,6 +72,7 @@ const emit = defineEmits<{
 const feedbackIndex = ref<number | null>(null)
 const switchingIndex = ref<number | null>(null)
 let feedbackTimer: ReturnType<typeof setTimeout> | null = null
+const timer = useTimer()
 
 const activeIndex = computed(() => {
   if (typeof props.currentIndex === 'number') {
@@ -139,10 +141,10 @@ function flashFeedback(index: number) {
   feedbackIndex.value = index
 
   if (feedbackTimer) {
-    clearTimeout(feedbackTimer)
+    timer.clearTimeout(feedbackTimer)
   }
 
-  feedbackTimer = setTimeout(() => {
+  feedbackTimer = timer.setTimeout(() => {
     feedbackIndex.value = null
     feedbackTimer = null
   }, 160)
@@ -171,12 +173,6 @@ function getItemColor(index: number) {
 
   return '#9b9b9b'
 }
-
-onBeforeUnmount(() => {
-  if (feedbackTimer) {
-    clearTimeout(feedbackTimer)
-  }
-})
 </script>
 
 <style lang="scss">

@@ -73,6 +73,7 @@ import type { QuestionTransitionViewportSnapshot } from '@/features/question-tra
 import { useQuestionLikeStore } from '@/store/questionLike'
 import { getQuestionById } from '@/features/questions'
 import { useAuth } from '@/composables/useAuth'
+import { useTimer } from '@/composables/useTimer'
 import { getDisplayedHeat, getPageScrollTop, handleImagePreviewBack, previewImage, runAfterPaint } from '@/utils'
 import { AppRoute, withQuery } from '@/router/routes'
 
@@ -86,6 +87,7 @@ definePage({
 const transitionStore = useQuestionTransitionStore()
 const questionLikeStore = useQuestionLikeStore()
 const { ensureLogin } = useAuth()
+const timer = useTimer()
 const questionId = ref(1)
 const isAnswerEnded = ref(false)
 const isReturning = ref(false)
@@ -243,7 +245,7 @@ function startReturnTransition() {
   )
   transitionStore.markPendingReturn(questionId.value)
 
-  setTimeout(() => {
+  timer.setTimeout(() => {
     const delta = getReturnNavigateDelta()
 
     uni.navigateBack({

@@ -83,7 +83,7 @@ function chooseLocation() {
   gap: 6rpx;
   height: 52rpx;
   padding: 0 18rpx;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border-radius: 999rpx;
 }
 

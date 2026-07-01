@@ -1,7 +1,7 @@
 <template>
   <view class="page-submit">
     <view v-if="!isPageReady" class="submit-loading">
-      <wd-loading v-if="!hasLoadingError" type="circular" color="#f5c542" size="42rpx" />
+      <wd-loading v-if="!hasLoadingError" type="circular" :color="BRAND_PRIMARY_COLOR" size="42rpx" />
       <text class="submit-loading__text">
         {{ hasLoadingError ? '页面加载失败' : '正在准备页面' }}
       </text>
@@ -107,6 +107,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
+import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import { useAuth } from '@/composables/useAuth'
 import { useImagePicker, useSubmitGuard } from '@/composables/useSubmitFormTools'
 import { previewImage } from '@/utils'
@@ -245,7 +246,7 @@ function isSilentAuthError(error: unknown) {
   font-size: 26rpx;
   font-weight: 900;
   color: #1f1b14;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border: 0;
   border-radius: 999rpx;
 }
@@ -309,7 +310,7 @@ function isSilentAuthError(error: unknown) {
 .submit-hero__badge-text {
   font-size: 24rpx;
   font-weight: 900;
-  color: #f5c542;
+  color: var(--tx-color-primary);
 }
 
 .submit-form {
@@ -388,7 +389,7 @@ function isSilentAuthError(error: unknown) {
   font-weight: 900;
   line-height: 88rpx;
   color: #1f1b14;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border: 0;
   border-radius: 999rpx;
 }

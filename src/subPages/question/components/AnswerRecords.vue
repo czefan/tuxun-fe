@@ -30,6 +30,7 @@
             <image
               class="answer-record__image"
               :src="record.image"
+              lazy-load
               mode="aspectFit"
               @tap.stop="previewImage(record.image, answerRecordImages)"
             />
@@ -72,6 +73,7 @@
             <image
               class="answer-record__image"
               :src="record.image"
+              lazy-load
               mode="aspectFit"
               @tap.stop="previewImage(record.image, myAnswerRecordImages)"
             />

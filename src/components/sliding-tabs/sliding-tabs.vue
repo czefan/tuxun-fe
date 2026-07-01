@@ -34,6 +34,8 @@
 </template>
 
 <script lang="ts">
+import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
+
 export interface TabItem {
   key: string
   title: string
@@ -68,7 +70,7 @@ const props = withDefaults(
     inactiveColor: '#8f8679',
     activeCountColor: '#9b7621',
     inactiveCountColor: '#aaa39a',
-    lineColor: '#f5c542',
+    lineColor: BRAND_PRIMARY_COLOR,
     gap: '10rpx',
     tabGap: '48rpx',
     padding: '8rpx 24rpx 28rpx',

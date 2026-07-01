@@ -1,6 +1,3 @@
-/**
- * 格式化时间。
- */
 export function formatTime(dateStr: string, format = 'YYYY-MM-DD HH:mm'): string {
   const d = new Date(dateStr)
   const map: Record<string, string> = {

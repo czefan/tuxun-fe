@@ -134,7 +134,7 @@ async function goSubmit() {
   height: 60rpx;
   min-width: 104rpx;
   padding: 0 14rpx;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border-radius: 999rpx;
 }
 

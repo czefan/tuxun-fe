@@ -4,6 +4,7 @@
       <image
         class="mall-card__image"
         :src="product.cover"
+        lazy-load
         mode="aspectFill"
         @tap.stop="$emit('preview', product.cover)"
       />
@@ -88,7 +89,7 @@ const coverStyle = computed(() => ({
   font-size: 20rpx;
   font-weight: 800;
   color: #1f1b14;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border-radius: 999rpx;
 }
 
@@ -156,7 +157,7 @@ const coverStyle = computed(() => ({
   font-weight: 900;
   line-height: 46rpx;
   color: #1f1b14;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border: 0;
   border-radius: 999rpx;
 }

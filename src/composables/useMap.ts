@@ -2,6 +2,7 @@
  * 地图中心点防抖更新 & 坐标处理 Composable
  */
 import { ref } from 'vue'
+import { useDebounceFn } from './useTimer'
 
 /** 坐标点 */
 export interface LatLng {
@@ -15,7 +16,12 @@ export interface LatLng {
  */
 export function useMap(debounceMs = 300) {
   const center = ref<LatLng>({ latitude: 39.9042, longitude: 116.4074 }) // 默认北京
-  let timer: ReturnType<typeof setTimeout> | null = null
+  const updateCenter = useDebounceFn((location: LatLng) => {
+    center.value = {
+      latitude: location.latitude,
+      longitude: location.longitude,
+    }
+  }, debounceMs)
 
   /**
    * 处理地图 regionchange 事件（带防抖）
@@ -25,16 +31,9 @@ export function useMap(debounceMs = 300) {
     if (e.type !== 'end')
       return
 
-    if (timer)
-      clearTimeout(timer)
-    timer = setTimeout(() => {
-      if (e.detail?.centerLocation) {
-        center.value = {
-          latitude: e.detail.centerLocation.latitude,
-          longitude: e.detail.centerLocation.longitude,
-        }
-      }
-    }, debounceMs)
+    if (e.detail?.centerLocation) {
+      updateCenter(e.detail.centerLocation)
+    }
   }
 
   /** 手动设置中心点 */

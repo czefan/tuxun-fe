@@ -50,6 +50,7 @@
               <image
                 class="answer-question__cover"
                 :src="item.cover"
+                lazy-load
                 mode="aspectFill"
               />
               <view class="answer-question__main">

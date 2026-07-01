@@ -38,6 +38,7 @@
           <image
             class="history-card__image"
             :src="item.cover"
+            lazy-load
             mode="aspectFill"
           />
         </view>

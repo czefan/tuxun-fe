@@ -57,7 +57,7 @@
   left: 0;
   width: 52rpx;
   height: 6rpx;
-  background: #f5c542;
+  background: var(--tx-color-primary);
   border-radius: 999rpx;
 }
 
@@ -102,11 +102,11 @@
 .answer-record__avatar-text {
   font-size: 22rpx;
   font-weight: 900;
-  color: #f5c542;
+  color: var(--tx-color-primary);
 }
 
 .answer-record__avatar--mine {
-  background: #f5c542;
+  background: var(--tx-color-primary);
 }
 
 .answer-record__avatar--mine .answer-record__avatar-text {

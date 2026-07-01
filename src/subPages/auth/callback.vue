@@ -1,6 +1,6 @@
 <template>
   <view class="page-auth-callback">
-    <wd-loading type="circular" color="#f5c542" size="44rpx" />
+    <wd-loading type="circular" :color="BRAND_PRIMARY_COLOR" size="44rpx" />
     <text class="page-auth-callback__text">{{ statusText }}</text>
   </view>
 </template>
@@ -10,6 +10,8 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useAuth } from '@/composables/useAuth'
 import type { OAuthCallbackQuery } from '@/composables/useAuth'
+import { useTimer } from '@/composables/useTimer'
+import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import { AppRoute, isTabBarRoute } from '@/router/routes'
 
 definePage({
@@ -19,6 +21,7 @@ definePage({
 })
 
 const { handleOAuthCallback } = useAuth()
+const timer = useTimer()
 const statusText = ref('正在完成登录')
 
 onLoad(async (query) => {
@@ -30,7 +33,7 @@ onLoad(async (query) => {
       title: statusText.value,
       icon: 'none',
     })
-    setTimeout(() => {
+    timer.setTimeout(() => {
       uni.reLaunch({ url: AppRoute.Home })
     }, 800)
     return
