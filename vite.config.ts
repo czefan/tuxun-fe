@@ -31,8 +31,6 @@ import { defineConfig, loadEnv } from 'vite'
 import ViteRestart from 'vite-plugin-restart'
 import openDevTools from './scripts/open-dev-tools'
 import vitePluginEruda from './scripts/vite-plugin-eruda'
-import { createCopyNativeResourcesPlugin } from './vite-plugins/copy-native-resources'
-import syncManifestPlugin from './vite-plugins/sync-manifest-plugins'
 
 type PagesJsonItem = Record<string, unknown>
 
@@ -150,8 +148,6 @@ export default defineConfig(({ command, mode }) => {
   // pnpm build:h5 时得到 => build production
   // pnpm dev:mp-weixin 时得到 => build development (注意区别，command为build)
   // pnpm build:mp-weixin 时得到 => build production
-  // pnpm dev:app 时得到 => build development (注意区别，command为build)
-  // pnpm build:app 时得到 => build production
   // dev 和 build 命令可以分别使用 .env.development 和 .env.production 的环境变量
   // 非 H5 端 dev 也是 build command，最终加载哪个 env 文件以实际 mode 为准。
 
@@ -168,7 +164,6 @@ export default defineConfig(({ command, mode }) => {
     VITE_APP_PUBLIC_BASE,
     VITE_APP_PROXY_ENABLE,
     VITE_APP_PROXY_PREFIX,
-    VITE_COPY_NATIVE_RES_ENABLE,
   } = env
   const { WECHAT_DEVTOOLS_CLI_PATH } = localEnv
   const bundleAnalyze = (process.env.VITE_BUNDLE_ANALYZE || env.VITE_BUNDLE_ANALYZE) === 'true'
@@ -288,14 +283,6 @@ export default defineConfig(({ command, mode }) => {
         gzipSize: true,
         brotliSize: true,
       }),
-      // 原生插件资源复制插件 - 仅在 app 平台且启用时生效
-      createCopyNativeResourcesPlugin(
-        UNI_PLATFORM === 'app' && VITE_COPY_NATIVE_RES_ENABLE === 'true',
-        {
-          verbose: mode === 'development', // 开发模式显示详细日志
-        },
-      ),
-      syncManifestPlugin(),
       vitePluginEruda({
         open: UNI_PLATFORM === 'h5' && mode === 'development',
       }),
@@ -313,7 +300,7 @@ export default defineConfig(({ command, mode }) => {
       preprocessorOptions: {
         scss: {
           api: 'modern-compiler',
-          silenceDeprecations: ['import', 'global-builtin', 'color-functions'],
+          silenceDeprecations: ['import', 'global-builtin', 'color-functions', 'legacy-js-api'],
         },
       },
       postcss: {
