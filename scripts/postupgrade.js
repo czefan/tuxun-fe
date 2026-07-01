@@ -11,13 +11,18 @@ const FG_LOG_ENABLE = true
 // 将 exec 转换为返回 Promise 的函数
 const execPromise = promisify(exec)
 
-// 定义要执行的命令
+// uvm 升级后可能补回多端依赖；本项目当前只保留 h5 和 mp-weixin。
 const dependencies = [
-  // TODO: 如果不需要某个平台的小程序，请手动删除或注释掉
+  '@dcloudio/uni-app-harmony',
+  '@dcloudio/uni-app-plus',
+  '@dcloudio/uni-mp-alipay',
   '@dcloudio/uni-mp-baidu',
+  '@dcloudio/uni-mp-harmony',
   '@dcloudio/uni-mp-jd',
   '@dcloudio/uni-mp-kuaishou',
+  '@dcloudio/uni-mp-lark',
   '@dcloudio/uni-mp-qq',
+  '@dcloudio/uni-mp-toutiao',
   '@dcloudio/uni-mp-xhs',
   '@dcloudio/uni-quickapp-webview',
 ]
