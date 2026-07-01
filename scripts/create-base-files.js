@@ -14,11 +14,14 @@ if (!fs.existsSync(srcDir)) {
   fs.mkdirSync(srcDir, { recursive: true })
 }
 
-function ensureGeneratedConfigFile(filePath) {
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).size <= placeholderConfigText.length) {
-    fs.writeFileSync(filePath, placeholderConfigText)
+function ensureGeneratedConfigFile(filePath, defaultContent = '{}\n') {
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).size <= defaultContent.length) {
+    fs.writeFileSync(filePath, defaultContent)
   }
 }
 
-ensureGeneratedConfigFile(manifestPath)
-ensureGeneratedConfigFile(pagesPath)
+const defaultManifestText = `${JSON.stringify({ name: 'tuxun', appid: '' }, null, 2)}\n`
+const defaultPagesText = `${JSON.stringify({ pages: [{ path: 'pages/index/index' }] }, null, 2)}\n`
+
+ensureGeneratedConfigFile(manifestPath, defaultManifestText)
+ensureGeneratedConfigFile(pagesPath, defaultPagesText)
