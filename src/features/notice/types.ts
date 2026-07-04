@@ -3,6 +3,7 @@ export interface NoticeItem {
   title: string
   summary: string
   time: string
+  read?: boolean
 }
 
 export interface NoticeGroup {

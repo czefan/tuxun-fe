@@ -35,7 +35,10 @@
         @tap="goNoticeDetail(notice)"
       >
         <view class="notice-row__avatar">
-          <wd-avatar text="通" size="64rpx" bg-color="#5ec7d3" color="#ffffff" />
+          <view class="avatar-container">
+            <wd-avatar text="通" size="64rpx" bg-color="#5ec7d3" color="#ffffff" />
+            <view v-if="!notice.read" class="avatar-badge" />
+          </view>
         </view>
         <view class="notice-row__main">
           <view class="notice-row__top">
@@ -62,6 +65,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { noticeGroups } from '@/features/notice'
 import type { NoticeItem } from '@/features/notice'
 import { AppRoute, withQuery } from '@/router/routes'
@@ -74,21 +78,39 @@ definePage({
 
 const searchVisible = ref(false)
 const searchKeyword = ref('')
+const readNoticeIds = ref<number[]>([])
+
+onShow(() => {
+  try {
+    const ids = uni.getStorageSync('tuxun_read_notices')
+    readNoticeIds.value = Array.isArray(ids) ? ids : []
+  }
+  catch (e) {
+    readNoticeIds.value = []
+  }
+})
 
 const visibleNoticeGroups = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase()
 
   return noticeGroups
-    .map(group => ({
-      ...group,
-      items: keyword
+    .map((group) => {
+      const filteredItems = keyword
         ? group.items.filter(notice =>
             [notice.title, notice.summary, notice.time].some(value =>
               value.toLowerCase().includes(keyword),
             ),
           )
-        : group.items,
-    }))
+        : group.items
+
+      return {
+        ...group,
+        items: filteredItems.map(notice => ({
+          ...notice,
+          read: readNoticeIds.value.includes(notice.id),
+        })),
+      }
+    })
     .filter(group => group.items.length > 0)
 })
 
@@ -104,7 +126,20 @@ function clearSearch() {
   searchKeyword.value = ''
 }
 
+function markAsRead(id: number) {
+  if (!readNoticeIds.value.includes(id)) {
+    readNoticeIds.value.push(id)
+    try {
+      uni.setStorageSync('tuxun_read_notices', readNoticeIds.value)
+    }
+    catch (e) {
+      // ignore
+    }
+  }
+}
+
 function goNoticeDetail(notice: NoticeItem) {
+  markAsRead(notice.id)
   uni.navigateTo({
     url: withQuery(AppRoute.NoticeDetail, { id: notice.id }),
   })
@@ -197,6 +232,25 @@ function goNoticeDetail(notice: NoticeItem) {
 
 .notice-row__avatar {
   flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.avatar-container {
+  position: relative;
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.avatar-badge {
+  position: absolute;
+  top: -1rpx;
+  right: -1rpx;
+  width: 14rpx;
+  height: 14rpx;
+  background-color: #fa4350; /* 红点颜色使用常见的警示红，也可由 UI 设计确定，此处的 fa4350 在项目中很常见 */
+  border: 2rpx solid #ffffff;
+  border-radius: 50%;
+  z-index: 1;
 }
 
 .notice-row__main {

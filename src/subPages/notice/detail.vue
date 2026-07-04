@@ -37,6 +37,20 @@ onLoad((query) => {
   const notice = Number.isFinite(rawId) ? getNoticeById(rawId) : undefined
   const detailContent = Number.isFinite(rawId) ? getNoticeDetailContentById(rawId) : ''
 
+  if (Number.isFinite(rawId)) {
+    try {
+      const ids = uni.getStorageSync('tuxun_read_notices')
+      const readNoticeIds = Array.isArray(ids) ? ids : []
+      if (!readNoticeIds.includes(rawId)) {
+        readNoticeIds.push(rawId)
+        uni.setStorageSync('tuxun_read_notices', readNoticeIds)
+      }
+    }
+    catch (e) {
+      // ignore
+    }
+  }
+
   if (notice) {
     title.value = notice.title
     time.value = notice.time
