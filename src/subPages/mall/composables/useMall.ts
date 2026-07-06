@@ -1,4 +1,3 @@
-import type { Ref } from 'vue'
 import { computed, ref } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { usePrivateList } from '@/composables/usePrivateList'
@@ -7,18 +6,79 @@ import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import {
   canExchangeProduct,
   exchangeList,
+  productList,
 } from '../features'
 import type { ExchangeRecord, ProductItem } from '../features'
 
-interface UseMallExchangeOptions {
-  searchKeyword: Ref<string>
-  switchTab: (index: number) => void
+export type MallTabKey = 'products' | 'records'
+
+interface SwiperChangeEvent {
+  detail: {
+    current: number
+  }
 }
 
-export function useMallExchange(options: UseMallExchangeOptions) {
+export function useMall() {
   const { ensureLogin } = useAuth()
   const timer = useTimer()
 
+  // 1. Tabs 状态与切换逻辑
+  const tabs: Array<{ key: MallTabKey, title: string }> = [
+    { key: 'products', title: '商品' },
+    { key: 'records', title: '兑换记录' },
+  ]
+  const activeTab = ref<MallTabKey>('products')
+  const currentTab = ref(0)
+
+  function switchTab(index: number) {
+    const tab = tabs[index]
+    if (!tab) {
+      return
+    }
+    currentTab.value = index
+    activeTab.value = tab.key
+  }
+
+  function onTabChange(_key: string, index: number) {
+    switchTab(index)
+  }
+
+  function onSwiperChange(e: SwiperChangeEvent) {
+    switchTab(e.detail.current)
+  }
+
+  // 2. 搜索状态与商品筛选逻辑
+  const searchVisible = ref(false)
+  const searchKeyword = ref('')
+
+  const visibleProducts = computed(() => {
+    const keyword = searchKeyword.value.trim().toLowerCase()
+    if (!keyword) {
+      return productList
+    }
+    return productList.filter(item =>
+      [item.title, item.desc, item.stockText, item.badge ?? '', `${item.points}`].some(value =>
+        value.toLowerCase().includes(keyword),
+      ),
+    )
+  })
+
+  const list1 = computed(() => visibleProducts.value.filter((_, index) => index % 2 === 0))
+  const list2 = computed(() => visibleProducts.value.filter((_, index) => index % 2 === 1))
+
+  function goSearch() {
+    searchVisible.value = true
+  }
+
+  function handleSearch(keyword: string) {
+    searchKeyword.value = keyword
+  }
+
+  function clearSearch() {
+    searchKeyword.value = ''
+  }
+
+  // 3. 兑换动作与记录管理逻辑
   const exchangeVisible = ref(false)
   const selectedProduct = ref<ProductItem | null>(null)
   const exchangeCount = ref(1)
@@ -26,12 +86,10 @@ export function useMallExchange(options: UseMallExchangeOptions) {
 
   const { list: visibleExchangeRecords, emptyText: exchangeRecordsEmptyText } = usePrivateList(
     () => {
-      const keyword = options.searchKeyword.value.trim().toLowerCase()
-
+      const keyword = searchKeyword.value.trim().toLowerCase()
       if (!keyword) {
         return exchangeRecords.value
       }
-
       return exchangeRecords.value.filter(record =>
         [record.title, record.time, record.status, record.exchangeCode ?? ''].some(value =>
           value.toLowerCase().includes(keyword),
@@ -45,7 +103,6 @@ export function useMallExchange(options: UseMallExchangeOptions) {
     if (!selectedProduct.value) {
       return 0
     }
-
     return selectedProduct.value.points * exchangeCount.value
   })
 
@@ -53,12 +110,10 @@ export function useMallExchange(options: UseMallExchangeOptions) {
     if (!selectedProduct.value) {
       return 99
     }
-
     const match = selectedProduct.value.stockText.match(/库存\s*(\d+)/)
     if (match) {
       return Number.parseInt(match[1], 10)
     }
-
     return 99
   })
 
@@ -155,13 +210,29 @@ export function useMallExchange(options: UseMallExchangeOptions) {
         exchangeVisible.value = false
 
         timer.setTimeout(() => {
-          options.switchTab(1)
+          switchTab(1)
         }, 800)
       },
     })
   }
 
   return {
+    // Tabs
+    tabs,
+    activeTab,
+    currentTab,
+    onTabChange,
+    onSwiperChange,
+    // Search
+    searchVisible,
+    searchKeyword,
+    visibleProducts,
+    list1,
+    list2,
+    goSearch,
+    handleSearch,
+    clearSearch,
+    // Exchange
     exchangeVisible,
     selectedProduct,
     exchangeCount,

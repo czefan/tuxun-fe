@@ -2,6 +2,14 @@ import type { ExchangeRecord, ProductItem } from './types'
 import type { SearchResult } from '@/components/search-overlay/features'
 import { mockImageAssets } from '@/mocks/assets'
 
+export function canExchangeProduct(item: ProductItem) {
+  return !item.stockText.includes('即将开放') && !item.stockText.includes('库存 0')
+}
+
+export function getExchangeButtonText(item: ProductItem) {
+  return canExchangeProduct(item) ? '兑换' : '即将开放'
+}
+
 export const productList: ProductItem[] = [
   {
     id: 1,
