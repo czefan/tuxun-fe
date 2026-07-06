@@ -21,6 +21,8 @@ dist
 
 # Editor directories and files
 .idea
+.agents/
+.codex/
 *.suo
 *.ntvs*
 *.njsproj
