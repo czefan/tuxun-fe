@@ -1,11 +1,11 @@
 <template>
-  <view class="page-home safe-bottom-page--fixed-bar">
-    <view class="feed-header">
-      <text class="feed-header__title">图寻</text>
-      <view class="feed-actions">
-        <view class="feed-submit-button" @tap="goSubmit">
+  <view class="page-home safe-bottom-page--fixed-bar box-border min-h-100vh p-[24rpx_22rpx_0] pb-[calc(112rpx+env(safe-area-inset-bottom))]" :style="pageStyle">
+    <view class="flex items-center justify-between gap-24rpx p-[8rpx_4rpx_18rpx]">
+      <text class="block text-44rpx text-[#211f1b] font-900 leading-[1.12]">图寻</text>
+      <view class="flex flex-shrink-0 items-center gap-14rpx">
+        <view class="h-60rpx min-w-104rpx flex flex-shrink-0 cursor-pointer items-center justify-center gap-6rpx border border-[rgba(33,31,27,0.08)] rounded-full border-solid bg-brand px-14rpx shadow-[0_12rpx_28rpx_rgba(33,31,27,0.08)]" @tap="goSubmit">
           <wd-icon name="plus" color="#1f1b14" size="24rpx" />
-          <text class="feed-submit-button__text">投稿</text>
+          <text class="block text-24rpx text-[#1f1b14] font-900">投稿</text>
         </view>
         <view class="feed-search-button u-circle-btn" @tap="goSearch">
           <wd-icon name="search-line" color="#211f1b" size="30rpx" />
@@ -13,7 +13,7 @@
       </view>
     </view>
 
-    <view v-if="searchKeyword" class="feed-search-status">
+    <view v-if="searchKeyword" class="m-[0_4rpx_18rpx] flex items-center gap-16rpx">
       <wd-search
         :model-value="searchKeyword"
         custom-class="tx-search"
@@ -23,7 +23,7 @@
         placeholder="搜索当期活动"
         @click="goSearch"
       />
-      <view class="feed-search-status__clear" @tap="clearSearch">
+      <view class="box-border h-64rpx w-64rpx flex flex-shrink-0 cursor-pointer items-center justify-center border border-[rgba(31,27,20,0.08)] rounded-full border-solid bg-white" @tap="clearSearch">
         <wd-icon name="close" color="#1f1b14" size="28rpx" />
       </view>
     </view>
@@ -64,6 +64,9 @@ const searchVisible = ref(false)
 const searchKeyword = ref('')
 
 const sortType = computed<SortType>(() => (sortCurrent.value === 0 ? 'hot' : 'latest'))
+const pageStyle = computed(() => ({
+  background: 'linear-gradient(180deg, rgba(255, 246, 229, 0.92) 0%, rgba(250, 250, 247, 0.96) 260rpx), #f8f7f4',
+}))
 
 const { ensureLogin } = useAuth()
 
@@ -89,84 +92,3 @@ async function goSubmit() {
   })
 }
 </script>
-
-<style scoped lang="scss">
-.page-home {
-  padding: 24rpx 22rpx 0;
-  background: linear-gradient(180deg, rgba(255, 246, 229, 0.92) 0%, rgba(250, 250, 247, 0.96) 260rpx), #f8f7f4;
-}
-
-.feed-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24rpx;
-  padding: 8rpx 4rpx 18rpx;
-}
-
-.feed-header__title {
-  display: block;
-  font-size: 44rpx;
-  font-weight: 900;
-  line-height: 1.12;
-  color: #211f1b;
-}
-
-.feed-actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 14rpx;
-}
-
-.feed-submit-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: #ffffff;
-  border: 1rpx solid rgba(33, 31, 27, 0.08);
-  box-shadow: 0 12rpx 28rpx rgba(33, 31, 27, 0.08);
-}
-
-.feed-submit-button {
-  gap: 6rpx;
-  height: 60rpx;
-  min-width: 104rpx;
-  padding: 0 14rpx;
-  background: var(--tx-color-primary);
-  border-radius: 999rpx;
-}
-
-.feed-submit-button__text {
-  display: block;
-  font-size: 24rpx;
-  font-weight: 900;
-  color: #1f1b14;
-}
-
-.feed-search-status {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  margin: 0 4rpx 18rpx;
-}
-
-.feed-search-status :deep(.wd-search) {
-  flex: 1;
-  min-width: 0;
-}
-
-.feed-search-status__clear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 64rpx;
-  height: 64rpx;
-  background: #ffffff;
-  border: 1rpx solid rgba(31, 27, 20, 0.08);
-  border-radius: 999rpx;
-  box-sizing: border-box;
-}
-</style>

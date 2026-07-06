@@ -1,18 +1,18 @@
 <template>
-  <view class="page-feedback safe-bottom-page">
-    <text class="page-feedback__title">意见反馈</text>
+  <view class="page-feedback safe-bottom-page box-border min-h-100vh bg-[#fffaf0] p-[30rpx_30rpx_calc(40rpx+env(safe-area-inset-bottom))]">
+    <text class="mb-24rpx block text-42rpx text-[#1f1b14] font-900">意见反馈</text>
     <template v-if="userStore.isLoggedIn()">
-      <!-- 反览类型 -->
-      <view class="feedback-card">
-        <view class="feedback-card__title">
+      <!-- 反馈类型 -->
+      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
+        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
           选择类型
         </view>
-        <view class="type-grid">
+        <view class="grid grid-cols-2 gap-16rpx">
           <view
             v-for="item in typeOptions"
             :key="item.value"
-            class="type-item"
-            :class="{ 'type-item--active': selectedType === item.value }"
+            class="h-80rpx flex cursor-pointer items-center justify-center border-2rpx border-[rgba(31,27,20,0.05)] rounded-12rpx border-solid bg-[#fdfcf9] text-26rpx text-[#756c5e] transition-all duration-200 ease-in-out"
+            :class="[selectedType === item.value ? 'bg-[#fef9eb] border-[#f5c542] text-[#b28000] font-700' : '']"
             @tap="selectedType = item.value"
           >
             {{ item.label }}
@@ -21,29 +21,30 @@
       </view>
 
       <!-- 设备环境 -->
-      <view v-if="selectedType === 'bug'" class="feedback-card feedback-env-card">
-        <view class="feedback-card__title">
+      <view v-if="selectedType === 'bug'" class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-[#fbfaf8] p-28rpx">
+        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
           设备环境 (可编辑)
         </view>
         <textarea
           v-model="deviceEnvText"
-          class="feedback-env-textarea"
+          class="box-border max-h-400rpx min-h-120rpx w-full whitespace-pre-wrap border border-[rgba(31,27,20,0.08)] rounded-8rpx border-solid bg-white p-[16rpx_20rpx] text-24rpx text-[#7c7468] leading-[1.6em]"
           placeholder="请描述您的手机型号、系统版本等设备环境..."
           auto-height
         />
-        <view class="feedback-env-tip">
+        <view class="mt-12rpx text-22rpx text-[#a39c91] leading-1.4">
           自动识别可能存在偏差，如不准确可手动修改。
         </view>
       </view>
 
       <!-- 反馈内容 -->
-      <view class="feedback-card">
-        <view class="feedback-card__title">
+      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
+        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
           反馈内容
         </view>
         <wd-textarea
           v-model="content"
           :placeholder="contentPlaceholder"
+          custom-class="tx-textarea"
           placeholder-class="feedback-textarea-placeholder"
           show-word-limit
           :maxlength="500"
@@ -52,47 +53,47 @@
       </view>
 
       <!-- 媒体上传 -->
-      <view class="feedback-card">
-        <view class="feedback-card__title">
+      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
+        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
           图片与视频 (最多3个)
         </view>
-        <view class="media-grid">
+        <view class="grid grid-cols-3 gap-18rpx">
           <view
             v-for="(item, index) in mediaList"
             :key="index"
-            class="media-item"
+            class="relative box-border h-0 w-full cursor-pointer overflow-hidden border border-[rgba(31,27,20,0.08)] rounded-12rpx border-solid bg-[#f7f4ee] pb-[100%]"
             @tap="previewMedia(item)"
           >
-            <image v-if="item.type === 'image'" class="media-img" :src="item.url" mode="aspectFill" />
-            <view v-else class="media-video-placeholder">
+            <image v-if="item.type === 'image'" class="absolute inset-0 h-full w-full" :src="item.url" mode="aspectFill" />
+            <view v-else class="absolute inset-0 h-full w-full flex flex-col items-center justify-center gap-6rpx bg-[#2b2b2b]">
               <wd-icon name="play-circle" color="#ffffff" size="48rpx" />
-              <text class="video-tip">视频</text>
+              <text class="text-20rpx text-white/70">视频</text>
             </view>
-            <view v-if="item.uploading" class="media-status-overlay">
+            <view v-if="item.uploading" class="absolute inset-0 z-2 h-full w-full flex flex-col items-center justify-center gap-6rpx bg-black/55">
               <wd-loading type="circular" color="#ffffff" size="36rpx" />
-              <text class="media-status-text">上传中</text>
+              <text class="text-20rpx text-white">上传中</text>
             </view>
-            <view class="media-delete-btn" @tap.stop="removeMedia(index)">
+            <view class="absolute right-6rpx top-6rpx z-3 h-34rpx w-34rpx flex items-center justify-center rounded-full bg-black/65" @tap.stop="removeMedia(index)">
               <wd-icon name="close" color="#ffffff" size="18rpx" />
             </view>
           </view>
-          <view v-if="mediaList.length < 3" class="media-add-btn" @tap="chooseAndUploadMedia">
-            <view class="media-add-inner">
+          <view v-if="mediaList.length < 3" class="relative box-border h-0 w-full cursor-pointer overflow-hidden border-2rpx border-[rgba(31,27,20,0.15)] rounded-12rpx border-dashed bg-[#fdfcf9] pb-[100%]" @tap="chooseAndUploadMedia">
+            <view class="absolute inset-0 h-full w-full flex flex-col items-center justify-center gap-6rpx">
               <wd-icon name="camera" color="#a09688" size="48rpx" />
-              <text class="media-add-text">添加图片/视频</text>
+              <text class="text-20rpx text-[#8b8273]">添加图片/视频</text>
             </view>
           </view>
         </view>
       </view>
 
       <!-- 联系方式 -->
-      <view class="feedback-card">
-        <view class="feedback-card__title">
+      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
+        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
           联系方式 (选填)
         </view>
         <input
           v-model="contact"
-          class="feedback-input"
+          class="box-border h-80rpx w-full border border-[rgba(31,27,20,0.08)] rounded-12rpx border-solid bg-white px-24rpx text-28rpx text-[#1f1b14]"
           placeholder="手机号、微信号或邮箱，方便与您沟通"
           placeholder-class="feedback-input-placeholder"
         >
@@ -102,7 +103,7 @@
         {{ isSubmitting ? '提交中...' : '提交反馈' }}
       </wd-button>
     </template>
-    <view v-else class="feedback-login-empty">
+    <view v-else class="py-120rpx">
       <wd-empty icon="no-content" tip="未登录" />
     </view>
   </view>
@@ -275,220 +276,6 @@ async function submit() {
 </script>
 
 <style scoped lang="scss">
-.page-feedback {
-  padding: 30rpx 30rpx calc(40rpx + env(safe-area-inset-bottom));
-  background: #fffaf0;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-.page-feedback__title {
-  display: block;
-  font-size: 42rpx;
-  font-weight: 900;
-  color: #1f1b14;
-  margin-bottom: 24rpx;
-}
-
-.feedback-card {
-  background: #ffffff;
-  border-radius: 16rpx;
-  padding: 28rpx;
-  margin-bottom: 24rpx;
-  border: 1rpx solid rgba(31, 27, 20, 0.04);
-}
-
-.feedback-card__title {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #1f1b14;
-  margin-bottom: 18rpx;
-}
-
-.type-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16rpx;
-}
-
-.type-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 80rpx;
-  background: #fdfcf9;
-  border: 2rpx solid rgba(31, 27, 20, 0.05);
-  border-radius: 12rpx;
-  font-size: 26rpx;
-  color: #756c5e;
-  transition: all 0.2s ease;
-}
-
-.type-item--active {
-  background: #fef9eb;
-  border-color: #f5c542;
-  color: #b28000;
-  font-weight: 700;
-}
-
-.feedback-env-card {
-  background-color: #fbfaf8;
-}
-
-.feedback-env-textarea {
-  width: 100%;
-  min-height: 120rpx;
-  max-height: 400rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #7c7468;
-  white-space: pre-wrap;
-  background: #ffffff;
-  padding: 16rpx 20rpx;
-  border-radius: 8rpx;
-  border: 1rpx solid rgba(31, 27, 20, 0.08);
-  box-sizing: border-box;
-}
-
-.feedback-env-tip {
-  margin-top: 12rpx;
-  font-size: 22rpx;
-  color: #a39c91;
-  line-height: 1.4;
-}
-
-.media-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18rpx;
-}
-
-.media-item,
-.media-add-btn {
-  position: relative;
-  width: 100%;
-  padding-bottom: 100%;
-  height: 0;
-  border-radius: 12rpx;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.media-item {
-  background-color: #f7f4ee;
-  border: 1rpx solid rgba(31, 27, 20, 0.08);
-}
-
-.media-img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.media-video-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #2b2b2b;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6rpx;
-}
-
-.video-tip {
-  font-size: 20rpx;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.media-status-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6rpx;
-  z-index: 2;
-}
-
-.media-status-text {
-  font-size: 20rpx;
-  color: #ffffff;
-}
-
-.media-delete-btn {
-  position: absolute;
-  top: 6rpx;
-  right: 6rpx;
-  width: 34rpx;
-  height: 34rpx;
-  background: rgba(0, 0, 0, 0.65);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-}
-
-.media-add-btn {
-  background-color: #fdfcf9;
-  border: 2rpx dashed rgba(31, 27, 20, 0.15);
-}
-
-.media-add-btn .media-add-inner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6rpx;
-}
-
-.media-add-text {
-  font-size: 20rpx;
-  color: #8b8273;
-}
-
-.feedback-input {
-  height: 80rpx;
-  background: #ffffff;
-  border: 1rpx solid rgba(31, 27, 20, 0.08);
-  border-radius: 12rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  color: #1f1b14;
-}
-
-.feedback-input-placeholder {
-  color: #a39c91;
-  font-size: 28rpx;
-}
-
-:deep(.feedback-textarea-placeholder),
-.feedback-textarea-placeholder {
-  font-size: 28rpx;
-  line-height: 1.6 !important;
-  color: #a39c91;
-}
-
-.feedback-login-empty {
-  padding: 120rpx 0;
-}
-
 :deep(.wd-textarea) {
   background-color: #ffffff !important;
   border-radius: 14rpx !important;

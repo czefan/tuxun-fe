@@ -132,21 +132,6 @@ uni-page-body:has(.page-auth-callback) {
 }
 /* #endif */
 
-/* 通用圆形小按钮（例如搜索按钮）：仅控制核心宽高与居中，不限制额外定制 */
-.u-circle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 62rpx;
-  height: 62rpx;
-  background: #ffffff;
-  border: 2rpx solid rgba(31, 27, 20, 0.08);
-  border-radius: 999rpx;
-  box-shadow: 0 8rpx 20rpx rgba(31, 26, 18, 0.05);
-  box-sizing: border-box;
-}
-
 /* wot-ui 搜索框统一适配旧业务的紧凑胶囊外观 */
 .tx-search {
   flex: 1;

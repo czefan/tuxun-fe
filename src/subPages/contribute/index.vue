@@ -1,27 +1,27 @@
 <template>
-  <view class="page-submit">
-    <view v-if="!isPageReady" class="submit-loading">
+  <view class="page-submit box-border min-h-100vh flex flex-col bg-[#f7f4ee] p-[28rpx_24rpx_calc(28rpx+env(safe-area-inset-bottom))]">
+    <view v-if="!isPageReady" class="min-h-70vh flex flex-1 flex-col items-center justify-center gap-22rpx">
       <wd-loading v-if="!hasLoadingError" type="circular" :color="BRAND_PRIMARY_COLOR" size="42rpx" />
-      <text class="submit-loading__text">
+      <text class="block text-28rpx text-[#81786c] font-800">
         {{ hasLoadingError ? '页面加载失败' : '正在准备页面' }}
       </text>
-      <button v-if="hasLoadingError" class="submit-loading__retry" @tap="preparePage">
+      <button v-if="hasLoadingError" class="m-0 h-68rpx w-180rpx flex items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 after:border-0" @tap="preparePage">
         重试
       </button>
     </view>
 
     <template v-else>
-      <view class="submit-hero">
-        <view class="submit-hero__copy">
-          <text class="submit-hero__title">投稿题目</text>
-          <text class="submit-hero__subtitle">审核通过后进入公开题库</text>
+      <view class="flex items-start justify-between gap-20rpx p-[8rpx_6rpx_26rpx]">
+        <view class="min-w-0 flex-1">
+          <text class="block text-44rpx text-[#1f1b14] font-900 leading-[1.16]">投稿题目</text>
+          <text class="mt-10rpx block text-24rpx text-[#81786c] leading-1.4">审核通过后进入公开题库</text>
         </view>
-        <view class="submit-hero__badge">
-          <text class="submit-hero__badge-text">图寻</text>
+        <view class="h-92rpx w-92rpx flex items-center justify-center rounded-22rpx bg-[#1f1b14] shadow-[0_14rpx_32rpx_rgba(31,27,20,0.16)]">
+          <text class="block text-24rpx text-brand font-900">图寻</text>
         </view>
       </view>
 
-      <view class="submit-form">
+      <view class="submit-form flex flex-col gap-22rpx">
         <view class="form-field">
           <text class="form-label">题目标题</text>
           <input
@@ -49,27 +49,27 @@
         <view class="form-field">
           <view class="field-top">
             <text class="form-label">题目图片</text>
-            <text class="field-tip">{{ images.length }}/3</text>
+            <text class="block text-22rpx text-[#9a9286]">{{ images.length }}/3</text>
           </view>
-          <view class="image-grid">
+          <view class="grid grid-cols-3 mt-18rpx gap-14rpx">
             <view
               v-for="(image, index) in images"
               :key="image"
-              class="image-tile"
+              class="relative aspect-square overflow-hidden rounded-16rpx"
             >
               <image
-                class="image-tile__photo"
+                class="h-full w-full"
                 :src="image"
                 mode="aspectFill"
                 @tap.stop="previewImage(image, images)"
               />
-              <view class="image-tile__remove" @tap.stop="removeImage(index)">
+              <view class="absolute right-8rpx top-8rpx h-40rpx w-40rpx flex cursor-pointer items-center justify-center rounded-full bg-[#1f1b14]/72" @tap.stop="removeImage(index)">
                 <wd-icon name="close" color="#ffffff" size="20rpx" />
               </view>
             </view>
-            <view v-if="images.length < 3" class="image-add" @tap="chooseImages">
+            <view v-if="images.length < 3" class="relative box-border aspect-square flex flex-col cursor-pointer items-center justify-center gap-10rpx overflow-hidden border-2rpx border-[rgba(31,27,20,0.16)] rounded-16rpx border-dashed bg-[#f8f6f2]" @tap="chooseImages">
               <wd-icon name="camera" color="#7c7468" size="40rpx" />
-              <text class="image-add__text">添加图片</text>
+              <text class="block text-22rpx text-[#7c7468] font-800">添加图片</text>
             </view>
           </view>
         </view>
@@ -95,8 +95,8 @@
         </view>
       </view>
 
-      <view class="submit-bottom">
-        <button class="submit-button" :disabled="isSubmitting" @tap="submit">
+      <view class="mt-auto p-[40rpx_0_calc(20rpx+env(safe-area-inset-bottom))]">
+        <button class="h-88rpx w-full border-0 rounded-full bg-brand p-0 text-30rpx text-[#1f1b14] font-900 leading-88rpx after:border-0 disabled:(text-[#1f1b14]/58_bg-[#e7ddc9])" :disabled="isSubmitting" @tap="submit">
           {{ isSubmitting ? '提交中' : '提交投稿' }}
         </button>
       </view>
@@ -207,199 +207,3 @@ function isSilentAuthError(error: unknown) {
   return !!error && typeof error === 'object' && (error as { isSilent?: boolean }).isSilent === true
 }
 </script>
-
-<style scoped lang="scss">
-.page-submit {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 28rpx 24rpx calc(28rpx + env(safe-area-inset-bottom));
-  background: #f7f4ee;
-  box-sizing: border-box;
-}
-
-.submit-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  flex-direction: column;
-  gap: 22rpx;
-  min-height: 70vh;
-}
-
-.submit-loading__text {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 800;
-  color: #81786c;
-}
-
-.submit-loading__retry {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 180rpx;
-  height: 68rpx;
-  margin: 0;
-  padding: 0;
-  font-size: 26rpx;
-  font-weight: 900;
-  color: #1f1b14;
-  background: var(--tx-color-primary);
-  border: 0;
-  border-radius: 999rpx;
-}
-
-.submit-loading__retry::after {
-  border: 0;
-}
-
-.submit-hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 8rpx 6rpx 26rpx;
-}
-
-.submit-hero__copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.submit-hero__title,
-.submit-hero__subtitle,
-.submit-hero__badge-text,
-.form-label,
-.field-tip,
-.form-count,
-.image-add__text,
-.field-action__text,
-.location-box__name,
-.location-box__address,
-.location-box__coord {
-  display: block;
-}
-
-.submit-hero__title {
-  font-size: 44rpx;
-  font-weight: 900;
-  line-height: 1.16;
-  color: #1f1b14;
-}
-
-.submit-hero__subtitle {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.4;
-  color: #81786c;
-}
-
-.submit-hero__badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 92rpx;
-  height: 92rpx;
-  background: #1f1b14;
-  border-radius: 22rpx;
-  box-shadow: 0 14rpx 32rpx rgba(31, 27, 20, 0.16);
-}
-
-.submit-hero__badge-text {
-  font-size: 24rpx;
-  font-weight: 900;
-  color: var(--tx-color-primary);
-}
-
-.submit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 22rpx;
-}
-
-.field-tip {
-  font-size: 22rpx;
-  color: #9a9286;
-}
-
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14rpx;
-  margin-top: 18rpx;
-}
-
-.image-tile,
-.image-add {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 1;
-  border-radius: 16rpx;
-}
-
-.image-tile__photo {
-  width: 100%;
-  height: 100%;
-}
-
-.image-tile__remove {
-  position: absolute;
-  top: 8rpx;
-  right: 8rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40rpx;
-  height: 40rpx;
-  background: rgba(31, 27, 20, 0.72);
-  border-radius: 999rpx;
-}
-
-.image-add {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10rpx;
-  background: #f8f6f2;
-  border: 2rpx dashed rgba(31, 27, 20, 0.16);
-  box-sizing: border-box;
-}
-
-.image-add__text {
-  font-size: 22rpx;
-  font-weight: 800;
-  color: #7c7468;
-}
-
-// Location picker styles are now scoped inside FormLocationPicker.vue
-
-.submit-bottom {
-  margin-top: auto;
-  padding: 40rpx 0 calc(20rpx + env(safe-area-inset-bottom));
-}
-
-.submit-button {
-  width: 100%;
-  height: 88rpx;
-  padding: 0;
-  font-size: 30rpx;
-  font-weight: 900;
-  line-height: 88rpx;
-  color: #1f1b14;
-  background: var(--tx-color-primary);
-  border: 0;
-  border-radius: 999rpx;
-}
-
-.submit-button::after {
-  border: 0;
-}
-
-.submit-button[disabled] {
-  color: rgba(31, 27, 20, 0.58);
-  background: #e7ddc9;
-}
-</style>

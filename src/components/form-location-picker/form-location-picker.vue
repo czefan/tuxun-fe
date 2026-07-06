@@ -1,16 +1,16 @@
 <template>
   <view class="form-field">
     <view class="field-top">
-      <text class="form-label">{{ labelText }}</text>
-      <view class="field-action" @tap="chooseLocation">
+      <text class="form-label block">{{ labelText }}</text>
+      <view class="h-52rpx flex cursor-pointer items-center gap-6rpx rounded-full bg-brand px-18rpx" @tap="chooseLocation">
         <wd-icon name="location" color="#1f1b14" size="24rpx" />
-        <text class="field-action__text">{{ t('common.choose') }}</text>
+        <text class="block text-24rpx text-[#1f1b14] font-900">{{ t('common.choose') }}</text>
       </view>
     </view>
     <view class="location-box" @tap="chooseLocation">
-      <text class="location-box__name">{{ locationName }}</text>
-      <text v-if="address" class="location-box__address">{{ address }}</text>
-      <text v-if="hasLocation" class="location-box__coord">
+      <text class="location-box__name block">{{ locationName }}</text>
+      <text v-if="address" class="location-box__address block">{{ address }}</text>
+      <text v-if="hasLocation" class="location-box__coord block">
         {{ latitude.toFixed(6) }}, {{ longitude.toFixed(6) }}
       </text>
     </view>
@@ -67,29 +67,3 @@ function chooseLocation() {
   })
 }
 </script>
-
-<style scoped lang="scss">
-.form-label,
-.field-action__text,
-.location-box__name,
-.location-box__address,
-.location-box__coord {
-  display: block;
-}
-
-.field-action {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  height: 52rpx;
-  padding: 0 18rpx;
-  background: var(--tx-color-primary);
-  border-radius: 999rpx;
-}
-
-.field-action__text {
-  font-size: 24rpx;
-  font-weight: 900;
-  color: #1f1b14;
-}
-</style>

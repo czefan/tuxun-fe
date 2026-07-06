@@ -1,15 +1,15 @@
 <template>
-  <view class="page-notice-detail safe-bottom-page">
-    <view class="notice-detail__header">
+  <view class="page-notice-detail safe-bottom-page bg-white p-30rpx pt-36rpx">
+    <view class="flex gap-22rpx border-0 border-b border-[#eeeeee] border-solid bg-white pb-30rpx">
       <wd-avatar text="官" size="88rpx" :bg-color="BRAND_PRIMARY_COLOR" color="#1f1b14" />
-      <view class="notice-detail__title-wrap">
-        <text class="notice-detail__eyebrow">官方通知</text>
-        <text class="notice-detail__title">{{ title }}</text>
-        <text class="notice-detail__time">{{ time }}</text>
+      <view class="min-w-0 flex-1">
+        <text class="mb-10rpx block text-22rpx text-[#b98200] font-800 tracking-0">官方通知</text>
+        <text class="block text-38rpx text-[#1f1b14] font-900 leading-[1.25]">{{ title }}</text>
+        <text class="mt-12rpx block text-24rpx text-[#8b8b8b]">{{ time }}</text>
       </view>
     </view>
 
-    <view class="notice-detail__content">
+    <view class="mt-30rpx bg-white p-0">
       <text class="u-paragraph">{{ content }}</text>
     </view>
   </view>
@@ -61,56 +61,3 @@ onLoad((query) => {
   }
 })
 </script>
-
-<style scoped lang="scss">
-.page-notice-detail {
-  padding: 36rpx 30rpx 0;
-  background: #ffffff;
-}
-
-.notice-detail__header {
-  display: flex;
-  gap: 22rpx;
-  padding: 0 0 30rpx;
-  background: #ffffff;
-  border-bottom: 1rpx solid #eeeeee;
-}
-
-.notice-detail__title-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.notice-detail__eyebrow,
-.notice-detail__title,
-.notice-detail__time {
-  display: block;
-}
-
-.notice-detail__eyebrow {
-  margin-bottom: 10rpx;
-  font-size: 22rpx;
-  font-weight: 800;
-  letter-spacing: 0;
-  color: #b98200;
-}
-
-.notice-detail__title {
-  font-size: 38rpx;
-  font-weight: 900;
-  line-height: 1.25;
-  color: #1f1b14;
-}
-
-.notice-detail__time {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  color: #8b8b8b;
-}
-
-.notice-detail__content {
-  margin-top: 30rpx;
-  padding: 0;
-  background: #ffffff;
-}
-</style>

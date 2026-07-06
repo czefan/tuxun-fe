@@ -70,7 +70,15 @@ export default defineConfig({
   ],
   shortcuts: [
     {
-      center: 'flex justify-center items-center',
+      'center': 'flex justify-center items-center',
+      'u-circle-btn': 'flex items-center justify-center flex-shrink-0 w-62rpx h-62rpx bg-white border-2rpx border-solid border-[rgba(31,27,20,0.08)] rounded-full shadow-[0_8rpx_20rpx_rgba(31,26,18,0.05)] box-border',
+      'u-page-viewport': 'safe-bottom-page flex flex-col h-100vh pt-34rpx bg-[#f6f4ef] box-border',
+      'u-header-flex': 'flex items-start justify-between gap-18rpx px-24rpx pb-28rpx pt-4rpx',
+      'u-list-wrapper': 'flex flex-col gap-18rpx px-24rpx pt-16rpx',
+      'u-card-item': 'flex gap-18rpx p-18rpx bg-white border border-solid border-[rgba(31,27,20,0.06)] rounded-18rpx shadow-[0_8rpx_24rpx_rgba(31,27,20,0.05)]',
+      'u-card-cover': 'flex-shrink-0 w-150rpx h-150rpx bg-[#eeeeee] rounded-14rpx',
+      'u-card-main': 'flex flex-col justify-between flex-1 min-w-0 h-150rpx box-border py-4rpx',
+      'u-card-title': 'block line-clamp-2 text-29rpx font-900 leading-[1.35] text-[#1f1b14]',
     },
   ],
   // 动态图标需要在这里配置，或者写在vue页面中注释掉
@@ -78,6 +86,7 @@ export default defineConfig({
     'i-carbon-code',
     'i-carbon-home',
     'i-carbon-user',
+    'i-carbon-user-filled',
     'i-carbon-notification',
     'i-carbon-notification-filled',
     'i-carbon-ibm-watson-language-translator',
@@ -93,6 +102,52 @@ export default defineConfig({
     ],
     ['pt-safe', { 'padding-top': 'env(safe-area-inset-top)' }],
     ['pb-safe', { 'padding-bottom': 'env(safe-area-inset-bottom)' }],
+    [
+      /^scrollbar-none$/,
+      (_, { rawSelector }) => `
+        .${rawSelector}::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          -webkit-appearance: none !important;
+          background: transparent !important;
+        }
+      `,
+    ],
+    [
+      /^animate-scale-in$/,
+      (_, { rawSelector }) => `
+        @keyframes scale-in {
+          from {
+            transform: scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        .${rawSelector} {
+          animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+      `,
+    ],
+    [
+      /^animate-slide-up$/,
+      (_, { rawSelector }) => `
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+        .${rawSelector} {
+          animation: slide-up 0.23s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+      `,
+    ],
   ],
   theme: {
     colors: {

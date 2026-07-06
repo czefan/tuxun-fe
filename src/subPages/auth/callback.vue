@@ -1,7 +1,7 @@
 <template>
-  <view class="page-auth-callback">
+  <view class="page-auth-callback min-h-100vh flex flex-col items-center justify-center gap-22rpx bg-white">
     <wd-loading type="circular" :color="BRAND_PRIMARY_COLOR" size="44rpx" />
-    <text class="page-auth-callback__text">{{ statusText }}</text>
+    <text class="block text-28rpx text-[#81786c] font-800">{{ statusText }}</text>
   </view>
 </template>
 
@@ -60,22 +60,3 @@ function jumpAfterLogin(url: string) {
   })
 }
 </script>
-
-<style scoped lang="scss">
-.page-auth-callback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 22rpx;
-  min-height: 100vh;
-  background: #ffffff;
-}
-
-.page-auth-callback__text {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 800;
-  color: #81786c;
-}
-</style>

@@ -1,13 +1,18 @@
 <template>
-  <view class="sort-tabs">
+  <view class="mx-4rpx mb-20rpx w-200rpx flex gap-4rpx rounded-full bg-[#e8e1d9]/65 p-4rpx">
     <view
       v-for="(item, index) in displayOptions"
       :key="item.name"
-      class="sort-pill"
-      :class="{ 'sort-pill--active': modelValue === index }"
+      class="flex-1 rounded-full py-8rpx transition-all duration-220 ease-[cubic-bezier(0.22,1,0.36,1)]"
+      :class="modelValue === index ? 'bg-white shadow-[0_4rpx_12rpx_rgba(33,31,27,0.08)]' : ''"
       @tap="selectTab(index)"
     >
-      <text class="sort-pill__text">{{ item.name }}</text>
+      <text
+        class="block text-center text-22rpx font-800 transition-colors duration-200 ease-in-out"
+        :class="modelValue === index ? 'text-[#211f1b]' : 'text-[#6f6960]'"
+      >
+        {{ item.name }}
+      </text>
     </view>
   </view>
 </template>
@@ -45,40 +50,3 @@ function selectTab(index: number) {
   emit('change', index)
 }
 </script>
-
-<style scoped lang="scss">
-.sort-tabs {
-  display: flex;
-  gap: 4rpx;
-  width: 200rpx;
-  padding: 4rpx;
-  margin: 0 4rpx 20rpx;
-  background: rgba(232, 225, 217, 0.65);
-  border-radius: 999rpx;
-}
-
-.sort-pill {
-  flex: 1;
-  padding: 8rpx 0;
-  border-radius: 999rpx;
-  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.sort-pill--active {
-  background: #ffffff;
-  box-shadow: 0 4rpx 12rpx rgba(33, 31, 27, 0.08);
-}
-
-.sort-pill__text {
-  display: block;
-  font-size: 22rpx;
-  font-weight: 800;
-  text-align: center;
-  color: #6f6960;
-  transition: color 0.2s ease;
-}
-
-.sort-pill--active .sort-pill__text {
-  color: #211f1b;
-}
-</style>

@@ -1,9 +1,9 @@
 <template>
   <view
-    class="status-tag"
-    :class="`status-tag--${status}`"
+    class="inline-flex flex-shrink-0 items-center justify-center rounded-full px-16rpx py-6rpx"
+    :class="statusClassMap[status]"
   >
-    <text class="status-tag__text">{{ labelText }}</text>
+    <text class="block translate-y-[0.5rpx] text-24rpx font-900 leading-none">{{ labelText }}</text>
   </view>
 </template>
 
@@ -24,6 +24,14 @@ const props = defineProps<{
   label?: string
 }>()
 
+const statusClassMap: Record<TagStatus, string> = {
+  pending: 'bg-[#f5c542]/22 text-[#9b7621]',
+  wrong: 'bg-[#e45064]/14 text-[#d9435b]',
+  rejected: 'bg-[#e45064]/14 text-[#d9435b]',
+  correct: 'bg-[#42a661]/16 text-[#2f8f4c]',
+  approved: 'bg-[#42a661]/16 text-[#2f8f4c]',
+}
+
 const labelText = computed(() => {
   const labelMap: Record<TagStatus, string> = {
     pending: t('status.pending'),
@@ -36,50 +44,3 @@ const labelText = computed(() => {
   return props.label || labelMap[props.status]
 })
 </script>
-
-<style scoped lang="scss">
-.status-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 6rpx 16rpx;
-  border-radius: 999rpx;
-}
-
-.status-tag--pending {
-  background: rgba(245, 197, 66, 0.22);
-}
-
-.status-tag--wrong,
-.status-tag--rejected {
-  background: rgba(228, 80, 100, 0.14);
-}
-
-.status-tag--correct,
-.status-tag--approved {
-  background: rgba(66, 166, 97, 0.16);
-}
-
-.status-tag__text {
-  display: block;
-  font-size: 24rpx;
-  font-weight: 900;
-  line-height: 1;
-  transform: translateY(0.5rpx);
-}
-
-.status-tag--pending .status-tag__text {
-  color: #9b7621;
-}
-
-.status-tag--wrong .status-tag__text,
-.status-tag--rejected .status-tag__text {
-  color: #d9435b;
-}
-
-.status-tag--correct .status-tag__text,
-.status-tag--approved .status-tag__text {
-  color: #2f8f4c;
-}
-</style>

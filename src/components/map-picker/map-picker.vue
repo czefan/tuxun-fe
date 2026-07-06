@@ -1,15 +1,15 @@
 <template>
-  <view class="map-picker">
+  <view class="relative h-600rpx w-full">
     <map
       :id="mapId"
-      class="map-picker__map"
+      class="h-full w-full"
       :latitude="center.latitude"
       :longitude="center.longitude"
       :scale="scale"
       show-location
       @regionchange="onRegionChange"
     />
-    <view class="map-picker__pin" />
+    <view class="pointer-events-none absolute left-1/2 top-1/2 h-34rpx w-34rpx border-4rpx border-white rounded-[50%_50%_50%_0] border-solid bg-[#e54b3f] shadow-[0_8rpx_20rpx_rgba(31,27,20,0.18)] after:(absolute left-[11rpx] top-[11rpx] h-12rpx w-12rpx rounded-full bg-white content-['']) -translate-x-1/2 -translate-y-full -rotate-45" />
   </view>
 </template>
 
@@ -36,42 +36,3 @@ function onRegionChange(e: any) {
   }
 }
 </script>
-
-<style scoped>
-.map-picker {
-  position: relative;
-  width: 100%;
-  height: 600rpx;
-}
-
-.map-picker__map {
-  width: 100%;
-  height: 100%;
-}
-
-.map-picker__pin {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 34rpx;
-  height: 34rpx;
-  background: #e54b3f;
-  border: 4rpx solid #ffffff;
-  border-radius: 50% 50% 50% 0;
-  box-shadow: 0 8rpx 20rpx rgba(31, 27, 20, 0.18);
-  transform: translate(-50%, -100%) rotate(-45deg);
-  pointer-events: none;
-}
-
-.map-picker__pin::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 12rpx;
-  height: 12rpx;
-  background: #ffffff;
-  border-radius: 50%;
-  content: '';
-  transform: translate(-50%, -50%);
-}
-</style>

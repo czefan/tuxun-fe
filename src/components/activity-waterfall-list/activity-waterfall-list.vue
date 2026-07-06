@@ -1,13 +1,13 @@
 <template>
   <view
-    class="activity-waterfall-list"
-    :class="{ 'activity-waterfall-list--locked': isTransitionLocked }"
+    class="m-[0_-14rpx] pt-12rpx"
+    :class="{ 'pointer-events-none touch-none': isTransitionLocked }"
   >
-    <view v-if="visibleActivities.length" :key="waterfallKey" class="activity-waterfall-list__columns">
+    <view v-if="visibleActivities.length" :key="waterfallKey" class="flex items-start gap-8rpx">
       <view
         v-for="(column, columnIndex) in waterfallColumns"
         :key="columnIndex"
-        class="activity-waterfall-list__column"
+        class="activity-waterfall-list__column min-w-0 flex-1"
       >
         <activity-card
           v-for="item in column"
@@ -19,14 +19,14 @@
       </view>
     </view>
 
-    <view v-else class="activity-waterfall-list__empty">
+    <view v-else class="py-[80rpx_0_120rpx]">
       <wd-empty icon="no-result" tip="没有找到相关活动" />
     </view>
 
-    <view v-if="visibleActivities.length" class="activity-waterfall-list__footer">
-      <view class="activity-waterfall-list__footer-line" />
-      <text class="activity-waterfall-list__footer-text">{{ nomoreText }}</text>
-      <view class="activity-waterfall-list__footer-line" />
+    <view v-if="visibleActivities.length" class="m-[22rpx_14rpx_18rpx] box-border min-h-88rpx flex items-center justify-center gap-18rpx px-10rpx">
+      <view class="h-1rpx max-w-150rpx flex-1 bg-[#1f1b14]/12" />
+      <text class="flex-shrink-0 text-25rpx text-[#81786c] font-normal leading-none">{{ nomoreText }}</text>
+      <view class="h-1rpx max-w-150rpx flex-1 bg-[#1f1b14]/12" />
     </view>
   </view>
 </template>
@@ -236,56 +236,3 @@ function setMeasuredColumnWidth(widthInPx: number) {
   estimatedColumnWidth.value = (widthInPx * 750) / windowWidth
 }
 </script>
-
-<style scoped lang="scss">
-.activity-waterfall-list {
-  margin: 0 -14rpx;
-  padding-top: 12rpx;
-}
-
-.activity-waterfall-list--locked {
-  pointer-events: none;
-  touch-action: none;
-}
-
-.activity-waterfall-list__columns {
-  display: flex;
-  align-items: flex-start;
-  gap: 8rpx;
-}
-
-.activity-waterfall-list__column {
-  flex: 1;
-  min-width: 0;
-}
-
-.activity-waterfall-list__footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18rpx;
-  min-height: 88rpx;
-  margin: 22rpx 14rpx 18rpx;
-  padding: 0 10rpx;
-  box-sizing: border-box;
-}
-
-.activity-waterfall-list__footer-line {
-  flex: 1;
-  max-width: 150rpx;
-  height: 1rpx;
-  background: rgba(31, 27, 20, 0.12);
-}
-
-.activity-waterfall-list__footer-text {
-  flex-shrink: 0;
-  font-size: 25rpx;
-  font-weight: normal;
-  line-height: 1;
-  color: #81786c;
-}
-
-.activity-waterfall-list__empty {
-  padding: 80rpx 0 120rpx;
-}
-</style>

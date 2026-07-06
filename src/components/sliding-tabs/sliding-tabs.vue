@@ -1,32 +1,32 @@
 <template>
   <view
-    class="sliding-tabs"
+    class="box-border w-full flex flex-row items-center overflow-x-auto whitespace-nowrap scrollbar-none"
     :style="{ padding, gap: tabGap }"
   >
     <view
       v-for="(item, index) in list"
       :key="item.key"
-      class="sliding-tab"
-      :class="{ 'sliding-tab--active': modelValue === item.key }"
+      class="relative box-border flex flex-shrink-0 cursor-pointer items-center pb-12rpx"
       :style="{ gap }"
       @tap="onTabTap(item.key, index)"
     >
       <text
-        class="sliding-tab-title"
+        class="transition-colors duration-150 ease-in-out"
+        :class="[modelValue === item.key ? 'font-900' : 'font-500']"
         :style="getTitleStyle(item.key === modelValue)"
       >
         {{ item.title }}
       </text>
       <text
         v-if="item.count !== undefined"
-        class="sliding-tab-count"
+        class="ml-6rpx text-22rpx font-700"
         :style="getCountStyle(item.key === modelValue)"
       >
         {{ item.count }}
       </text>
       <view
         v-if="modelValue === item.key"
-        class="sliding-tab-line"
+        class="absolute bottom-0 h-6rpx rounded-full transition-all duration-150 ease-in-out"
         :style="getLineStyle()"
       />
     </view>
@@ -115,60 +115,3 @@ function getLineStyle() {
   return style
 }
 </script>
-
-<style scoped lang="scss">
-.sliding-tabs {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  overflow-x: auto;
-  white-space: nowrap;
-  width: 100%;
-  box-sizing: border-box;
-
-  /* 隐藏滚动条 */
-  &::-webkit-scrollbar {
-    display: none;
-    width: 0 !important;
-    height: 0 !important;
-    -webkit-appearance: none;
-    background: transparent;
-  }
-}
-
-.sliding-tab {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding-bottom: 12rpx;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.sliding-tab-title {
-  font-size: 30rpx;
-  font-weight: 500;
-  transition: color 0.15s ease-in-out;
-}
-
-.sliding-tab--active {
-  .sliding-tab-title {
-    font-weight: 900;
-  }
-}
-
-.sliding-tab-count {
-  font-size: 22rpx;
-  margin-left: 6rpx;
-  font-weight: 700;
-}
-
-.sliding-tab-line {
-  position: absolute;
-  bottom: 0;
-  height: 6rpx;
-  border-radius: 99rpx;
-  transition: all 0.15s ease-in-out;
-}
-</style>

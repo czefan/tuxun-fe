@@ -1,8 +1,8 @@
 <template>
-  <view v-if="visible" class="search-overlay" :style="overlayStyle">
-    <view class="search-overlay__shade" @tap="closeSearch" />
-    <view class="search-panel">
-      <view class="search-header">
+  <view v-if="visible" class="fixed inset-x-0 bottom-0 z-[1200] overflow-hidden" :style="overlayStyle">
+    <view class="absolute inset-0 bg-[#1f1b14]/48" @tap="closeSearch" />
+    <view class="relative box-border max-h-full w-full overflow-y-auto rounded-0 p-[24rpx_24rpx_calc(34rpx+env(safe-area-inset-bottom))] shadow-[0_24rpx_80rpx_rgba(0,0,0,0.22)]" :style="panelStyle">
+      <view class="flex items-center gap-16rpx pb-30rpx">
         <wd-search
           v-model="keyword"
           :placeholder="placeholder"
@@ -12,27 +12,27 @@
           :focus="visible"
           @search="submitSearch"
         />
-        <view class="search-close" @tap="closeSearch">
+        <view class="h-64rpx w-64rpx flex flex-shrink-0 cursor-pointer items-center justify-center border border-[rgba(31,27,20,0.08)] rounded-full border-solid bg-white" @tap="closeSearch">
           <wd-icon name="close" color="#1f1b14" size="28rpx" />
         </view>
       </view>
 
-      <view v-if="!keyword" class="search-section">
-        <view class="search-section__header">
-          <text class="search-section__title">{{ t('common.searchHistory') }}</text>
-          <text v-if="historyList.length" class="search-section__clear" @tap="clearHistory">
+      <view v-if="!keyword" class="mb-34rpx">
+        <view class="flex items-center justify-between gap-20rpx">
+          <text class="block text-30rpx text-[#1f1b14] font-900">{{ t('common.searchHistory') }}</text>
+          <text v-if="historyList.length" class="block flex-shrink-0 cursor-pointer text-24rpx text-[#9f927f]" @tap="clearHistory">
             {{ t('common.clearSearchHistory') }}
           </text>
         </view>
-        <view v-if="historyList.length" class="history-tags">
+        <view v-if="historyList.length" class="mt-20rpx flex flex-wrap gap-16rpx">
           <view
             v-for="item in historyList"
             :key="item"
-            class="history-tag"
+            class="box-border max-w-full flex cursor-pointer items-center gap-18rpx border border-[rgba(31,27,20,0.08)] rounded-full border-solid bg-white p-[12rpx_16rpx_12rpx_22rpx]"
             @tap="useHistory(item)"
           >
-            <text class="history-tag__text">{{ item }}</text>
-            <view class="history-tag__remove" @tap.stop="removeHistory(item)">
+            <text class="block truncate text-24rpx text-[#1f1b14] font-700">{{ item }}</text>
+            <view class="h-30rpx w-30rpx flex flex-shrink-0 items-center justify-center" @tap.stop="removeHistory(item)">
               <wd-icon name="close" color="#9f927f" size="20rpx" />
             </view>
           </view>
@@ -40,12 +40,12 @@
         <wd-empty v-else :tip="t('common.noSearchHistory')" custom-style="padding-bottom: 0;" icon-size="120rpx" />
       </view>
 
-      <view v-else-if="keyword" class="search-results">
-        <text class="search-results__title">{{ titleText }}</text>
-        <view v-for="item in visibleResults" :key="item.id" class="result-card">
-          <text class="result-card__title">{{ item.title }}</text>
-          <text class="result-card__desc">{{ item.desc }}</text>
-          <text class="result-card__meta">{{ item.meta }}</text>
+      <view v-else-if="keyword" class="flex flex-col gap-18rpx">
+        <text class="block text-30rpx text-[#1f1b14] font-900">{{ titleText }}</text>
+        <view v-for="item in visibleResults" :key="item.id" class="border border-[rgba(31,27,20,0.06)] rounded-24rpx border-solid bg-white p-24rpx shadow-[0_10rpx_28rpx_rgba(31,26,18,0.06)]">
+          <text class="block text-30rpx text-[#1f1b14] font-900">{{ item.title }}</text>
+          <text class="mt-10rpx block text-26rpx text-[#756c5e] leading-1.45">{{ item.desc }}</text>
+          <text class="mt-12rpx block text-24rpx text-[#b98200] font-800">{{ item.meta }}</text>
         </view>
         <wd-empty v-if="!visibleResults.length" :tip="t('common.noSearchResults')" />
       </view>
@@ -87,6 +87,10 @@ const historyList = ref<string[]>([])
 
 const overlayStyle = computed(() => ({
   top: props.offsetTop,
+}))
+
+const panelStyle = computed(() => ({
+  background: 'radial-gradient(circle at 12% 0%, rgba(245, 197, 66, 0.22), transparent 34%), linear-gradient(180deg, #fffaf0 0%, #f5f5f5 360rpx)',
 }))
 
 const placeholder = computed(() => getSearchPlaceholder(props.scope))
@@ -162,166 +166,3 @@ function closeSearch() {
   emit('update:visible', false)
 }
 </script>
-
-<style scoped lang="scss">
-.search-overlay {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1200;
-  overflow: hidden;
-}
-
-.search-overlay__shade {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: rgba(31, 27, 20, 0.48);
-}
-
-.search-panel {
-  position: relative;
-  max-height: 100%;
-  width: 100%;
-  padding: 24rpx 24rpx calc(34rpx + env(safe-area-inset-bottom));
-  overflow-y: auto;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(245, 197, 66, 0.22), transparent 34%),
-    linear-gradient(180deg, #fffaf0 0%, #f5f5f5 360rpx);
-  border-radius: 0;
-  box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.22);
-  box-sizing: border-box;
-}
-
-.search-header {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  padding-bottom: 30rpx;
-}
-
-.search-header :deep(.wd-search) {
-  flex: 1;
-  min-width: 0;
-}
-
-.search-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 64rpx;
-  height: 64rpx;
-  background: #ffffff;
-  border: 1rpx solid rgba(31, 27, 20, 0.08);
-  border-radius: 999rpx;
-}
-
-.search-section {
-  margin-bottom: 34rpx;
-}
-
-.search-section__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.search-section__title,
-.search-section__clear,
-.history-tag__text,
-.search-results__title,
-.result-card__title,
-.result-card__desc,
-.result-card__meta {
-  display: block;
-}
-
-.search-section__title,
-.search-results__title {
-  font-size: 30rpx;
-  font-weight: 900;
-  color: #1f1b14;
-}
-
-.search-section__clear {
-  flex-shrink: 0;
-  font-size: 24rpx;
-  color: #9f927f;
-}
-
-.history-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-  margin-top: 20rpx;
-}
-
-.history-tag {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  max-width: 100%;
-  padding: 12rpx 16rpx 12rpx 22rpx;
-  background: #ffffff;
-  border: 1rpx solid rgba(31, 27, 20, 0.08);
-  border-radius: 999rpx;
-  box-sizing: border-box;
-}
-
-.history-tag__text {
-  overflow: hidden;
-  font-size: 24rpx;
-  font-weight: 700;
-  color: #1f1b14;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.history-tag__remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 30rpx;
-  height: 30rpx;
-}
-
-.search-results {
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-}
-
-.result-card {
-  padding: 24rpx;
-  background: #ffffff;
-  border: 1rpx solid rgba(31, 27, 20, 0.06);
-  border-radius: 24rpx;
-  box-shadow: 0 10rpx 28rpx rgba(31, 26, 18, 0.06);
-}
-
-.result-card__title {
-  font-size: 30rpx;
-  font-weight: 900;
-  color: #1f1b14;
-}
-
-.result-card__desc {
-  margin-top: 10rpx;
-  font-size: 26rpx;
-  line-height: 1.45;
-  color: #756c5e;
-}
-
-.result-card__meta {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  font-weight: 800;
-  color: #b98200;
-}
-</style>

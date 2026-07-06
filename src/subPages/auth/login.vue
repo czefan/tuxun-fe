@@ -1,17 +1,21 @@
 <template>
-  <view class="page-auth-login">
-    <view class="auth-panel">
-      <text class="auth-panel__brand">图寻</text>
-      <text class="auth-panel__title">登录后继续</text>
+  <view class="page-auth-login box-border min-h-100vh flex items-center justify-center bg-[#f8f7f4] p-48rpx">
+    <view class="auth-panel max-w-560rpx w-full flex flex-col items-stretch gap-24rpx">
+      <text class="block text-center text-52rpx text-[#211f1b] font-900 leading-[1.1]">图寻</text>
+      <text class="mb-24rpx block text-center text-28rpx text-[#81786c] font-700">登录后继续</text>
       <button
-        class="auth-panel__button"
+        class="h-88rpx w-full flex items-center justify-center border-0 rounded-full bg-brand p-0 text-28rpx text-[#1f1b14] font-800 after:border-none"
         :loading="loading"
         :disabled="loading"
         @tap="handleLogin"
       >
         {{ isMockLoginEnabled ? '本地测试登录' : '统一认证登录' }}
       </button>
-      <button class="auth-panel__ghost" :disabled="loading" @tap="goHome">
+      <button
+        class="h-88rpx w-full flex items-center justify-center border-0 rounded-full bg-transparent p-0 text-28rpx text-[#81786c] font-800 after:border-none"
+        :disabled="loading"
+        @tap="goHome"
+      >
         暂不登录
       </button>
     </view>
@@ -48,12 +52,24 @@ async function handleLogin() {
   try {
     if (isMockLoginEnabled) {
       setMockLogin()
-      jumpAfterLogin(redirectUrl.value)
-      return
+      uni.showToast({
+        title: '测试登录成功',
+        icon: 'success',
+      })
+      setTimeout(() => {
+        jumpAfterLogin()
+      }, 500)
     }
-
-    await startOAuthLogin({
-      returnUrl: redirectUrl.value,
+    else {
+      await startOAuthLogin({
+        returnUrl: redirectUrl.value,
+      })
+    }
+  }
+  catch (e) {
+    uni.showToast({
+      title: '登录失败，请重试',
+      icon: 'none',
     })
   }
   finally {
@@ -68,7 +84,8 @@ function goHome() {
   })
 }
 
-function jumpAfterLogin(url: string) {
+function jumpAfterLogin() {
+  const url = redirectUrl.value
   if (isTabBarRoute(url)) {
     uni.switchTab({
       url,
@@ -79,80 +96,16 @@ function jumpAfterLogin(url: string) {
 
   uni.redirectTo({
     url,
-    fail: () => uni.reLaunch({ url: AppRoute.Home }),
+    fail: () => {
+      uni.reLaunch({ url: AppRoute.Home })
+    },
   })
 }
 
-function normalizeRedirectUrl(value: unknown) {
-  if (typeof value !== 'string' || !value) {
-    return AppRoute.Home
-  }
-
-  try {
-    return decodeURIComponent(value)
-  }
-  catch {
+function normalizeRedirectUrl(value: any): string {
+  if (typeof value === 'string' && value.startsWith('/')) {
     return value
   }
+  return AppRoute.Home
 }
 </script>
-
-<style scoped lang="scss">
-.page-auth-login {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 48rpx;
-  background: #f8f7f4;
-  box-sizing: border-box;
-}
-
-.auth-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 100%;
-  max-width: 560rpx;
-  gap: 24rpx;
-}
-
-.auth-panel__brand,
-.auth-panel__title {
-  display: block;
-  text-align: center;
-  color: #211f1b;
-}
-
-.auth-panel__brand {
-  font-size: 52rpx;
-  font-weight: 900;
-  line-height: 1.1;
-}
-
-.auth-panel__title {
-  margin-bottom: 24rpx;
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #81786c;
-}
-
-.auth-panel__button,
-.auth-panel__ghost {
-  width: 100%;
-  height: 88rpx;
-  border-radius: 999rpx;
-  font-size: 28rpx;
-  font-weight: 800;
-}
-
-.auth-panel__button {
-  color: #1f1b14;
-  background: var(--tx-color-primary);
-}
-
-.auth-panel__ghost {
-  color: #81786c;
-  background: transparent;
-}
-</style>

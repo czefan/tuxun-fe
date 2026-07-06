@@ -1,23 +1,33 @@
 <template>
-  <view class="page-my safe-bottom-page--fixed-bar" :class="{ 'page-my--modal-open': editNameVisible || editAvatarVisible }">
-    <view class="page-my__header">
-      <view v-if="userStore.isLoggedIn()" class="profile-avatar" @tap="onAvatarTap">
+  <view
+    class="page-my safe-bottom-page--fixed-bar bg-white px-30rpx pt-28rpx"
+    :class="{ 'page-my--modal-open': editNameVisible || editAvatarVisible }"
+  >
+    <view class="page-my__header flex flex-col items-center pb-64rpx pt-34rpx">
+      <view
+        class="profile-avatar m-0 h-132rpx w-132rpx flex items-center justify-center overflow-hidden rounded-full bg-[#fdf3d7] p-0 leading-normal after:border-none"
+        @tap="onAvatarTap"
+      >
         <image
-          class="profile-avatar__image"
+          class="h-full w-full"
           :src="userStore.userAvatar"
           mode="aspectFill"
         />
       </view>
-      <view v-else class="profile-avatar">
-        <image
-          class="profile-avatar__image"
-          :src="userStore.userAvatar"
-          mode="aspectFill"
+      <view
+        class="profile-name-wrapper mt-30rpx flex cursor-pointer items-end justify-center gap-12rpx transition-all duration-150 ease-out active:(scale-97 opacity-80)"
+        @tap="onNicknameTap"
+      >
+        <text class="profile-name block max-w-480rpx truncate text-36rpx text-[#161616] font-900 leading-[1.2em]">
+          {{ userStore.userInfo?.nickname || '未登录' }}
+        </text>
+        <wd-icon
+          v-if="userStore.isLoggedIn()"
+          name="edit"
+          color="#a09688"
+          size="28rpx"
+          class="profile-name-edit mb-6rpx self-end"
         />
-      </view>
-      <view class="profile-name-wrapper" @tap="onNicknameTap">
-        <text class="profile-name">{{ userStore.userInfo?.nickname || '未登录' }}</text>
-        <wd-icon v-if="userStore.isLoggedIn()" name="edit" color="#a09688" size="28rpx" class="profile-name-edit" />
       </view>
       <wd-button
         v-if="!userStore.isLoggedIn()"
@@ -29,43 +39,65 @@
       >
         登录
       </wd-button>
-      <button v-else class="profile-logout" @tap="handleLogout">
+      <button
+        v-else
+        class="profile-logout mt-24rpx box-border h-56rpx w-156rpx flex items-center justify-center border-0 rounded-full bg-[#f8f6f2] p-0 text-24rpx text-[#8f8679] font-800 after:border-none"
+        @tap="handleLogout"
+      >
         退出登录
       </button>
     </view>
 
-    <view v-for="group in menuGroups" :key="group.label" class="my-group">
-      <text class="my-group__label">{{ group.label }}</text>
+    <view
+      v-for="group in menuGroups"
+      :key="group.label"
+      class="my-group mb-34rpx"
+    >
+      <text class="my-group__label mb-8rpx block text-24rpx text-[#8b8b8b] font-700">
+        {{ group.label }}
+      </text>
 
       <view
-        v-for="item in group.items"
+        v-for="(item, index) in group.items"
         :key="item.path"
-        class="my-row"
+        class="my-row flex cursor-pointer items-start gap-22rpx bg-white pt-22rpx"
         @tap="goPage(item)"
       >
-        <view class="my-row__icon" :style="{ background: item.color }">
+        <view
+          class="my-row__icon mt-4rpx h-64rpx w-64rpx flex flex-shrink-0 items-center justify-center rounded-14rpx"
+          :style="{ background: item.color }"
+        >
           <wd-icon :name="item.icon" color="#ffffff" size="30rpx" />
         </view>
-        <view class="my-row__main">
-          <text class="my-row__title">{{ item.title }}</text>
-          <text class="my-row__summary">{{ item.desc }}</text>
+        <view
+          class="my-row__main min-w-0 flex-1 pb-22rpx"
+          :class="index === group.items.length - 1 ? 'border-b-0' : 'border-b-1rpx border-b-solid border-[#eeeeee]'"
+        >
+          <text class="my-row__title block truncate text-32rpx text-[#161616] font-900">
+            {{ item.title }}
+          </text>
+          <text class="my-row__summary mt-10rpx block truncate text-27rpx text-[#7f7f7f] leading-[1.4em]">
+            {{ item.desc }}
+          </text>
         </view>
-        <view class="my-row__right">
-          <text v-if="item.value" class="my-row__value">{{ item.value }}</text>
+        <view class="my-row__right min-w-46rpx flex flex-shrink-0 items-center self-stretch justify-end pb-22rpx -translate-y-4rpx">
+          <text v-if="item.value" class="my-row__value block text-26rpx text-[#9b7621] font-800">
+            {{ item.value }}
+          </text>
           <wd-icon v-else name="right" color="#c8c1b8" size="26rpx" />
         </view>
       </view>
     </view>
 
     <!-- 修改昵称弹窗 -->
-    <view v-if="editNameVisible" class="custom-modal-mask" @tap="closeEditName">
-      <view class="custom-modal" @tap.stop>
-        <text class="custom-modal__title">修改用户名</text>
+    <view v-if="editNameVisible" class="fixed inset-0 z-[999] box-border flex items-start justify-center bg-[#211b14]/48 pt-220rpx backdrop-blur-8px" @tap="closeEditName">
+      <view class="box-border w-580rpx rounded-28rpx bg-white p-[44rpx_40rpx] shadow-[0_20rpx_60rpx_rgba(31,27,20,0.16)] animate-scale-in" @tap.stop>
+        <text class="mb-34rpx block text-center text-32rpx text-[#1f1b14] font-900">修改用户名</text>
         <!-- #ifdef MP-WEIXIN -->
         <input
           v-model="newNickname"
           type="nickname"
-          class="custom-modal__input"
+          class="box-border h-88rpx w-full border border-[rgba(31,27,20,0.08)] rounded-18rpx border-solid bg-[#fcfbfa] px-24rpx text-28rpx text-[#1f1b14]"
           placeholder="请输入新的用户名"
           :maxlength="16"
           :adjust-position="false"
@@ -81,7 +113,7 @@
         <input
           v-model="newNickname"
           type="text"
-          class="custom-modal__input"
+          class="box-border h-88rpx w-full border border-[rgba(31,27,20,0.08)] rounded-18rpx border-solid bg-[#fcfbfa] px-24rpx text-28rpx text-[#1f1b14]"
           placeholder="请输入新的用户名"
           :maxlength="16"
           :adjust-position="false"
@@ -91,11 +123,11 @@
           @keyboardheightchange="keepNicknameModalPosition"
         >
         <!-- #endif -->
-        <view class="custom-modal__actions">
-          <button class="custom-modal__btn custom-modal__btn--cancel" @tap="closeEditName">
+        <view class="mt-40rpx flex gap-20rpx">
+          <button class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-[#f5f4ef] p-0 text-26rpx text-[#8f8679] font-900 leading-80rpx after:border-0" @tap="closeEditName">
             取消
           </button>
-          <button class="custom-modal__btn custom-modal__btn--confirm" @tap="confirmEditName">
+          <button class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 leading-80rpx after:border-0" @tap="confirmEditName">
             保存
           </button>
         </view>
@@ -103,19 +135,19 @@
     </view>
 
     <!-- 修改头像弹窗 -->
-    <view v-if="editAvatarVisible" class="custom-modal-mask custom-modal-mask--center" @tap="closeEditAvatar">
-      <view class="custom-modal" @tap.stop>
-        <text class="custom-modal__title">修改头像</text>
-        <view class="custom-modal__content" style="text-align: center; margin-bottom: 40rpx; color: #8f8679; font-size: 28rpx;">
+    <view v-if="editAvatarVisible" class="fixed inset-0 z-[999] box-border flex items-center justify-center bg-[#211b14]/48 backdrop-blur-8px" @tap="closeEditAvatar">
+      <view class="box-border w-580rpx rounded-28rpx bg-white p-[44rpx_40rpx] shadow-[0_20rpx_60rpx_rgba(31,27,20,0.16)] animate-scale-in" @tap.stop>
+        <text class="mb-34rpx block text-center text-32rpx text-[#1f1b14] font-900">修改头像</text>
+        <view class="mb-40rpx text-center text-28rpx text-[#8f8679]">
           是否修改您的用户头像？
         </view>
-        <view class="custom-modal__actions">
-          <button class="custom-modal__btn custom-modal__btn--cancel" @tap="closeEditAvatar">
+        <view class="flex gap-20rpx">
+          <button class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-[#f5f4ef] p-0 text-26rpx text-[#8f8679] font-900 leading-80rpx after:border-0" @tap="closeEditAvatar">
             取消
           </button>
           <!-- #ifdef MP-WEIXIN -->
           <button
-            class="custom-modal__btn custom-modal__btn--confirm"
+            class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 leading-80rpx after:border-0"
             open-type="chooseAvatar"
             @chooseavatar="onChooseAvatarWithClose"
           >
@@ -124,7 +156,7 @@
           <!-- #endif -->
           <!-- #ifndef MP-WEIXIN -->
           <button
-            class="custom-modal__btn custom-modal__btn--confirm"
+            class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 leading-80rpx after:border-0"
             @tap="confirmEditAvatar"
           >
             确定
@@ -275,298 +307,3 @@ async function goPage(item: MyMenuItem) {
   })
 }
 </script>
-
-<style scoped lang="scss">
-.page-my {
-  padding: 28rpx 30rpx 0;
-  background: #ffffff;
-}
-
-.page-my--modal-open {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1000;
-  width: 100%;
-  overflow: hidden;
-}
-
-.page-my__header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 34rpx 0 64rpx;
-}
-
-.profile-avatar__text,
-.profile-name,
-.my-group__label,
-.my-row__title,
-.my-row__value,
-.my-row__summary {
-  display: block;
-}
-
-.profile-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 132rpx;
-  height: 132rpx;
-  overflow: hidden;
-  background: #fdf3d7;
-  border-radius: 50%;
-}
-
-.profile-avatar__image {
-  width: 100%;
-  height: 100%;
-}
-
-.profile-logout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 156rpx;
-  height: 56rpx;
-  margin: 24rpx 0 0;
-  padding: 0;
-  font-size: 24rpx;
-  font-weight: 800;
-  line-height: 56rpx;
-  color: #8f8679;
-  background: #f8f6f2;
-  border: 0;
-  border-radius: 999rpx;
-}
-
-.profile-logout::after {
-  border: 0;
-}
-
-.profile-avatar__text {
-  font-size: 54rpx;
-  font-weight: 900;
-  color: var(--tx-color-primary);
-}
-
-.profile-name-wrapper {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 12rpx;
-  margin-top: 30rpx;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-
-  &:active {
-    transform: scale(0.97);
-    opacity: 0.8;
-  }
-}
-
-.profile-name {
-  overflow: hidden;
-  max-width: 480rpx;
-  font-size: 36rpx;
-  font-weight: 900;
-  color: #161616;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-.profile-name-edit {
-  align-self: flex-end;
-  margin-bottom: 6rpx;
-}
-
-.my-group {
-  margin-bottom: 34rpx;
-}
-
-.my-group__label {
-  margin: 0 0 8rpx 0;
-  font-size: 24rpx;
-  font-weight: 700;
-  color: #8b8b8b;
-}
-
-.my-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 22rpx;
-  padding: 22rpx 0 0;
-  background: #ffffff;
-}
-
-.my-row__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 64rpx;
-  height: 64rpx;
-  margin-top: 4rpx;
-  border-radius: 14rpx;
-}
-
-.my-row__main {
-  flex: 1;
-  min-width: 0;
-  padding-bottom: 22rpx;
-  border-bottom: 1rpx solid #eeeeee;
-}
-
-.my-row:last-child .my-row__main {
-  border-bottom: 0;
-}
-
-.my-row__title {
-  overflow: hidden;
-  flex: 1;
-  font-size: 32rpx;
-  font-weight: 900;
-  color: #161616;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.my-row__value {
-  font-size: 26rpx;
-  font-weight: 800;
-  color: #9b7621;
-}
-
-.my-row__right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  align-self: stretch;
-  flex-shrink: 0;
-  min-width: 46rpx;
-  padding-bottom: 22rpx;
-  transform: translateY(-4rpx);
-}
-
-.my-row__summary {
-  overflow: hidden;
-  margin-top: 10rpx;
-  font-size: 27rpx;
-  line-height: 1.4;
-  color: #7f7f7f;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 重置微信小程序下 button 属性作为头像容器时的样式 */
-button.profile-avatar {
-  padding: 0;
-  margin: 0;
-  line-height: normal;
-  border: 0;
-  background: #fdf3d7;
-  &::after {
-    border: none;
-  }
-}
-
-@keyframes scale-in {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* 昵称修改模态框 */
-.custom-modal-mask {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 999;
-  background: rgba(31, 27, 20, 0.48);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 220rpx;
-  backdrop-filter: blur(8px);
-  box-sizing: border-box;
-}
-
-.custom-modal-mask--center {
-  align-items: center;
-  padding-top: 0;
-}
-
-.custom-modal {
-  width: 580rpx;
-  background: #ffffff;
-  border-radius: 28rpx;
-  padding: 44rpx 40rpx;
-  box-sizing: border-box;
-  box-shadow: 0 20rpx 60rpx rgba(31, 27, 20, 0.16);
-  animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-.custom-modal__title {
-  display: block;
-  font-size: 32rpx;
-  font-weight: 900;
-  color: #1f1b14;
-  text-align: center;
-  margin-bottom: 34rpx;
-}
-
-.custom-modal__input {
-  width: 100%;
-  height: 88rpx;
-  background: #fcfbfa;
-  border: 1rpx solid rgba(31, 27, 20, 0.08);
-  border-radius: 18rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  color: #1f1b14;
-  box-sizing: border-box;
-}
-
-.custom-modal__actions {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 40rpx;
-}
-
-.custom-modal__btn {
-  flex: 1;
-  height: 80rpx;
-  font-size: 26rpx;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999rpx;
-  border: 0;
-  line-height: 80rpx;
-
-  &::after {
-    border: 0;
-  }
-
-  &--confirm {
-    background: var(--tx-color-primary);
-    color: #1f1b14;
-  }
-
-  &--cancel {
-    background: #f5f4ef;
-    color: #8f8679;
-  }
-}
-</style>

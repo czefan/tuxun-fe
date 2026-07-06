@@ -64,9 +64,9 @@ export const customTabbarList: CustomTabBarItem[] = [
   {
     text: '%tabbar.me%',
     pagePath: 'pages/my/index',
-    iconType: 'uiLib',
-    icon: 'user',
-    iconActive: 'user',
+    iconType: 'unocss',
+    icon: 'i-carbon-user',
+    iconActive: 'i-carbon-user-filled',
   },
 ]
 

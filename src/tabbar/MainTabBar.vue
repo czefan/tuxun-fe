@@ -187,7 +187,7 @@ function getItemColor(index: number) {
   justify-content: space-between;
   width: 100%;
   min-height: calc(112rpx + env(safe-area-inset-bottom));
-  padding: 4rpx 56rpx calc(8rpx + env(safe-area-inset-bottom));
+  padding: 4rpx 70rpx calc(8rpx + env(safe-area-inset-bottom));
   background: #ffffff;
   border-top: 1rpx solid rgba(31, 27, 20, 0.08);
   box-shadow: 0 -14rpx 30rpx rgba(31, 27, 20, 0.06);
