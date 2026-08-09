@@ -82,7 +82,7 @@ function handleLogTap(item: ScoreLogVM) {
       <view class="flex items-center gap-2 pb-2.5">
         <view class="flex items-center gap-1">
           <text class="i-my-icons-points text-lg text-[#B69171]" />
-          <text class="font-num text-xl text-[#1E1E1E] font-bold leading-none">
+          <text class="text-xl text-[#1E1E1E] font-bold leading-none font-numeric">
             {{ isLoggedIn() ? (userStore.userInfo?.points ?? 0) : '--' }}
           </text>
         </view>
@@ -90,13 +90,13 @@ function handleLogTap(item: ScoreLogVM) {
         <view class="flex flex-col justify-center gap-0.5 text-[10px] leading-tight">
           <view class="flex items-center gap-0.5 text-[#756C5E]">
             <text>收入</text>
-            <text class="font-num text-[#B69171] font-bold">
+            <text class="text-[#B69171] font-bold font-numeric">
               {{ isLoggedIn() ? `+${totalIncome}` : '--' }}
             </text>
           </view>
           <view class="flex items-center gap-0.5 text-[#756C5E]">
             <text>支出</text>
-            <text class="font-num text-[#1E1E1E] font-bold">
+            <text class="text-[#1E1E1E] font-bold font-numeric">
               {{ isLoggedIn() ? `-${totalExpense}` : '--' }}
             </text>
           </view>

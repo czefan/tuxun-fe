@@ -37,7 +37,9 @@ export const shortcuts: Extract<UserShortcuts, any[]> = [
     'u-user-name': 'text-base text-[#1E1E1E] font-medium leading-tight',
 
     // 7. 统一时间与日期 (14px 数字字体)
-    'u-meta-time': 'font-num text-sm text-[#756C5E] font-medium leading-none',
+    // 数字字体栈是全局 SCSS 自定义类 .font-numeric（见 styles/index.scss），
+    // 不是 unocss 工具类——直接用类名而非 shortcut，避免「unmatched utility」警告
+    'u-meta-time': 'font-numeric text-sm text-[#756C5E] font-medium leading-none',
 
     // 8. 微型注解与辅助单位 (12px 小字)
     'u-meta-sub': 'text-xs text-[#8A7E70] font-normal',
@@ -62,6 +64,5 @@ export const shortcuts: Extract<UserShortcuts, any[]> = [
 
     // 布局类样式迁移 (Layout Styles)
     'fixed-bottom-bar': 'fixed right-0 bottom--1px left-0 z-99 bg-white border-t border-t-solid border-t-[rgba(31,27,20,0.06)] box-border',
-    'font-num': 'font-numeric',
   },
 ]

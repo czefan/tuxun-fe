@@ -251,7 +251,7 @@ function handleModalGoActivity() {
 
             <!-- 时间区间 (去除前缀文案，字号加大并使用顶级 DIN/SF Pro 无衬线数字 Stack) -->
             <view v-if="selectedActivity.startTime || selectedActivity.endTime" class="border-t border-[#D3BA9F]/30 pt-2.5">
-              <text class="font-num block text-sm text-[#756C5E] font-bold">
+              <text class="block text-sm text-[#756C5E] font-bold font-numeric">
                 {{ formatDate(selectedActivity.startTime) }} ~ {{ formatDate(selectedActivity.endTime) }}
               </text>
             </view>

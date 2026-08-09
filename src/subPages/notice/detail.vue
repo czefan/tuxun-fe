@@ -27,7 +27,7 @@ onLoad((query) => {
       <!-- 标题与时间 -->
       <view class="border-b border-[#B69171]/40 pb-4 space-y-2">
         <text class="block text-2xl text-[#1E1E1E] font-extrabold leading-snug tracking-tight">{{ detail.title }}</text>
-        <text class="font-num block text-sm text-[#756C5E] font-medium tracking-wide">{{ detail.createdAt }}</text>
+        <text class="block text-sm text-[#756C5E] font-medium tracking-wide font-numeric">{{ detail.createdAt }}</text>
       </view>
 
       <!-- 升级字号的正文内容 -->

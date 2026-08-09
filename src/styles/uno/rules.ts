@@ -10,6 +10,22 @@ export const rules: Rule[] = [
   ],
   ['pt-safe', { 'padding-top': 'env(safe-area-inset-top)' }],
   ['pb-safe', { 'padding-bottom': 'env(safe-area-inset-bottom)' }],
+  // 数字字体栈单一数据源 (Single Source of Truth)
+  // 注册为 unocss rule 供模板与 shortcuts (如 u-meta-time) 引用。
+  // 多词字体名用反斜杠转义空格（DIN\ Alternate）而非引号：
+  // unocss/esbuild 压缩时会剥掉 font-family 的引号，而无引号多词 family-name
+  // 不是合法的 custom-ident；转义空格是标准写法，压缩环节不会改写它。
+  [
+    /^font-numeric$/,
+    (_, { rawSelector }) => `
+      .${rawSelector} {
+        font-family: DIN\\ Alternate, SF\\ Pro\\ Display, SF\\ Pro\\ Text, Inter, -apple-system,
+          BlinkMacSystemFont, Segoe\\ UI, Roboto, Helvetica\\ Neue, sans-serif;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
+      }
+    `,
+  ],
   [
     /^scrollbar-none$/,
     (_, { rawSelector }) => `

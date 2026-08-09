@@ -200,7 +200,7 @@ function handleExchange(goodId: number) {
         </template>
         <view class="flex items-center gap-1">
           <text class="i-my-icons-points text-base text-[#B69171]" />
-          <text class="font-num text-lg text-[#1E1E1E] font-bold">{{ userStore.userInfo?.points ?? 0 }}</text>
+          <text class="text-lg text-[#1E1E1E] font-bold font-numeric">{{ userStore.userInfo?.points ?? 0 }}</text>
         </view>
       </view>
     </view>
@@ -249,7 +249,7 @@ function handleExchange(goodId: number) {
                   <view class="flex items-center justify-between pt-0.5">
                     <view class="flex items-center gap-0.5">
                       <text class="i-my-icons-points text-xs text-[#B69171]" />
-                      <text class="font-num text-xs text-[#B69171] font-bold">{{ item.scorePrice }}</text>
+                      <text class="text-xs text-[#B69171] font-bold font-numeric">{{ item.scorePrice }}</text>
                     </view>
                     <text class="text-xs text-[#756C5E] font-medium">库存: {{ item.stock }}</text>
                   </view>
@@ -296,7 +296,7 @@ function handleExchange(goodId: number) {
                   <view class="flex items-center justify-between gap-1">
                     <view class="flex flex-shrink-0 items-center gap-0.5">
                       <text class="i-my-icons-points text-xs text-[#B69171]" />
-                      <text class="font-num text-xs text-[#B69171] font-bold">-{{ item.scoreCost }}</text>
+                      <text class="text-xs text-[#B69171] font-bold font-numeric">-{{ item.scoreCost }}</text>
                     </view>
                     <text class="truncate u-meta-time">{{ item.exchangeAt || '尚未核销' }}</text>
                   </view>
@@ -363,7 +363,7 @@ function handleExchange(goodId: number) {
               <input
                 v-model="exchangeInputStr"
                 type="number"
-                class="font-num h-7 w-12 border border-[#D3BA9F]/60 rounded-md bg-stone-50 py-0.5 text-center text-sm text-[#1E1E1E] font-bold"
+                class="h-7 w-12 border border-[#D3BA9F]/60 rounded-md bg-stone-50 py-0.5 text-center text-sm text-[#1E1E1E] font-bold font-numeric"
                 @input="handleCountInput"
                 @blur="handleCountBlur"
               >
@@ -383,7 +383,7 @@ function handleExchange(goodId: number) {
               <text class="text-xs text-[#756C5E]">合计积分</text>
               <view class="flex items-center gap-0.5">
                 <text class="i-my-icons-points text-sm text-[#B69171]" />
-                <text class="font-num text-base text-[#B69171] font-bold">{{ activeGood.scorePrice * exchangeCount }}</text>
+                <text class="text-base text-[#B69171] font-bold font-numeric">{{ activeGood.scorePrice * exchangeCount }}</text>
               </view>
             </view>
             <wd-button type="warning" round size="medium" custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] shadow-xs" :disabled="activeGood.stock <= 0 || exchangeMutation.isPending.value" @click="handleExchange(activeGood.id)">

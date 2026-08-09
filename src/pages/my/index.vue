@@ -181,7 +181,7 @@ function navigateTo(url: string) {
                   {{ (profileInfo?.isAdmin || userStore.userInfo?.isAdmin) ? '管理员' : `Level ${(profileInfo?.level || userStore.userInfo?.level || 1)}` }}
                 </view>
               </view>
-              <text class="font-num block text-sm text-[#756C5E] font-bold">ID: {{ profileInfo?.id || userStore.userInfo?.id || profileInfo?.netid || userStore.userInfo?.netid }}</text>
+              <text class="block text-sm text-[#756C5E] font-bold font-numeric">ID: {{ profileInfo?.id || userStore.userInfo?.id || profileInfo?.netid || userStore.userInfo?.netid }}</text>
             </view>
           </view>
         </view>
@@ -190,7 +190,7 @@ function navigateTo(url: string) {
         <view class="flex items-center justify-end border-t border-[#B69171]/30 pt-1.5">
           <view class="flex cursor-pointer items-center gap-1 active:opacity-75" @click="navigateTo(AppRoute.MyPoints)">
             <text class="text-xs text-[#756C5E] font-medium">总积分:</text>
-            <text class="font-num ml-0.5 text-base text-[#1E1E1E] font-bold">{{ profileInfo?.points ?? userStore.userInfo?.points ?? 0 }}</text>
+            <text class="ml-0.5 text-base text-[#1E1E1E] font-bold font-numeric">{{ profileInfo?.points ?? userStore.userInfo?.points ?? 0 }}</text>
           </view>
         </view>
       </view>

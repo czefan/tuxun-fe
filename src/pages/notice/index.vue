@@ -304,7 +304,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                 class="space-y-1.5"
               >
                 <!-- 时间分组小标题 (本周 / 本月 / 更早) -->
-                <text class="font-num block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase">
+                <text class="block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase font-numeric">
                   {{ group.title }}
                 </text>
 
@@ -330,7 +330,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                           {{ item.title }}
                         </text>
                       </view>
-                      <text class="font-num flex-shrink-0 text-sm text-[#756C5E] font-bold">
+                      <text class="flex-shrink-0 text-sm text-[#756C5E] font-bold font-numeric">
                         {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
                       </text>
                     </view>
@@ -376,7 +376,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                 class="space-y-1.5"
               >
                 <!-- 时间分组小标题 (本周 / 本月 / 更早) -->
-                <text class="font-num block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase">
+                <text class="block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase font-numeric">
                   {{ group.title }}
                 </text>
 
@@ -415,7 +415,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                             </text>
                             <text v-if="isMe(item.user.id)" class="ml-1 flex-shrink-0 rounded bg-[#B69171]/15 px-1 py-0.2 text-[10px] text-[#B69171] font-bold leading-none">我</text>
                           </view>
-                          <text class="font-num flex-shrink-0 text-xs text-[#756C5E] font-bold">
+                          <text class="flex-shrink-0 text-xs text-[#756C5E] font-bold font-numeric">
                             {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
                           </text>
                         </view>

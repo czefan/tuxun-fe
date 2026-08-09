@@ -111,7 +111,7 @@ defineExpose({ locate: locate_, chooseLocation: chooseLocation_, isSubmittable }
     <!-- 已选坐标说明 -->
     <view class="px-0.5">
       <text class="block text-sm text-[#1E1E1E] font-bold">{{ locationLabel }}</text>
-      <text v-if="hasLocation" class="font-num mt-0.5 block text-xs text-[#756C5E]">
+      <text v-if="hasLocation" class="mt-0.5 block text-xs text-[#756C5E] font-numeric">
         {{ latitude.toFixed(6) }}, {{ longitude.toFixed(6) }}
       </text>
       <text v-if="hasLocation && !isSubmittable" class="mt-0.5 block text-xs text-rose-500 font-bold">
