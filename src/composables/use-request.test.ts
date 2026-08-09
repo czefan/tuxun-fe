@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
-import useRequest, { invalidateRequestCache } from './useRequest'
+import useRequest, { invalidateRequestCache } from './use-request'
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void
@@ -108,7 +108,7 @@ describe('useRequest', () => {
     const asyncFn = vi.fn().mockResolvedValue(2)
     const { data, mutate, reset, run } = withSetup(() => useRequest(asyncFn, { initialData: 1 }))
 
-    mutate(current => (current ?? 0) + 1)
+    mutate((current?: number) => (current ?? 0) + 1)
     expect(data.value).toBe(2)
 
     await run()
@@ -194,7 +194,7 @@ describe('useRequest', () => {
     const asyncFn = vi.fn().mockReturnValue(deferred.promise)
     const { run } = withSetup(() =>
       useRequest<string, { id: number }>(asyncFn, {
-        cache: { key: args => ['detail', args?.id], cacheTime: 1000 },
+        cache: { key: (args?: { id: number }) => ['detail', args?.id], cacheTime: 1000 },
       }),
     )
 

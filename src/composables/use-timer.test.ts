@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
-import { useDebounceFn, useTimer } from './useTimer'
+import { useDebounceFn, useTimer } from './use-timer'
 
 function mountComposable<T>(composableFn: () => T) {
   let result!: T
