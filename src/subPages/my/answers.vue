@@ -1,192 +1,160 @@
-<template>
-  <view class="page-answers u-page-viewport">
-    <view class="u-header-flex">
-      <view class="min-w-0 flex-1">
-        <text class="block text-44rpx text-[#1f1b14] font-900 leading-[1.15]">{{ t('page.answers') }}</text>
-        <text class="mt-10rpx block text-24rpx text-[#81786c]">{{ t('page.answers.subtitle') }}</text>
-      </view>
-      <view class="answers-search-button u-circle-btn" @tap="goSearch">
-        <wd-icon name="search-line" color="#1f1b14" size="30rpx" />
-      </view>
-    </view>
-
-    <view v-if="searchKeyword" class="flex items-center gap-16rpx px-24rpx pb-18rpx">
-      <wd-search
-        :model-value="searchKeyword"
-        hide-cancel
-        custom-class="tx-search"
-        placeholder-left
-        disabled
-        @click="goSearch"
-      />
-      <view class="box-border h-64rpx w-64rpx flex flex-shrink-0 items-center justify-center border border-[rgba(31,27,20,0.08)] rounded-full border-solid bg-white" @tap="clearSearch">
-        <wd-icon name="close" color="#1f1b14" size="28rpx" />
-      </view>
-    </view>
-
-    <!-- 横向 Tabs 过滤栏 -->
-    <sliding-tabs
-      :list="tabs"
-      :model-value="activeTab"
-      padding="8rpx 24rpx 28rpx"
-      @change="onTabChange"
-    />
-
-    <!-- 左右滑动分页 Swiper -->
-    <swiper
-      class="min-h-0 w-full flex-1"
-      :current="currentTab"
-      @change="onSwiperChange"
-    >
-      <swiper-item v-for="tab in tabs" :key="tab.key">
-        <scroll-view scroll-y class="h-full">
-          <view class="u-list-wrapper pb-[calc(40rpx+env(safe-area-inset-bottom))]">
-            <view
-              v-for="item in getFilteredAnswersByStatus(tab.key)"
-              :key="item.questionId"
-              class="u-card-item"
-              @tap="goQuestion(item)"
-            >
-              <image
-                class="u-card-cover"
-                :src="item.cover"
-                lazy-load
-                mode="aspectFill"
-              />
-              <view class="u-card-main">
-                <text class="u-card-title">{{ item.title }}</text>
-                <view class="w-full flex items-center gap-16rpx">
-                  <status-tag :status="item.latestStatus" />
-                  <text class="block flex-shrink-0 text-24rpx text-[#9b7621] font-900">{{ item.usedCount }}/{{ item.limitCount }}</text>
-                  <text class="ml-auto block flex-shrink-0 text-24rpx text-[#8f8679]">{{ item.latestTime }}</text>
-                </view>
-              </view>
-            </view>
-
-            <!-- 空状态 -->
-            <view v-if="!getFilteredAnswersByStatus(tab.key).length" class="py-120rpx">
-              <wd-empty icon="no-content" :tip="answersEmptyText" />
-            </view>
-          </view>
-        </scroll-view>
-      </swiper-item>
-    </swiper>
-
-    <!-- 复用全局的搜索浮层，直接传递搜索项实现纯前端精准搜索 -->
-    <search-overlay
-      v-model:visible="searchVisible"
-      :results="searchResults"
-      :title="t('search.title.contributions')"
-      @search="handleSearch"
-    />
-  </view>
-</template>
-
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  getAnswerQuestionRecords,
-} from './features'
-import type { AnswerQuestionRecord, AnswerStatus } from './features'
-import { usePrivateList } from '@/composables/usePrivateList'
-import { t } from '@/locale'
+import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { useInfiniteMyAttemptRecords } from '@/features/record/query'
+import type { UserAttemptRecordVM } from '@/features/record/types'
+import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
 
 definePage({
   style: {
     navigationBarTitleText: '%page.answers%',
+    enablePullDownRefresh: true,
   },
 })
 
-type TabKey = 'all' | AnswerStatus
-
-interface TabItem {
-  key: TabKey
-  title: string
+const { isLoggedIn, loginDirectly } = useAuth()
+const activeStatusIndex = ref('全部')
+const statusOptions = ['全部', '审核中', '已破解', '未破解']
+const statusMap: Record<string, undefined | 'pending' | 'solved' | 'unsolved'> = {
+  全部: undefined,
+  审核中: 'pending',
+  已破解: 'solved',
+  未破解: 'unsolved',
 }
 
-const searchVisible = ref(false)
-const searchKeyword = ref('')
-const activeTab = ref<TabKey>('all')
-const currentTab = ref(0)
+const queryParams = computed(() => ({
+  status: statusMap[activeStatusIndex.value],
+  page_size: 20,
+}))
 
-const tabs: TabItem[] = [
-  { key: 'all', title: t('common.all') },
-  { key: 'pending', title: t('status.pending') },
-  { key: 'correct', title: t('status.correct') },
-  { key: 'wrong', title: t('status.wrong') },
-]
+const {
+  data: attemptsPagesData,
+  isPending: isLoading,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  refetch,
+} = useInfiniteMyAttemptRecords(queryParams)
 
-const statusText: Record<AnswerStatus, string> = {
-  pending: t('status.pending'),
-  correct: t('status.correct'),
-  wrong: t('status.wrong'),
-}
+const list = computed<UserAttemptRecordVM[]>(() => attemptsPagesData.value?.pages.flatMap(page => page.list) ?? [])
 
-const { list: answerQuestions, emptyText: answersEmptyText } = usePrivateList(
-  getAnswerQuestionRecords,
-  t('empty.answers'),
-)
-
-function onTabChange(key: string, index: number) {
-  const tab = tabs[index]
-
-  if (!tab) {
-    return
+function getFilteredList(opt: string) {
+  if (opt === '全部')
+    return list.value
+  if (opt === '审核中') {
+    return list.value.filter(item => String(item.status).toLowerCase() === 'pending')
   }
-
-  currentTab.value = index
-  activeTab.value = tab.key
-}
-
-function onSwiperChange(e: any) {
-  const index = e.detail.current
-  onTabChange('', index)
-}
-
-function getFilteredAnswersByStatus(status: TabKey) {
-  const statusFiltered
-    = status === 'all'
-      ? answerQuestions.value
-      : answerQuestions.value.filter(item => item.latestStatus === status)
-  const keyword = searchKeyword.value.trim().toLowerCase()
-
-  if (!keyword) {
-    return statusFiltered
+  if (opt === '已破解') {
+    return list.value.filter(item => String(item.status).toLowerCase() === 'solved')
   }
-
-  return statusFiltered.filter(item =>
-    [item.title, item.location, item.summary, item.latestStatus, item.latestTime].some(value =>
-      value.toLowerCase().includes(keyword),
-    ),
-  )
+  if (opt === '未破解') {
+    // 契约只下发 status；未破解页签严格只显示 unsolved，不混入已破解
+    return list.value.filter(item => String(item.status).toLowerCase() === 'unsolved')
+  }
+  return list.value
 }
 
-// 构造通用的 SearchResult 传给 search-overlay 实现无缝搜索
-const searchResults = computed(() => {
-  return answerQuestions.value.map(record => ({
-    id: `answer-${record.questionId}`,
-    title: record.title,
-    desc: record.summary,
-    meta: statusText[record.latestStatus],
-  }))
+onReachBottom(() => {
+  if (hasNextPage?.value && !isFetchingNextPage.value) {
+    fetchNextPage()
+  }
 })
 
-function goSearch() {
-  searchVisible.value = true
-}
+onPullDownRefresh(async () => {
+  // 只重拉本页自己的列表。无参 invalidateQueries() 会失效全站查询——
+  // 下拉刷新首页不该把商城、通知、用户资料一起作废重拉。
+  await refetch()
+  uni.stopPullDownRefresh()
+})
 
-function handleSearch(keyword: string) {
-  searchKeyword.value = keyword
+function goPhotoDetail(photoId: number) {
+  if (photoId) {
+    uni.navigateTo({ url: withQuery(AppRoute.QuestionDetail, { id: photoId }) })
+  }
 }
-
-function clearSearch() {
-  searchKeyword.value = ''
-}
-
-function goQuestion(item: AnswerQuestionRecord) {
-  uni.navigateTo({
-    url: withQuery(AppRoute.QuestionDetail, { id: item.questionId }),
-  })
-}
+const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.value))
 </script>
+
+<template>
+  <view class="page-my-answers swiper-page bg-[#F1DFC5] px-3 pt-3">
+    <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
+    <view class="flex flex-shrink-0 items-center gap-6 px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+      <view
+        v-for="opt in statusOptions"
+        :key="opt"
+        class="relative cursor-pointer pb-2.5 text-base transition-all active:scale-95"
+        :class="activeStatusIndex === opt ? 'text-[#1E1E1E] font-black' : 'text-[#8A7E70] font-bold'"
+        @tap="activeStatusIndex = opt"
+      >
+        <text>{{ opt }}</text>
+        <view
+          v-if="activeStatusIndex === opt"
+          class="absolute left-0 right-0 h-[2.5px] rounded-full bg-[#B69171] -bottom-[1px]"
+        />
+      </view>
+    </view>
+
+    <!-- 支持左右平滑连贯拖拽滑屏的 Swiper 容器 -->
+    <swiper
+      class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
+      :current="currentTabIndex"
+      :duration="300"
+      @change="(e) => activeStatusIndex = statusOptions[e.detail.current]"
+    >
+      <swiper-item v-for="opt in statusOptions" :key="opt" class="box-border">
+        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextPage()">
+          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
+            <wd-empty icon="no-result" tip="登录后查看作答记录" />
+            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+              去登录
+            </wd-button>
+          </view>
+          <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
+            <view v-if="isLoading" class="space-y-3">
+              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
+            </view>
+            <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-[#B69171]">
+              <view
+                v-for="(item, index) in getFilteredList(opt)"
+                :key="item.id"
+                class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-75"
+                :class="index > 0 ? 'border-t border-[#B69171]' : ''"
+                @tap="goPhotoDetail(item.photo.id)"
+              >
+                <view class="mr-2 h-16 min-w-0 flex flex-1 items-center gap-3">
+                  <wd-img
+                    custom-class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#B69171]/10 object-cover ring-1 ring-[#D3BA9F]"
+                    lazy-load
+                    :src="item.photo.image.url"
+                    mode="aspectFill"
+                    width="64px"
+                    height="64px"
+                  />
+                  <view class="h-16 min-w-0 flex flex-1 flex-col justify-between py-1">
+                    <text class="line-clamp-2 block u-title-base font-bold">
+                      {{ item.photo.title }}
+                      <text class="ml-1 u-action-link text-base"> {{ Math.min(item.userAttemptsCount || 1, 5) }}/5</text>
+                    </text>
+                    <text class="block u-meta-time">{{ item.createdAt }}</text>
+                  </view>
+                </view>
+                <status-tag :status="item.status" />
+              </view>
+
+              <wd-loadmore
+                v-if="isFetchingNextPage"
+                :state="isFetchingNextPage ? 'loading' : undefined"
+                @reload="fetchNextPage"
+              />
+            </view>
+
+            <view v-else class="py-20">
+              <wd-empty icon="no-result" tip="暂无作答记录" />
+            </view>
+          </view>
+        </scroll-view>
+      </swiper-item>
+    </swiper>
+  </view>
+</template>

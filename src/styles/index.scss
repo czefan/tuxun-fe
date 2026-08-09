@@ -1,0 +1,251 @@
+/* ==========================================================================
+   全局复用：样式混入宏 (SCSS Mixins)
+   ========================================================================== */
+
+// 原生风格自定义返回键折角箭头
+@mixin nav-back-arrow($color: rgba(31, 27, 20, 0.95)) {
+  width: 12px;
+  height: 12px;
+  border-left: 1.5px solid $color;
+  border-top: 1.5px solid $color;
+  transform: rotate(-45deg);
+  margin-top: 1px;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   全局基础重置与全局变量
+   ========================================================================== */
+
+button {
+  box-sizing: border-box;
+
+  &::after {
+    border: 0; /* 清除微信小程序默认伪元素框线 */
+  }
+}
+
+/* 全局移动端原生滚动条完全隐藏 (适用于全站所有 App / 微信小程序 / H5 页面及 scroll-view 区域) */
+/* #ifdef H5 */
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+/* #endif */
+
+/* WXSS 里不存在 body / html 元素，且小程序 scroll-view 的滚动条由 show-scrollbar 属性控制，
+   整块是纯浏览器样式，包进 H5 避免开发者工具刷选择器告警 */
+/* #ifdef H5 */
+::-webkit-scrollbar,
+scroll-view::-webkit-scrollbar,
+uni-scroll-view::-webkit-scrollbar,
+.uni-scroll-view::-webkit-scrollbar,
+body::-webkit-scrollbar,
+html::-webkit-scrollbar,
+page::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  color: transparent !important;
+  background: transparent !important;
+}
+/* #endif */
+
+/* 内嵌 scroll-view 滚动到边界时，禁止把滚动链式传导给外层页面。
+   否则在列表滚到底后继续滚动，整页会被"挤"动、露出页面底部空白（H5 上表现为拼接出一段内容）。
+   仅约束 scroll-view 自身的越界传导，不影响其内部滚动与 @scrolltolower 事件。
+   注意 uni-app H5 的 scroll-view 实际滚动元素是内层 .uni-scroll-view (overflow-y:auto)，
+   光加在外层 <uni-scroll-view> 宿主上不生效，必须连同 .uni-scroll-view 一起命中。 */
+scroll-view,
+uni-scroll-view,
+.uni-scroll-view {
+  overscroll-behavior: contain;
+}
+
+:root,
+page {
+  --tx-bg-main: #f1dfc5; /* 全局浅黄底色 */
+  --tx-bg-brown: #b69171; /* 顶栏/底栏/突出块褐色 */
+  --tx-bg-accent: #f9df95; /* 高亮卡片/选中态/按钮亮黄 */
+  --tx-border-brown: #d3ba9f; /* 统一分割线与卡片边框色 */
+  --tx-radius-base: 15px; /* 全局基础圆角 */
+  /* 全站统一底部留白（可见间隙）：改这一处即可全局调整所有页面的底部留白 */
+  --tx-bottom-space: 40px;
+  /* 底部自定义 tab 栏高度：与 main-tab-bar.vue 的实际高度 (100rpx) 保持同步 */
+  --tx-tabbar-height: 100rpx;
+
+  --wot-color-theme: #b69171;
+  --wot-button-warning-bg-color: #f9df95;
+  --wot-button-warning-color: #1e1e1e;
+}
+
+page {
+  height: 100%;
+  background-color: #f1dfc5 !important;
+}
+
+/* 统一底部留白：全站所有页面复用。改 :root 的 --tx-bottom-space 一处即可全局调整，
+   带底栏页面自动叠加 --tx-tabbar-height（与实际底栏高度同步），保证全站可见留白一致。 */
+
+/* 无底栏页面：底部留白 = 统一间隙 + 安全区。
+   min-height 用导航栏以下的可见区 calc 公式（与 .page-fill/.swiper-page 一致）而非 100vh：
+   否则短内容页会比实际可见区多出导航栏高度，下方空出一大块、还能多滚一段空白。 */
+.safe-bottom-page {
+  min-height: calc(100vh - 44px - env(safe-area-inset-top)) !important;
+  box-sizing: border-box;
+  padding-bottom: calc(var(--tx-bottom-space) + env(safe-area-inset-bottom)) !important;
+}
+
+/* 有底栏页面（底部 tab 栏）：底部留白 = 统一间隙 + 底栏高度 + 安全区。
+   min-height 同上；底栏为 fixed 悬浮，由 padding-bottom 垫开，不额外扣减。 */
+.safe-bottom-page--fixed-bar {
+  min-height: calc(100vh - 44px - env(safe-area-inset-top)) !important;
+  box-sizing: border-box;
+  padding-bottom: calc(
+    var(--tx-bottom-space) + var(--tx-tabbar-height) + env(safe-area-inset-bottom)
+  ) !important;
+}
+
+/* 无底栏页面内嵌 scroll-view 的内容区：底部留白（纯 padding，不影响页面高度） */
+.bottom-space {
+  padding-bottom: calc(var(--tx-bottom-space) + env(safe-area-inset-bottom)) !important;
+}
+
+/* 有底栏页面内嵌 scroll-view 的内容区：底部留白 = 间隙 + 底栏高度 */
+.bottom-space--bar {
+  padding-bottom: calc(
+    var(--tx-bottom-space) + var(--tx-tabbar-height) + env(safe-area-inset-bottom)
+  ) !important;
+}
+
+/* 顶部滑动切换（swiper + 内嵌 scroll-view）页面专用容器：
+   页面高度锁定为 H5 原生导航栏（44px）以下的可见区域，且禁止整页滚动。
+   否则根节点用 min-h-screen(100vh) 会比实际可见区多出导航栏高度，列表滚到底后
+   整页会被带动 / 底部拼接出一段空白。底部的安全间距改由 scroll-view 内容区
+   （pb-*）承担，而不是页面根节点。 */
+.swiper-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: calc(100vh - 44px - env(safe-area-inset-top));
+  overflow: hidden;
+}
+
+/* 全高 Flex 内容页：内容顶部对齐，底部可钉一条信息（如版权/版本号）。
+   用 min-height（而非 min-h-screen 的 100vh）锁到导航栏以下的可见区域，
+   短内容页不会再在下方空出一大块，也不会多出导航栏高度的滚动区。 */
+.page-fill {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  min-height: calc(100vh - 44px - env(safe-area-inset-top));
+}
+
+/* #ifdef H5 */
+html,
+body,
+#app,
+uni-app,
+uni-page,
+uni-page-wrapper,
+uni-page-body {
+  background: var(--tx-page-bg, #f1dfc5) !important;
+}
+/* #endif */
+
+/* ==========================================================================
+   第三方组件库覆盖与特定级联样式
+   ========================================================================== */
+
+/* #ifdef H5 */
+/* uni-app 内置 <picker>（投稿页"选择关联活动"等）在 H5 下由 uni 自绘弹窗，
+   确定按钮硬编码为系统蓝 #007aff，与全站褐色主题不符。
+   统一改为主题褐色，与 uni.showModal 的 confirmColor: #B69171 保持一致。 */
+.uni-picker-action.uni-picker-action-confirm {
+  color: var(--tx-bg-brown) !important;
+}
+/* #endif */
+
+/* wot-ui 搜索框统一适配旧业务的紧凑胶囊外观 */
+.tx-search {
+  flex: 1;
+  min-width: 0;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.tx-search .wd-search__block {
+  min-height: 72rpx;
+  margin-right: 0 !important;
+  overflow: hidden;
+  background: #ffffff !important;
+  border-radius: 999rpx !important;
+  box-shadow: 0 8rpx 20rpx rgba(31, 26, 18, 0.04);
+  transition:
+    border-radius 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.tx-search--active .wd-search__block {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.tx-search .wd-search__field {
+  min-height: 72rpx;
+  padding: 0 24rpx !important;
+}
+
+.tx-search .wd-search__input {
+  height: 72rpx !important;
+  font-size: 28rpx !important;
+  color: #1f1b14 !important;
+}
+
+.tx-search .wd-search__search-left-icon,
+.tx-search .wd-search__search-icon {
+  color: #9a9286 !important;
+  font-size: 30rpx !important;
+}
+
+.tx-search .wd-search__placeholder-txt {
+  color: #a09688 !important;
+  font-size: 28rpx !important;
+}
+
+/* 兼容表单特定嵌套结构微调 */
+.field-top .form-label {
+  margin-bottom: 0;
+}
+
+/* 通用段落排版类 */
+.u-paragraph {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 33rpx;
+  line-height: 1.75;
+  color: #3a342c;
+}
+
+/* ==========================================================================
+   最主流、高级的无衬线现代数字与时间 Stack (DIN Alternate / SF Pro / Inter)
+   ========================================================================== */
+.font-numeric,
+.font-time {
+  font-family:
+    'DIN Alternate',
+    'SF Pro Display',
+    'SF Pro Text',
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    sans-serif !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}

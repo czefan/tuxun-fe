@@ -1,66 +1,12 @@
-<template>
-  <view class="page-answer box-border min-h-100vh flex flex-col bg-[#f7f4ee] p-[28rpx_24rpx_calc(28rpx+env(safe-area-inset-bottom))]">
-    <view class="overflow-hidden border border-[rgba(31,27,20,0.07)] rounded-18rpx border-solid bg-white shadow-[0_10rpx_28rpx_rgba(31,27,20,0.05)]">
-      <view class="relative overflow-hidden bg-[#eeeeee]" :style="questionImageStyle">
-        <image
-          class="absolute inset-0 block h-full w-full"
-          :src="questionCover"
-          mode="aspectFill"
-          @tap.stop="previewImage(questionCover)"
-        />
-      </view>
-      <view class="p-[22rpx_24rpx_24rpx]">
-        <text class="block text-22rpx text-[#9b7621] font-800">当前题目</text>
-        <text class="mt-8rpx block text-32rpx text-[#1f1b14] font-900 leading-[1.35]">{{ questionTitle }}</text>
-      </view>
-    </view>
-
-    <view class="answer-form mt-22rpx flex flex-col gap-22rpx">
-      <view class="form-field">
-        <text class="form-label">现场照片</text>
-        <view v-if="answerImage" class="relative h-420rpx overflow-hidden rounded-16rpx bg-[#eeeeee]">
-          <image
-            class="h-full w-full"
-            :src="answerImage"
-            mode="aspectFill"
-            @tap.stop="previewImage(answerImage)"
-          />
-          <view class="absolute bottom-16rpx right-16rpx h-58rpx flex cursor-pointer items-center gap-8rpx rounded-full bg-brand px-20rpx" @tap="chooseAnswerImage">
-            <wd-icon name="camera" color="#1f1b14" size="24rpx" />
-            <text class="block text-24rpx text-[#1f1b14] font-900">重拍</text>
-          </view>
-        </view>
-        <view v-else class="box-border h-260rpx flex flex-col cursor-pointer items-center justify-center gap-14rpx overflow-hidden border-2rpx border-[rgba(31,27,20,0.16)] rounded-16rpx border-dashed bg-[#f8f6f2]" @tap="chooseAnswerImage">
-          <wd-icon name="camera" color="#7c7468" size="48rpx" />
-          <text class="block text-24rpx text-[#7c7468] font-800">拍摄或上传同机位照片</text>
-        </view>
-      </view>
-
-      <form-location-picker
-        v-model:address="answer.address"
-        v-model:latitude="answer.latitude"
-        v-model:longitude="answer.longitude"
-        label="当前位置"
-        selected-text="已选择位置"
-        unselected-text="未选择位置"
-      />
-    </view>
-
-    <view class="mt-auto p-[40rpx_0_calc(20rpx+env(safe-area-inset-bottom))]">
-      <button class="h-88rpx w-full border-0 rounded-full bg-[#f56c6c] p-0 text-30rpx text-white font-900 leading-88rpx after:border-0 disabled:(bg-[#d8cbc0] text-white/72)" :disabled="isSubmitting" @tap="submitAnswerForm">
-        {{ isSubmitting ? '提交中' : '提交答案' }}
-      </button>
-    </view>
-  </view>
-</template>
-
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { useImagePicker, useSubmitGuard } from '@/composables/useSubmitFormTools'
-import { getQuestionById } from '@/features/questions'
-import { mockImageAssets } from '@/mocks/assets'
-import { previewImage } from '@/utils'
+import { useSubmitAttempt } from '@/features/attempt/query'
+import { useAuth } from '@/composables/use-auth'
+import { AppRoute, withQuery } from '@/router/routes'
+import { smartCompressImage } from '@/utils/image-compress'
+
+import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
 
 definePage({
   style: {
@@ -68,75 +14,223 @@ definePage({
   },
 })
 
-interface AnswerForm {
-  address: string
-  latitude: number
-  longitude: number
-  content: string
-}
+const { requireLogin } = useAuth()
 
-const questionId = ref(1)
-const questionTitle = ref('图寻题目')
-const questionCover = ref<string>(mockImageAssets.campus.gate.src)
-const questionCoverWidth = ref<number>(mockImageAssets.campus.gate.width)
-const questionCoverHeight = ref<number>(mockImageAssets.campus.gate.height)
-const answer = reactive<AnswerForm>({
+const photoId = ref(0)
+const loading = ref(false)
+const formData = reactive({
+  filePath: '',
   address: '',
   latitude: 0,
   longitude: 0,
-  content: '',
+  coordType: DEFAULT_COORD_TYPE as 'wgs84' | 'gcj02',
 })
 
-const {
-  firstImage: answerImage,
-  chooseImages: chooseAnswerImage,
-} = useImagePicker({
-  limit: 1,
-  sourceType: ['camera', 'album'],
-})
-const { isSubmitting, submitWithGuard } = useSubmitGuard()
-const questionImageStyle = computed(() => ({
-  paddingBottom: `${(questionCoverHeight.value / questionCoverWidth.value) * 100}%`,
-}))
+const DRAFT_KEY_PREFIX = 'tuxun_submit_attempt_draft_'
+
+const submitMutation = useSubmitAttempt(() => photoId.value)
 
 onLoad((query) => {
-  const rawId = Number(query?.id)
-  questionId.value = Number.isFinite(rawId) && rawId > 0 ? rawId : 1
-
-  const fallbackQuestion = getQuestionById(questionId.value)
-  questionTitle.value
-    = typeof query?.title === 'string' && query.title
-      ? decodeURIComponent(query.title)
-      : fallbackQuestion.title
-  questionCover.value
-    = typeof query?.cover === 'string' && query.cover
-      ? decodeURIComponent(query.cover)
-      : fallbackQuestion.cover
-  const rawCoverWidth = Number(query?.coverWidth)
-  const rawCoverHeight = Number(query?.coverHeight)
-  questionCoverWidth.value
-    = Number.isFinite(rawCoverWidth) && rawCoverWidth > 0
-      ? rawCoverWidth
-      : fallbackQuestion.coverWidth
-  questionCoverHeight.value
-    = Number.isFinite(rawCoverHeight) && rawCoverHeight > 0
-      ? rawCoverHeight
-      : fallbackQuestion.coverHeight
+  if (typeof query?.id === 'string') {
+    photoId.value = Number(query.id)
+    checkDraft()
+  }
 })
 
-function submitAnswerForm() {
-  submitWithGuard(validateAnswer)
+function checkDraft() {
+  if (!photoId.value)
+    return
+  const key = `${DRAFT_KEY_PREFIX}${photoId.value}`
+  const saved = uni.getStorageSync(key)
+  if (saved) {
+    uni.showModal({
+      title: '恢复草稿',
+      content: '检测到您上次有未提交的作答草稿，是否恢复？',
+      confirmText: '恢复',
+      cancelText: '放弃',
+      success: (res) => {
+        if (res.confirm) {
+          try {
+            const parsed = JSON.parse(saved)
+            Object.assign(formData, parsed)
+          }
+          catch {}
+        }
+        else if (res.cancel) {
+          uni.removeStorageSync(key)
+        }
+      },
+    })
+  }
 }
 
-function validateAnswer() {
-  if (!answerImage.value) {
-    return '请上传现场照片'
-  }
+watch(
+  formData,
+  (newVal) => {
+    if (!photoId.value)
+      return
+    if (newVal.filePath || newVal.address || newVal.latitude) {
+      uni.setStorageSync(`${DRAFT_KEY_PREFIX}${photoId.value}`, JSON.stringify(newVal))
+    }
+  },
+  { deep: true },
+)
 
-  if (answer.latitude === 0 || answer.longitude === 0) {
-    return '请选择当前位置'
-  }
-
-  return ''
+function choosePhoto() {
+  uni.chooseImage({
+    count: 1,
+    sourceType: ['camera', 'album'],
+    success: async (res) => {
+      if (res.tempFilePaths && res.tempFilePaths.length > 0) {
+        formData.filePath = await smartCompressImage(res.tempFilePaths[0])
+      }
+    },
+  })
 }
+
+/**
+ * 这里是手写校验，不是没接 wd-form 的 rules——**这个版本的 wd-form 没有 rules 这个 prop**。
+ * 它只认 `schema`（`{ validate(model) => Issue[] }`，配 zod/valibot 适配器用），
+ * 传 `:rules` 会被当普通属性丢掉；`validate()` 里 `props.schema` 为空时
+ * `rawIssues = []`，valid 恒为 true——空表单照样提交。
+ * wd-form / wd-form-item 在这里只负责标签与排版。
+ */
+async function handleSubmit() {
+  if (!requireLogin())
+    return
+  if (!formData.filePath) {
+    uni.showToast({ title: '请先拍摄/选择实地拍照照片', icon: 'none' })
+    return
+  }
+  if (!isSubmittableLocation(formData.latitude, formData.longitude)) {
+    uni.showToast({ title: '请选择地点', icon: 'none' })
+    return
+  }
+
+  loading.value = true
+  try {
+    await submitMutation.mutateAsync({
+      photoId: photoId.value,
+      filePath: formData.filePath,
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      coordType: formData.coordType,
+    })
+
+    if (photoId.value) {
+      uni.removeStorageSync(`${DRAFT_KEY_PREFIX}${photoId.value}`)
+    }
+
+    uni.showToast({ title: '作答已提交，等待审核', icon: 'success' })
+
+    setTimeout(() => {
+      uni.redirectTo({ url: withQuery(AppRoute.QuestionDetail, { id: photoId.value }) })
+    }, 1200)
+  }
+  catch {
+    // Handled by interceptor
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void } | null>(null)
 </script>
+
+<template>
+  <view class="page-submit-attempt safe-bottom-page bg-[#F1DFC5] px-3 pt-3 space-y-4">
+    <!-- 第一部分：图片 -->
+    <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
+      <view class="flex items-center gap-2 border-b border-[#D3BA9F]/30 pb-2.5">
+        <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+        <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+          图片 <text class="text-rose-500">*</text>
+        </text>
+      </view>
+
+      <view
+        class="relative h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-[#D3BA9F] rounded-2xl border-dashed bg-[#F8F6F2] transition-colors active:bg-[#EFECE6]"
+        @tap="choosePhoto"
+      >
+        <wd-img
+          v-if="formData.filePath"
+          custom-class="h-full w-full object-cover"
+          :src="formData.filePath"
+          lazy-load
+          mode="aspectFill"
+          width="100%"
+          height="100%"
+        />
+        <view v-else class="flex flex-col items-center p-3 text-center space-y-1.5">
+          <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E]">
+            <text class="i-carbon:camera text-2xl font-black" />
+          </view>
+          <text class="block text-sm text-[#1E1E1E] font-black">拍照或选取现场照片</text>
+          <text class="block text-xs text-[#756C5E] font-bold">需包含关键特征点以供判定</text>
+        </view>
+
+        <view v-if="formData.filePath" class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md">
+          <text class="i-carbon:renew text-xs" />
+          <text class="text-xs font-bold">重新选择</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 第二部分：定位 -->
+    <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
+      <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-2.5">
+        <view class="flex items-center gap-2">
+          <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+          <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+            定位 <text class="text-rose-500">*</text>
+          </text>
+        </view>
+        <view class="flex items-center gap-3">
+          <view
+            class="flex cursor-pointer items-center gap-1 text-sm text-[#B69171] font-bold transition-opacity active:opacity-70"
+            @click="locationPickerRef?.locate()"
+          >
+            <text class="i-carbon:location text-sm text-[#B69171]" />
+            <text>定位</text>
+          </view>
+          <view
+            class="flex cursor-pointer items-center gap-1 text-sm text-[#756C5E] font-medium transition-opacity active:opacity-70"
+            @click="locationPickerRef?.chooseLocation()"
+          >
+            <text class="i-carbon:map text-sm text-[#756C5E]" />
+            <text>全屏</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- wd-form 只负责标签与排版；必填与坐标校验仍在 handleSubmit 显式判断（见 location-guard 测试） -->
+      <wd-form :model="formData">
+        <form-location-picker
+          ref="locationPickerRef"
+          v-model:latitude="formData.latitude"
+          v-model:longitude="formData.longitude"
+          v-model:address="formData.address"
+          selected-text="已选择打卡定位"
+          unselected-text="点击地图选取坐标"
+        />
+      </wd-form>
+    </view>
+
+    <!-- 第三部分：提交按钮 -->
+    <view class="pt-2">
+      <wd-button
+        type="warning"
+        round
+        block
+        size="large"
+        custom-class="!font-bold !bg-[#B69171] !text-white shadow-xs"
+        :loading="loading"
+        :disabled="loading"
+        @click="handleSubmit"
+      >
+        提交作答
+      </wd-button>
+    </view>
+  </view>
+</template>

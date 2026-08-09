@@ -1,25 +1,19 @@
-# Router
+# 路由与导航守卫 (`src/router`)
 
-`src/router` 不是 VueRouter。uni-app 页面导航由 `pages/`、`subPages/`、生成的 `src/pages.json` 和 `uni.navigateTo` / `uni.switchTab` 驱动。
+本目录定义 UniApp 项目路由跳转常量、拦截守卫与登录控制逻辑。
 
-这个目录只负责导航守卫：
+---
 
-- `auth.ts`：登录策略、登录页路径、受守卫控制的路径列表。
-- `guard.ts`：通过 `uni.addInterceptor` 注册 `navigateTo`、`redirectTo`、`reLaunch`、`switchTab` 守卫。
+## 🛠️ 路由工作机制
 
-## 登录策略
+1. **约定式路由**：
+   - 使用 `@uni-helper/vite-plugin-uni-pages` 插件。在页面文件 (`pages/*.vue` 或 `subPages/*.vue`) 中通过 `definePage` 块定义路由与页面配置。
+   - **禁止手动修改 `src/pages.json`**，该文件由 Vite 编译时自动生成。
+   - 自动生成的路由类型保存在 `src/types/uni-pages.d.ts` 中。
 
-`LOGIN_STRATEGY` 支持两种模式：
+2. **跳转常量集中管理 (`routes.ts`)**：
+   - 包含主包与分包页面的枚举及强类型跳转路径方法，避免在业务代码中硬编码字符串 URL。
 
-- `DEFAULT_NO_NEED_LOGIN`：页面默认公开访问，`EXCLUDE_LOGIN_PATH_LIST` 中的路径需要登录。
-- `DEFAULT_NEED_LOGIN`：页面默认需要登录，`EXCLUDE_LOGIN_PATH_LIST` 中的路径公开访问。
-
-页面也可以在 `definePage` 中设置 `excludeLoginPath`，它会被合并进 `EXCLUDE_LOGIN_PATH_LIST`。
-
-当前登录页是 `AppRoute.AuthLogin`，实际路径为 `/subPages/auth/login`。
-
-## 平台差异
-
-小程序构建中，`LOGIN_PAGE_ENABLE_IN_MP = false` 表示跳过 H5 登录页守卫，由平台登录流程处理授权。
-
-TabBar 当前项同步在 `guard.ts` 中处理；TabBar 配置和渲染仍然归 `src/tabbar` 管理。
+3. **导航守卫与登录策略 (`index.ts`)**：
+   - 挂载 `uni.navigateTo` / `uni.redirectTo` 拦截器。
+   - 未登录状态访问需鉴权页面时，阻断跳转并重定向至登录 Modal / 登录页面。

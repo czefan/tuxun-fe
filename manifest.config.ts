@@ -18,6 +18,9 @@ const {
   VITE_WX_APPID,
   VITE_APP_PUBLIC_BASE,
   VITE_FALLBACK_LOCALE,
+  VITE_AMAP_KEY,
+  VITE_AMAP_SECURITY_JSCODE,
+  VITE_AMAP_SERVICE_HOST,
 } = env
 const isProduction = getMode() === 'production'
 // console.log('manifest.config.ts env:', env)
@@ -32,7 +35,17 @@ export default defineManifestConfig({
   'locale': VITE_FALLBACK_LOCALE, // 'zh-Hans'
   'h5': {
     router: {
+      mode: 'history',
       base: VITE_APP_PUBLIC_BASE,
+    },
+    sdkConfigs: {
+      maps: {
+        amap: {
+          key: VITE_AMAP_KEY || '',
+          securityJsCode: VITE_AMAP_SECURITY_JSCODE || '',
+          serviceHost: VITE_AMAP_SERVICE_HOST || '',
+        },
+      },
     },
   },
   /* 微信小程序特有相关 */
@@ -53,6 +66,10 @@ export default defineManifestConfig({
     // styleIsolation: 'shared',
     usingComponents: true,
     // __usePrivacyCheck__: true,
+    permission: {
+      'scope.userLocation': { desc: '用于标注题目拍摄位置与提交作答坐标' },
+    },
+    requiredPrivateInfos: ['getLocation', 'chooseLocation'],
   },
   'uniStatistics': {
     enable: false,

@@ -1,26 +1,8 @@
-<template>
-  <view class="page-notice-detail safe-bottom-page bg-white p-30rpx pt-36rpx">
-    <view class="flex gap-22rpx border-0 border-b border-[#eeeeee] border-solid bg-white pb-30rpx">
-      <wd-avatar text="官" size="88rpx" :bg-color="BRAND_PRIMARY_COLOR" color="#1f1b14" />
-      <view class="min-w-0 flex-1">
-        <text class="mb-10rpx block text-22rpx text-[#b98200] font-800 tracking-0">官方通知</text>
-        <text class="block text-38rpx text-[#1f1b14] font-900 leading-[1.25]">{{ title }}</text>
-        <text class="mt-12rpx block text-24rpx text-[#8b8b8b]">{{ time }}</text>
-      </view>
-    </view>
-
-    <view class="mt-30rpx bg-white p-0">
-      <text class="u-paragraph">{{ content }}</text>
-    </view>
-  </view>
-</template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getNoticeById } from '@/features/notice'
-import { getNoticeDetailContentById } from './features'
-import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
+import { useAnnouncementDetail } from '@/features/notification/query'
+import { previewImage } from '@/utils/image-preview'
 
 definePage({
   style: {
@@ -28,36 +10,47 @@ definePage({
   },
 })
 
-const title = ref('消息详情')
-const time = ref('')
-const content = ref('暂无详情内容。')
+const announcementId = ref(0)
+const { data: detail, isLoading: loading } = useAnnouncementDetail(() => announcementId.value)
 
 onLoad((query) => {
-  const rawId = Number(query?.id)
-  const notice = Number.isFinite(rawId) ? getNoticeById(rawId) : undefined
-  const detailContent = Number.isFinite(rawId) ? getNoticeDetailContentById(rawId) : ''
-
-  if (Number.isFinite(rawId)) {
-    try {
-      const ids = uni.getStorageSync('tuxun_read_notices')
-      const readNoticeIds = Array.isArray(ids) ? ids : []
-      if (!readNoticeIds.includes(rawId)) {
-        readNoticeIds.push(rawId)
-        uni.setStorageSync('tuxun_read_notices', readNoticeIds)
-      }
-    }
-    catch (e) {
-      // ignore
-    }
-  }
-
-  if (notice) {
-    title.value = notice.title
-    time.value = notice.time
-  }
-
-  if (detailContent) {
-    content.value = detailContent
+  if (typeof query?.id === 'string') {
+    announcementId.value = Number(query.id)
   }
 })
 </script>
+
+<template>
+  <view class="page-notice-detail safe-bottom-page box-border bg-[#F1DFC5] px-4 pt-6">
+    <!-- 公告详情：版心居中排版 -->
+    <view v-if="detail" class="mx-auto max-w-xl space-y-5">
+      <!-- 标题与时间 -->
+      <view class="border-b border-[#B69171]/40 pb-4 space-y-2">
+        <text class="block text-2xl text-[#1E1E1E] font-extrabold leading-snug tracking-tight">{{ detail.title }}</text>
+        <text class="font-num block text-sm text-[#756C5E] font-medium tracking-wide">{{ detail.createdAt }}</text>
+      </view>
+
+      <!-- 升级字号的正文内容 -->
+      <view class="text-base text-[#26221F] leading-relaxed tracking-normal">
+        <text class="block whitespace-pre-wrap leading-relaxed">{{ detail.content }}</text>
+      </view>
+
+      <!-- 通知配图 (居中展示) -->
+      <view v-if="detail.image?.originUrl" class="w-full flex justify-center pt-2">
+        <wd-img
+          custom-class="w-full rounded-2xl bg-stone-100 overflow-hidden shadow-xs"
+          :src="detail.image.originUrl"
+          lazy-load
+          mode="widthFix"
+          width="100%"
+          :style="{ aspectRatio: `${detail.image.width} / ${detail.image.height}` }"
+          @click="previewImage(detail.image.originUrl)"
+        />
+      </view>
+    </view>
+
+    <view v-else-if="!loading" class="py-20">
+      <wd-empty icon="no-result" tip="未找到相关通知" />
+    </view>
+  </view>
+</template>

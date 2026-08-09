@@ -1,10 +1,6 @@
-import { useUserStore } from '@/store/user'
-import { stringifyQuery } from '@/utils/queryString'
-import { getEnvBaseUrl } from './env'
+import { useAuthStore } from '@/store/auth'
+import { stringifyQuery } from '@/utils/query-string'
 import type { CustomRequestOptions } from './types'
-
-// 请求基准地址
-const baseUrl = getEnvBaseUrl()
 
 // 拦截器配置
 const httpInterceptor = {
@@ -22,36 +18,17 @@ const httpInterceptor = {
         }
       }
     }
-    // 非 http 开头需拼接地址
-    if (!options.url.startsWith('http')) {
-      // #ifdef H5
-      if (JSON.parse(import.meta.env.VITE_APP_PROXY_ENABLE)) {
-        // 自动拼接代理前缀
-        options.url = import.meta.env.VITE_APP_PROXY_PREFIX + options.url
-      }
-      else {
-        options.url = baseUrl + options.url
-      }
-      // #endif
-      // 非H5正常拼接
-      // #ifndef H5
-      options.url = baseUrl + options.url
-      // #endif
-      // TIPS: 如果需要对接多个后端服务，也可以在这里处理，拼接成所需要的地址
-    }
     // 1. 请求超时
     options.timeout = 60000 // 60s
-    // 2. （可选）添加小程序端请求头标识
-    options.header = {
-      ...options.header,
+    // 2. 跨端 Session/Cookie 鉴权
+    const authStore = useAuthStore()
+    const headers: Record<string, string> = { ...options.header }
+    if (options.auth !== false && authStore.sessionId) {
+      headers['X-Session-Id'] = authStore.sessionId
     }
-    // 3. 添加 token 请求头标识
-    const userStore = useUserStore()
-    const token = userStore.token
-
-    if (options.auth !== false && token) {
-      options.header.Authorization = `Bearer ${token}`
-    }
+    options.header = headers
+    // 3. Session/Cookie 鉴权。H5 跨域调试时需要携带 Cookie。
+    ;(options as CustomRequestOptions & { withCredentials?: boolean }).withCredentials = options.auth !== false
     return options
   },
 }

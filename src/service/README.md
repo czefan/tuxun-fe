@@ -1,9 +1,12 @@
-# Service
+# 网络服务层 (`src/service`)
 
-`src/service` 是业务请求的唯一入口。
+本目录管理 `tuxun-fe` 项目的网络 API 客户端、接口契约类型与底层 HTTP 请求库。
 
-- `api/`：按业务模块拆分接口方法。
-- `api/types.ts`：API 模块共享的分页等通用接口类型。
-- `request/`：封装 `uni.request` / `uni.uploadFile`、拦截器、OpenAPI adapter 和请求类型。
+---
 
-不要在这里放 fixtures、页面私有逻辑或展示层 adapter。共享领域数据放 `src/features/*`，页面私有逻辑放页面自己的 `features` 目录。
+## 📂 子目录职责
+
+- **`api/`**：按业务模块导出的 API 接口客户端函数。
+- **`contract/`**：`schema.d.ts` OpenAPI 自动生成的强类型声明。
+- **`request/`**：底层 `uni.request` 适配器与统一请求/响应拦截器。
+- **`query/`**：全局 TanStack Vue Query 的 Query Key 工厂管理（`keys.ts`）。

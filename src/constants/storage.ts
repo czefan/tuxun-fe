@@ -8,9 +8,18 @@ export const StorageKey = {
   OAuthRedirectAttempts: 'oauth_redirect_attempts',
   PendingActions: 'pending_actions',
   EnvNamespaceFingerprint: 'env_namespace_fingerprint',
+  ReadNoticeIds: 'tuxun_read_notices',
 } as const
 
-export type StorageKeyValue = (typeof StorageKey)[keyof typeof StorageKey]
+/**
+ * 搜索历史按 scope 分键存放，键名是 `searchHistory:<scope>`。
+ * 走前缀而不是逐个枚举，是为了新增 scope 时不用回来改这里。
+ */
+export const SearchHistoryKeyPrefix = 'searchHistory:'
+
+export function getSearchHistoryKey(scope: string) {
+  return `${SearchHistoryKeyPrefix}${scope}`
+}
 
 export const AuthCleanupStorageKeys = [
   StorageKey.Token,
@@ -21,4 +30,5 @@ export const AuthCleanupStorageKeys = [
   StorageKey.OAuthRedirectUrl,
   StorageKey.OAuthRedirectAttempts,
   StorageKey.PendingActions,
+  StorageKey.ReadNoticeIds,
 ] as const

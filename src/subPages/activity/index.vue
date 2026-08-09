@@ -1,141 +1,193 @@
-<template>
-  <view class="page-activity safe-bottom-page--fixed-bar bg-[#f6f4ef] p-[26rpx_24rpx_0]">
-    <view class="flex items-start justify-between gap-18rpx p-[2rpx_6rpx_20rpx]">
-      <view class="min-w-0 flex-1">
-        <text class="block text-36rpx text-[#1f1b14] font-900 leading-[1.2em]">{{ activityTitle }}</text>
-        <text class="mt-8rpx block truncate text-24rpx text-[#81786c] leading-[1.35em]">{{ activitySubtitle }}</text>
-      </view>
-      <view class="activity-search-button u-circle-btn" @tap="goSearch">
-        <wd-icon name="search-line" color="#1f1b14" size="30rpx" />
-      </view>
-    </view>
-
-    <view v-if="searchKeyword" class="m-[0_4rpx_18rpx] flex items-center gap-16rpx">
-      <wd-search
-        :model-value="searchKeyword"
-        hide-cancel
-        custom-class="tx-search"
-        placeholder-left
-        disabled
-        @click="goSearch"
-      />
-      <view class="box-border h-64rpx w-64rpx flex flex-shrink-0 cursor-pointer items-center justify-center border border-[rgba(31,27,20,0.08)] rounded-full border-solid bg-white" @tap="clearSearch">
-        <wd-icon name="close" color="#1f1b14" size="28rpx" />
-      </view>
-    </view>
-
-    <sort-tabs v-model="sortCurrent" />
-
-    <activity-waterfall-list
-      nomore-text="该期活动题目已加载"
-      :sort-type="sortType"
-      :search-keyword="searchKeyword"
-      answer-ended
-    />
-
-    <search-overlay
-      v-model:visible="searchVisible"
-      scope="activity"
-      :title="`搜索${activityTitle}`"
-      @search="handleSearch"
-    />
-
-    <MainTabBar
-      v-if="customTabBarVisible"
-      :current-path="AppRoute.History"
-      @reselect="goHistory"
-    />
-  </view>
-</template>
-
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-
-import { useTabBarFeedback } from '@/composables/useTabBarFeedback'
-import { AppRoute } from '@/router/routes'
-import { pastActivityList } from '@/features/history'
-import MainTabBar from '@/tabbar/MainTabBar.vue'
+import { computed, nextTick, ref } from 'vue'
+import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { useInfinitePhotoList } from '@/features/photo/query'
+import { useAuth } from '@/features/user/composables/use-auth'
+import PhotoWaterfall from '@/features/photo/components/photo-waterfall.vue'
+import { useViewTransition } from '@/composables/use-view-transition'
+import type { PhotoCardVM } from '@/features/photo/types'
 
 definePage({
+  type: 'home',
   style: {
     navigationBarTitleText: '%page.activity%',
+    enablePullDownRefresh: true,
   },
 })
 
-type SortType = 'hot' | 'latest'
-
 const activityTitle = ref('活动主页')
-const activityId = ref('')
-const activityPeriod = ref('')
-const activityCount = ref<number | null>(null)
-const sortCurrent = ref(0)
-const searchVisible = ref(false)
+const activityId = ref<number>(0)
+const sortCurrent = ref('最热')
+const sortOptions = ['最热', '最新']
+
+const statusCurrent = ref('全部')
+const statusOptions = ['全部', '未破解', '已破解']
+
 const searchKeyword = ref('')
 
-const sortType = computed<SortType>(() => (sortCurrent.value === 0 ? 'hot' : 'latest'))
-const { customTabBarVisible } = useTabBarFeedback(goHistory)
-const activitySubtitle = computed(() => {
-  const meta: string[] = []
-
-  if (activityPeriod.value) {
-    meta.push(activityPeriod.value)
-  }
-
-  if (activityCount.value !== null) {
-    meta.push(`${activityCount.value} 题`)
-  }
-
-  return meta.length > 0 ? meta.join(' · ') : '该期题目'
+const sortType = computed(() => {
+  if (sortCurrent.value === '最热')
+    return 'hot'
+  return 'created_at'
 })
 
-onLoad((query) => {
-  if (typeof query?.id === 'string') {
-    activityId.value = query.id
+const { isLoggedIn } = useAuth()
+
+const solvedParam = computed(() => {
+  if (!isLoggedIn()) {
+    return undefined
   }
-
-  const activity = pastActivityList.find(item => String(item.id) === activityId.value)
-
-  if (activity) {
-    activityTitle.value = activity.title
-    activityPeriod.value = activity.period
-    activityCount.value = activity.count
+  if (statusCurrent.value === '未破解') {
+    return false
   }
-  else {
-    if (typeof query?.title === 'string' && query.title) {
-      activityTitle.value = decodeURIComponent(query.title)
-    }
-
-    if (typeof query?.period === 'string' && query.period) {
-      activityPeriod.value = decodeURIComponent(query.period)
-    }
-
-    if (typeof query?.count === 'string' && query.count) {
-      const count = Number(query.count)
-      activityCount.value = Number.isFinite(count) ? count : null
-    }
+  if (statusCurrent.value === '已破解') {
+    return true
   }
-
-  uni.setNavigationBarTitle({
-    title: activityTitle.value,
-  })
+  return undefined
 })
 
-function goSearch() {
-  searchVisible.value = true
-}
+const {
+  data,
+  isPending,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  refetch,
+} = useInfinitePhotoList(computed(() => ({
+  activity_id: activityId.value || undefined,
+  keyword: searchKeyword.value || undefined,
+  sort_by: sortType.value,
+  solved: solvedParam.value,
+  page_size: 20,
+})))
 
-function handleSearch(keyword: string) {
-  searchKeyword.value = keyword
-}
+const photoList = computed<PhotoCardVM[]>(() => data.value?.pages.flatMap(page => page.list) ?? [])
 
-function clearSearch() {
-  searchKeyword.value = ''
-}
+onReachBottom(() => {
+  if (hasNextPage?.value && !isFetchingNextPage.value) {
+    fetchNextPage()
+  }
+})
 
-function goHistory() {
-  uni.switchTab({
-    url: AppRoute.History,
+onPullDownRefresh(async () => {
+  // 只重拉本页自己的列表。无参 invalidateQueries() 会失效全站查询——
+  // 下拉刷新首页不该把商城、通知、用户资料一起作废重拉。
+  await refetch()
+  uni.stopPullDownRefresh()
+})
+
+onLoad((options) => {
+  if (options?.id) {
+    activityId.value = Number(options.id)
+  }
+  if (options?.title) {
+    activityTitle.value = decodeURIComponent(options.title)
+  }
+  // 原生导航栏标题跟随进入的活动主题
+  uni.setNavigationBarTitle({ title: activityTitle.value })
+})
+
+const { navigateWithTransition } = useViewTransition()
+const openingPhotoId = ref<number | null>(null)
+
+async function handlePhotoOpen(item: PhotoCardVM) {
+  openingPhotoId.value = item.id
+  await nextTick()
+  await navigateWithTransition(`/subPages/question/detail?id=${item.id}`, () => {
+    openingPhotoId.value = null
   })
 }
+
+const filterVisible = ref(false)
 </script>
+
+<template>
+  <view class="page-activity safe-bottom-page bg-[#F1DFC5]">
+    <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
+    <view class="sticky top-[var(--window-top,0px)] z-20 box-border w-full bg-[#F1DFC5] px-1.5 py-1.5" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+      <view class="flex items-center gap-2">
+        <view class="min-w-0 flex-1">
+          <wd-search
+            v-model="searchKeyword"
+            placeholder="搜索活动题目..."
+            hide-cancel
+            custom-class="tx-search"
+            placeholder-left
+            @clear="searchKeyword = ''"
+          />
+        </view>
+        <view
+          class="shadow-2xs h-9 w-9 flex flex-shrink-0 cursor-pointer items-center justify-center border border-[#D3BA9F] rounded-full transition-transform active:scale-95"
+          :class="filterVisible ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+          @click="filterVisible = !filterVisible"
+        >
+          <text class="i-carbon:filter text-base" :class="filterVisible ? 'text-white' : 'text-[#B69171]'" />
+        </view>
+      </view>
+    </view>
+
+    <main class="box-border w-full px-1.5 pt-1.5 space-y-1.5">
+      <PhotoWaterfall
+        :opening-id="openingPhotoId"
+        :list="photoList"
+        :loading="isPending"
+        empty-text="该活动暂无题目"
+        @open="handlePhotoOpen"
+      />
+
+      <wd-loadmore
+        v-if="isFetchingNextPage"
+        :state="isFetchingNextPage ? 'loading' : undefined"
+        @reload="fetchNextPage"
+      />
+    </main>
+
+    <!-- 筛选从顶栏往下下拉弹出 Sheet (Top Dropdown Popup) -->
+    <wd-popup
+      v-model="filterVisible"
+      position="top"
+      :z-index="99"
+      custom-style="background: transparent;"
+      @close="filterVisible = false"
+    >
+      <view class="relative box-border w-full border-b border-[#D3BA9F] rounded-b-[24px] bg-[#F1DFC5] px-4 pb-5 pt-[calc(var(--status-bar-height,20px)+60px)] shadow-2xl space-y-4">
+        <!-- 右上角绝对定位关闭按钮 -->
+        <view class="absolute right-4 top-[calc(var(--status-bar-height,20px)+52px)] z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-[#B69171]/30 transition-transform active:scale-90" @click="filterVisible = false">
+          <wd-icon name="close" size="18px" color="#1E1E1E" />
+        </view>
+
+        <!-- 排序方式 -->
+        <view class="space-y-1.5">
+          <text class="text-xs text-[#756C5E] font-bold">排序方式</text>
+          <view class="grid grid-cols-2 gap-2">
+            <view
+              v-for="opt in sortOptions"
+              :key="opt"
+              class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
+              :class="sortCurrent === opt ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+              @click="sortCurrent = opt"
+            >
+              {{ opt }}
+            </view>
+          </view>
+        </view>
+
+        <!-- 破解状态 (包含本人是否已破解) -->
+        <view class="space-y-1.5">
+          <text class="text-xs text-[#756C5E] font-bold">破解状态</text>
+          <view class="grid grid-cols-3 gap-2">
+            <view
+              v-for="st in statusOptions"
+              :key="st"
+              class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
+              :class="statusCurrent === st ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+              @click="statusCurrent = st"
+            >
+              {{ st }}
+            </view>
+          </view>
+        </view>
+      </view>
+    </wd-popup>
+  </view>
+</template>

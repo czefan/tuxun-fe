@@ -1,187 +1,10 @@
-<template>
-  <view
-    class="page-my safe-bottom-page--fixed-bar bg-white px-30rpx pt-28rpx"
-    :class="{ 'page-my--modal-open': editNameVisible || editAvatarVisible }"
-  >
-    <view class="page-my__header flex flex-col items-center pb-64rpx pt-34rpx">
-      <view
-        class="profile-avatar m-0 h-132rpx w-132rpx flex items-center justify-center overflow-hidden rounded-full bg-[#fdf3d7] p-0 leading-normal after:border-none"
-        @tap="onAvatarTap"
-      >
-        <image
-          class="h-full w-full"
-          :src="userStore.userAvatar"
-          mode="aspectFill"
-        />
-      </view>
-      <view
-        class="profile-name-wrapper mt-30rpx flex cursor-pointer items-end justify-center gap-12rpx transition-all duration-150 ease-out active:(scale-97 opacity-80)"
-        @tap="onNicknameTap"
-      >
-        <text class="profile-name block max-w-480rpx truncate text-36rpx text-[#161616] font-900 leading-[1.2em]">
-          {{ userStore.userInfo?.nickname || '未登录' }}
-        </text>
-        <wd-icon
-          v-if="userStore.isLoggedIn()"
-          name="edit"
-          color="#a09688"
-          size="28rpx"
-          class="profile-name-edit mb-6rpx self-end"
-        />
-      </view>
-      <wd-button
-        v-if="!userStore.isLoggedIn()"
-        type="warning"
-        round
-        size="small"
-        custom-style="margin-top: 24rpx; width: 136rpx;"
-        @click="handleLogin"
-      >
-        登录
-      </wd-button>
-      <button
-        v-else
-        class="profile-logout mt-24rpx box-border h-56rpx w-156rpx flex items-center justify-center border-0 rounded-full bg-[#f8f6f2] p-0 text-24rpx text-[#8f8679] font-800 after:border-none"
-        @tap="handleLogout"
-      >
-        退出登录
-      </button>
-    </view>
-
-    <view
-      v-for="group in menuGroups"
-      :key="group.label"
-      class="my-group mb-34rpx"
-    >
-      <text class="my-group__label mb-8rpx block text-24rpx text-[#8b8b8b] font-700">
-        {{ group.label }}
-      </text>
-
-      <view
-        v-for="(item, index) in group.items"
-        :key="item.path"
-        class="my-row flex cursor-pointer items-start gap-22rpx bg-white pt-22rpx"
-        @tap="goPage(item)"
-      >
-        <view
-          class="my-row__icon mt-4rpx h-64rpx w-64rpx flex flex-shrink-0 items-center justify-center rounded-14rpx"
-          :style="{ background: item.color }"
-        >
-          <wd-icon :name="item.icon" color="#ffffff" size="30rpx" />
-        </view>
-        <view
-          class="my-row__main min-w-0 flex-1 pb-22rpx"
-          :class="index === group.items.length - 1 ? 'border-b-0' : 'border-b-1rpx border-b-solid border-[#eeeeee]'"
-        >
-          <text class="my-row__title block truncate text-32rpx text-[#161616] font-900">
-            {{ item.title }}
-          </text>
-          <text class="my-row__summary mt-10rpx block truncate text-27rpx text-[#7f7f7f] leading-[1.4em]">
-            {{ item.desc }}
-          </text>
-        </view>
-        <view class="my-row__right min-w-46rpx flex flex-shrink-0 items-center self-stretch justify-end pb-22rpx -translate-y-4rpx">
-          <text v-if="item.value" class="my-row__value block text-26rpx text-[#9b7621] font-800">
-            {{ item.value }}
-          </text>
-          <wd-icon v-else name="right" color="#c8c1b8" size="26rpx" />
-        </view>
-      </view>
-    </view>
-
-    <!-- 修改昵称弹窗 -->
-    <view v-if="editNameVisible" class="fixed inset-0 z-[999] box-border flex items-start justify-center bg-[#211b14]/48 pt-220rpx backdrop-blur-8px" @tap="closeEditName">
-      <view class="box-border w-580rpx rounded-28rpx bg-white p-[44rpx_40rpx] shadow-[0_20rpx_60rpx_rgba(31,27,20,0.16)] animate-scale-in" @tap.stop>
-        <text class="mb-34rpx block text-center text-32rpx text-[#1f1b14] font-900">修改用户名</text>
-        <!-- #ifdef MP-WEIXIN -->
-        <input
-          v-model="newNickname"
-          type="nickname"
-          class="box-border h-88rpx w-full border border-[rgba(31,27,20,0.08)] rounded-18rpx border-solid bg-[#fcfbfa] px-24rpx text-28rpx text-[#1f1b14]"
-          placeholder="请输入新的用户名"
-          :maxlength="16"
-          :adjust-position="false"
-          :cursor-spacing="0"
-          focus
-          @focus="keepNicknameModalPosition"
-          @blur="onNicknameBlur"
-          @input="onNicknameInput"
-          @keyboardheightchange="keepNicknameModalPosition"
-        >
-        <!-- #endif -->
-        <!-- #ifndef MP-WEIXIN -->
-        <input
-          v-model="newNickname"
-          type="text"
-          class="box-border h-88rpx w-full border border-[rgba(31,27,20,0.08)] rounded-18rpx border-solid bg-[#fcfbfa] px-24rpx text-28rpx text-[#1f1b14]"
-          placeholder="请输入新的用户名"
-          :maxlength="16"
-          :adjust-position="false"
-          :cursor-spacing="0"
-          focus
-          @focus="keepNicknameModalPosition"
-          @keyboardheightchange="keepNicknameModalPosition"
-        >
-        <!-- #endif -->
-        <view class="mt-40rpx flex gap-20rpx">
-          <button class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-[#f5f4ef] p-0 text-26rpx text-[#8f8679] font-900 leading-80rpx after:border-0" @tap="closeEditName">
-            取消
-          </button>
-          <button class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 leading-80rpx after:border-0" @tap="confirmEditName">
-            保存
-          </button>
-        </view>
-      </view>
-    </view>
-
-    <!-- 修改头像弹窗 -->
-    <view v-if="editAvatarVisible" class="fixed inset-0 z-[999] box-border flex items-center justify-center bg-[#211b14]/48 backdrop-blur-8px" @tap="closeEditAvatar">
-      <view class="box-border w-580rpx rounded-28rpx bg-white p-[44rpx_40rpx] shadow-[0_20rpx_60rpx_rgba(31,27,20,0.16)] animate-scale-in" @tap.stop>
-        <text class="mb-34rpx block text-center text-32rpx text-[#1f1b14] font-900">修改头像</text>
-        <view class="mb-40rpx text-center text-28rpx text-[#8f8679]">
-          是否修改您的用户头像？
-        </view>
-        <view class="flex gap-20rpx">
-          <button class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-[#f5f4ef] p-0 text-26rpx text-[#8f8679] font-900 leading-80rpx after:border-0" @tap="closeEditAvatar">
-            取消
-          </button>
-          <!-- #ifdef MP-WEIXIN -->
-          <button
-            class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 leading-80rpx after:border-0"
-            open-type="chooseAvatar"
-            @chooseavatar="onChooseAvatarWithClose"
-          >
-            确定
-          </button>
-          <!-- #endif -->
-          <!-- #ifndef MP-WEIXIN -->
-          <button
-            class="h-80rpx flex flex-1 items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 leading-80rpx after:border-0"
-            @tap="confirmEditAvatar"
-          >
-            确定
-          </button>
-          <!-- #endif -->
-        </view>
-      </view>
-    </view>
-  </view>
-</template>
-
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useAvatarEditor } from './composables/useAvatarEditor'
-import { isMockLoginEnabled, useAuth } from '@/composables/useAuth'
-import { useTimer } from '@/composables/useTimer'
-import { useUserStore } from '@/store/user'
-import { getMyMenuGroups } from './features'
-import type { MyMenuItem } from './features'
-
-interface InputValueEvent {
-  detail?: {
-    value?: string
-  }
-}
+import { ref } from 'vue'
+import { useUserStore } from '@/features/user'
+import { useAuth } from '@/features/user/composables/use-auth'
+import { useUpdateAvatar, useUpdateNickname, useUserInfo } from '@/features/user/query'
+import { smartCompressImage } from '@/utils/image-compress'
+import { AppRoute } from '@/router/routes'
 
 definePage({
   style: {
@@ -190,120 +13,366 @@ definePage({
 })
 
 const userStore = useUserStore()
-const { ensureLogin, setMockLogin, startOAuthLogin } = useAuth()
-const timer = useTimer()
+const { isLoggedIn, loginDirectly, logout } = useAuth()
 
-const menuGroups = computed(() => getMyMenuGroups(userStore.userInfo?.points ?? 0))
-const {
-  editAvatarVisible,
-  onAvatarTap,
-  closeEditAvatar,
-  confirmEditAvatar,
-  onChooseAvatarWithClose,
-} = useAvatarEditor()
-
-// 昵称修改状态
 const editNameVisible = ref(false)
+const editAvatarVisible = ref(false)
 const newNickname = ref('')
 
-function onNicknameBlur(e: InputValueEvent) {
-  if (e.detail && typeof e.detail.value === 'string') {
-    newNickname.value = e.detail.value
-  }
-}
+const { data: profileInfo } = useUserInfo({ silentAuth: true, enabled: () => isLoggedIn() })
+const nicknameMutation = useUpdateNickname()
+const avatarMutation = useUpdateAvatar()
 
-function onNicknameInput(e: InputValueEvent) {
-  if (e.detail && typeof e.detail.value === 'string') {
-    newNickname.value = e.detail.value
-  }
-}
-
-function keepNicknameModalPosition() {
-  const restoreDelays = [0, 50, 150, 300]
-
-  restoreDelays.forEach((delay) => {
-    timer.setTimeout(() => {
-      uni.pageScrollTo({
-        scrollTop: 0,
-        duration: 0,
-      })
-    }, delay)
-  })
-}
-
-function onNicknameTap() {
-  if (!userStore.isLoggedIn()) {
-    return
-  }
-  newNickname.value = userStore.userInfo?.nickname || ''
-  editNameVisible.value = true
-}
-
-function closeEditName() {
-  editNameVisible.value = false
-}
-
-function confirmEditName() {
-  const name = newNickname.value.trim()
-  if (!name) {
-    uni.showToast({
-      title: '用户名不能为空',
-      icon: 'none',
-    })
-    return
-  }
-  userStore.updateUserInfo({ nickname: name })
-  uni.showToast({
-    title: '修改成功',
-    icon: 'success',
-  })
-  editNameVisible.value = false
-}
-
-async function handleLogin() {
-  if (isMockLoginEnabled) {
-    setMockLogin()
-  }
-  else {
-    await startOAuthLogin()
-    return
-  }
-
-  uni.showToast({
-    title: '登录成功',
-    icon: 'success',
-  })
-}
+const menuGroups = [
+  {
+    title: '活动',
+    items: [
+      { title: '我的投稿', route: AppRoute.MyContributions, icon: 'i-carbon:camera', color: 'bg-amber-500/10 text-amber-600' },
+      { title: '我的答题', route: AppRoute.MyAnswers, icon: 'i-carbon:task', color: 'bg-emerald-500/10 text-emerald-600' },
+    ],
+  },
+  {
+    title: '积分',
+    items: [
+      { title: '积分明细', route: AppRoute.MyPoints, icon: 'i-carbon:currency-dollar', color: 'bg-indigo-500/10 text-indigo-600' },
+      { title: '积分商城', route: AppRoute.Mall, icon: 'i-carbon:store', color: 'bg-purple-500/10 text-purple-600' },
+    ],
+  },
+  {
+    title: '更多',
+    items: [
+      { title: '帮助中心', route: AppRoute.MyHelp, icon: 'i-carbon:help', color: 'bg-teal-500/10 text-teal-600' },
+      { title: '意见反馈', route: AppRoute.MyFeedback, icon: 'i-carbon:chat', color: 'bg-blue-500/10 text-blue-600' },
+      { title: '关于我们', route: AppRoute.MyAbout, icon: 'i-carbon:information', color: 'bg-rose-500/10 text-rose-600' },
+    ],
+  },
+]
 
 function handleLogout() {
   uni.showModal({
-    title: '退出登录',
-    content: '确认退出当前账号吗？',
+    title: '提示',
+    content: '确定要退出登录吗？',
+    confirmText: '确定退出',
     cancelText: '取消',
-    confirmText: '退出',
-    confirmColor: '#d96a78',
-    success: (res) => {
+    confirmColor: '#EF4444',
+    success: async (res) => {
       if (!res.confirm) {
         return
       }
-
-      userStore.logout()
-      editNameVisible.value = false
+      const { serverCleared } = await logout()
       uni.showToast({
-        title: '已退出登录',
-        icon: 'success',
+        title: serverCleared ? '已退出登录' : '已退出登录（服务端会话清除失败）',
+        icon: 'none',
       })
     },
   })
 }
 
-async function goPage(item: MyMenuItem) {
-  if (item.requiresLogin && !(await ensureLogin())) {
-    return
-  }
+function openEditNickname() {
+  if (!isLoggedIn())
+    return loginDirectly()
+  newNickname.value = profileInfo.value?.nickname || userStore.userInfo?.nickname || ''
+  editNameVisible.value = true
+}
 
-  uni.navigateTo({
-    url: item.path,
+const selectedAvatarPath = ref('')
+
+function openEditAvatar() {
+  if (!isLoggedIn())
+    return loginDirectly()
+  selectedAvatarPath.value = ''
+  editAvatarVisible.value = true
+}
+
+function confirmNickname() {
+  if (!newNickname.value.trim())
+    return uni.showToast({ title: '昵称不能为空', icon: 'none' })
+  if (newNickname.value.length > 10)
+    return uni.showToast({ title: '昵称最多10个字符', icon: 'none' })
+
+  nicknameMutation.mutate(newNickname.value.trim(), {
+    onSuccess: (res) => {
+      userStore.updateUserInfo({ nickname: res.nickname, nicknameEditsRemaining: res.nicknameEditsRemaining })
+      editNameVisible.value = false
+      uni.showToast({ title: '修改成功', icon: 'none' })
+    },
   })
 }
+
+function startChooseAvatar() {
+  const remaining = profileInfo.value?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining
+  if (remaining !== undefined && remaining <= 0) {
+    return uni.showToast({ title: '头像修改次数已用尽', icon: 'none' })
+  }
+
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+    success: (res) => {
+      if (res.tempFilePaths[0]) {
+        selectedAvatarPath.value = res.tempFilePaths[0]
+      }
+    },
+  })
+}
+
+function handleChooseAvatar(e: any) {
+  if (e.detail?.avatarUrl) {
+    selectedAvatarPath.value = e.detail.avatarUrl
+  }
+}
+
+function confirmUpdateAvatar() {
+  if (!selectedAvatarPath.value) {
+    return uni.showToast({ title: '请先选择新头像', icon: 'none' })
+  }
+  void handleAvatarUpload(selectedAvatarPath.value)
+}
+
+async function handleAvatarUpload(filePath: string) {
+  const compressedPath = await smartCompressImage(filePath)
+  avatarMutation.mutate(compressedPath, {
+    onSuccess: (res) => {
+      userStore.updateUserInfo({ avatar: res.avatarUrl, avatarEditsRemaining: res.avatarEditsRemaining })
+      selectedAvatarPath.value = ''
+      editAvatarVisible.value = false
+      uni.showToast({ title: '头像更新成功', icon: 'none' })
+    },
+  })
+}
+
+function navigateTo(url: string) {
+  if (!isLoggedIn()) {
+    // 未登录用户依然允许访问页面（通过页面内部去登录卡片引导登录）
+  }
+  uni.navigateTo({ url })
+}
 </script>
+
+<template>
+  <view class="page-my safe-bottom-page--fixed-bar bg-[#F1DFC5] px-3 pt-3 space-y-4">
+    <!-- 用户身份单层精质通行证卡片 (Design-Spec #D3BA9F Passport Hero Card) -->
+    <view class="shadow-2xs overflow-hidden border border-[#B69171]/40 rounded-[18px] bg-[#D3BA9F] p-4.5 text-[#1E1E1E]">
+      <view v-if="isLoggedIn()" class="space-y-2">
+        <view class="flex items-center justify-between">
+          <view class="flex items-center gap-3.5">
+            <view class="relative cursor-pointer transition-transform active:scale-95" @click="openEditAvatar">
+              <wd-img
+                custom-class="h-16 w-16 rounded-full bg-[#D9D9D9] object-cover ring-2 ring-[#B69171] shadow-xs"
+                :src="profileInfo?.avatar || userStore.userAvatar"
+                lazy-load
+                mode="aspectFill"
+                round
+                width="128rpx"
+                height="128rpx"
+              />
+              <view class="shadow-xs absolute h-5 w-5 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E] ring-1 ring-white -bottom-0.5 -right-0.5">
+                <text class="i-carbon:camera text-3xs font-black" />
+              </view>
+            </view>
+
+            <view class="space-y-1">
+              <!-- 点击昵称直接弹出修改 -->
+              <view class="inline-flex cursor-pointer items-center gap-1.5 active:opacity-75" @click="openEditNickname">
+                <text class="text-xl text-[#1E1E1E] font-black tracking-tight">{{ profileInfo?.nickname || userStore.userInfo?.nickname }}</text>
+                <wd-icon name="edit" size="14px" color="#756C5E" />
+                <view class="shadow-2xs rounded-full bg-[#F9DF95] px-2.5 py-0.5 text-[10px] text-[#1E1E1E] font-black">
+                  {{ (profileInfo?.isAdmin || userStore.userInfo?.isAdmin) ? '管理员' : `Level ${(profileInfo?.level || userStore.userInfo?.level || 1)}` }}
+                </view>
+              </view>
+              <text class="font-num block text-sm text-[#756C5E] font-bold">ID: {{ profileInfo?.id || userStore.userInfo?.id || profileInfo?.netid || userStore.userInfo?.netid }}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 总积分 (向上靠紧，留白缩减) -->
+        <view class="flex items-center justify-end border-t border-[#B69171]/30 pt-1.5">
+          <view class="flex cursor-pointer items-center gap-1 active:opacity-75" @click="navigateTo(AppRoute.MyPoints)">
+            <text class="text-xs text-[#756C5E] font-medium">总积分:</text>
+            <text class="font-num ml-0.5 text-base text-[#1E1E1E] font-bold">{{ profileInfo?.points ?? userStore.userInfo?.points ?? 0 }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view v-else class="flex items-center justify-between py-1">
+        <view class="flex items-center gap-3.5">
+          <view class="shadow-xs h-12 w-12 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E]">
+            <wd-icon name="user" size="24px" color="#1E1E1E" />
+          </view>
+          <view>
+            <text class="block text-lg text-[#1E1E1E] font-black">未登录账户</text>
+            <text class="mt-0.5 block text-xs text-[#756C5E] font-bold">登录解锁校园机位与积分探索</text>
+          </view>
+        </view>
+        <wd-button size="small" round type="warning" custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] shadow-xs" @click="loginDirectly">
+          去登录
+        </wd-button>
+      </view>
+    </view>
+
+    <!-- 功能列表：按 活动 / 积分 / 更多 3 大板块区分与呈现 -->
+    <view class="space-y-4">
+      <view
+        v-for="group in menuGroups"
+        :key="group.title"
+        class="space-y-1"
+      >
+        <text class="block px-1 text-xs text-[#756C5E] font-black tracking-wider font-mono uppercase">
+          {{ group.title }}
+        </text>
+
+        <view class="border-y border-[#B69171]">
+          <view
+            v-for="(item, index) in group.items"
+            :key="item.title"
+            class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-75"
+            :class="index > 0 ? 'border-t border-[#B69171]' : ''"
+            @click="navigateTo(item.route)"
+          >
+            <view class="flex items-center gap-3.5">
+              <view class="h-8 w-8 flex items-center justify-center rounded-full bg-[#B69171]/15 text-[#B69171]">
+                <text class="text-lg font-bold" :class="item.icon" />
+              </view>
+              <text class="text-sm text-[#1E1E1E] font-black tracking-tight">{{ item.title }}</text>
+            </view>
+            <wd-icon name="arrow-right" size="14px" color="#756C5E" />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 退出登录按钮 -->
+    <view v-if="isLoggedIn()" class="pt-2">
+      <wd-button round block type="danger" size="large" custom-class="!font-bold shadow-xs" @click="handleLogout">
+        退出登录
+      </wd-button>
+    </view>
+
+    <!-- 修改昵称 Popup -->
+    <wd-popup v-model="editNameVisible" position="center" custom-style="background: transparent; width: 88vw; max-width: 620rpx; overflow: visible;" @close="editNameVisible = false">
+      <view class="box-border w-full border border-[#D3BA9F] rounded-[22px] bg-white p-5 shadow-xl space-y-4">
+        <!-- 标题栏 -->
+        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-3">
+          <view class="flex items-center gap-2">
+            <view class="h-4 w-1.5 rounded-full bg-[#F9DF95]" />
+            <text class="u-title-lg">修改个人昵称</text>
+          </view>
+          <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#F9DF95]/50 !text-[#854D0E] !border-0">
+            剩余 {{ profileInfo?.nicknameEditsRemaining ?? userStore.userInfo?.nicknameEditsRemaining ?? 0 }} 次
+          </wd-tag>
+        </view>
+
+        <!-- 输入框 -->
+        <view class="space-y-1">
+          <text class="block text-xs text-[#756C5E] font-bold">新昵称</text>
+          <wd-input
+            v-model="newNickname"
+            placeholder="请输入新昵称 (≤10字)"
+            :maxlength="10"
+            clearable
+            custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+          />
+        </view>
+
+        <!-- 操作按钮 -->
+        <view class="flex gap-3 pt-1">
+          <wd-button
+            class="flex-1"
+            round
+            size="medium"
+            custom-class="!bg-[#F8F6F2] !text-[#756C5E] !border !border-[#D3BA9F]/50 !font-bold"
+            @click="editNameVisible = false"
+          >
+            取消
+          </wd-button>
+          <wd-button
+            class="flex-1"
+            round
+            size="medium"
+            custom-class="!bg-[#F9DF95] !text-[#1E1E1E] !font-black shadow-xs active:scale-95 transition-transform"
+            :disabled="nicknameMutation.isPending.value"
+            :loading="nicknameMutation.isPending.value"
+            @click="confirmNickname"
+          >
+            保存修改
+          </wd-button>
+        </view>
+      </view>
+    </wd-popup>
+
+    <!-- 修改头像 Popup -->
+    <wd-popup v-model="editAvatarVisible" position="center" custom-style="background: transparent; width: 88vw; max-width: 620rpx; overflow: visible;" @close="editAvatarVisible = false">
+      <view class="box-border w-full border border-[#D3BA9F] rounded-[22px] bg-white p-5 shadow-xl space-y-4">
+        <!-- 标题栏 -->
+        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-3">
+          <view class="flex items-center gap-2">
+            <view class="h-4 w-1.5 rounded-full bg-[#F9DF95]" />
+            <text class="u-title-lg">修改个人头像</text>
+          </view>
+          <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#F9DF95]/50 !text-[#854D0E] !border-0">
+            剩余 {{ profileInfo?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining ?? 0 }} 次
+          </wd-tag>
+        </view>
+
+        <!-- 头像展示区 -->
+        <view class="flex justify-center py-2">
+          <view class="relative rounded-full p-1 ring-4 ring-[#F9DF95]/40">
+            <wd-img
+              lazy-load
+              custom-class="h-22 w-22 rounded-full bg-[#F8F6F2] object-cover ring-2 ring-[#F9DF95] shadow-sm"
+              :src="selectedAvatarPath || profileInfo?.avatar || userStore.userAvatar"
+              mode="aspectFill"
+              round
+              width="176rpx"
+              height="176rpx"
+            />
+          </view>
+        </view>
+
+        <!-- 操作区 -->
+        <view class="space-y-2.5">
+          <!-- #ifdef MP-WEIXIN -->
+          <button class="m-0 w-full border-none bg-transparent p-0 outline-none" open-type="chooseAvatar" @chooseavatar="handleChooseAvatar">
+            <wd-button round block size="medium" custom-class="!bg-[#F8F6F2] !text-[#1E1E1E] !border !border-[#D3BA9F]/60 !font-bold">
+              <template #icon>
+                <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
+              </template>
+              微信快捷选图
+            </wd-button>
+          </button>
+          <!-- #endif -->
+          <wd-button round block size="medium" custom-class="!bg-[#F8F6F2] !text-[#1E1E1E] !border !border-[#D3BA9F]/60 !font-bold" @click="startChooseAvatar">
+            <template #icon>
+              <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
+            </template>
+            选择图片
+          </wd-button>
+
+          <view class="flex gap-3 pt-1">
+            <wd-button
+              class="flex-1"
+              round
+              size="medium"
+              custom-class="!bg-[#F8F6F2] !text-[#756C5E] !border !border-[#D3BA9F]/50 !font-bold"
+              @click="editAvatarVisible = false"
+            >
+              取消
+            </wd-button>
+            <wd-button
+              class="flex-1"
+              round
+              size="medium"
+              custom-class="!bg-[#F9DF95] !text-[#1E1E1E] !font-black shadow-xs active:scale-95 transition-transform"
+              :disabled="!selectedAvatarPath || avatarMutation.isPending.value"
+              :loading="avatarMutation.isPending.value"
+              @click="confirmUpdateAvatar"
+            >
+              确认修改
+            </wd-button>
+          </view>
+        </view>
+      </view>
+    </wd-popup>
+  </view>
+</template>

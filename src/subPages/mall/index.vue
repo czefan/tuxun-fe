@@ -1,289 +1,402 @@
+<script setup lang="ts">
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { useExchangeGood, useInfiniteExchangeList, useInfiniteGoodsList } from '@/features/mall/query'
+import type { ExchangeRecordVM, GoodsVM } from '@/features/mall/types'
+import VerifyCodeQr from '@/features/mall/components/verify-code-qr.vue'
+import { useUserStore } from '@/features/user'
+import { useAuth } from '@/features/user/composables/use-auth'
+import { debounce } from '@/utils/debounce'
+
+definePage({
+  style: {
+    navigationBarTitleText: '%page.mall%',
+    enablePullDownRefresh: true,
+  },
+})
+
+const { isLoggedIn, loginDirectly, requireLogin } = useAuth()
+
+const activeTab = ref('积分商城')
+const tabOptions = ['积分商城', '兑换记录']
+const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
+const userStore = useUserStore()
+
+const searchKeyword = ref('')
+const debouncedKeyword = ref('')
+const setKeyword = debounce((val: string) => {
+  debouncedKeyword.value = val
+}, 300)
+watch(searchKeyword, setKeyword)
+onUnmounted(() => setKeyword.cancel())
+const showSearchInput = ref(false)
+
+watch(activeTab, () => {
+  showSearchInput.value = false
+  searchKeyword.value = ''
+  debouncedKeyword.value = ''
+})
+
+const { data: goodsData, isPending: goodsLoading, fetchNextPage: fetchNextGoods, hasNextPage: hasNextGoods, isFetchingNextPage: isFetchingGoods, refetch: refetchGoods } = useInfiniteGoodsList(computed(() => ({
+  keyword: debouncedKeyword.value.trim() || undefined,
+})))
+const { data: exchangeData, isPending: exchangeLoading, fetchNextPage: fetchNextExchanges, hasNextPage: hasNextExchanges, isFetchingNextPage: isFetchingExchanges, refetch: refetchExchanges } = useInfiniteExchangeList()
+const exchangeMutation = useExchangeGood()
+
+const goodsList = computed<GoodsVM[]>(() => goodsData.value?.pages.flatMap(p => p.list) ?? [])
+const exchangeList = computed<ExchangeRecordVM[]>(() => exchangeData.value?.pages.flatMap(p => p.list) ?? [])
+
+onReachBottom(() => {
+  if (activeTab.value === '积分商城') {
+    if (hasNextGoods?.value && !isFetchingGoods.value)
+      fetchNextGoods()
+  }
+  else {
+    if (hasNextExchanges?.value && !isFetchingExchanges.value)
+      fetchNextExchanges()
+  }
+})
+
+onPullDownRefresh(async () => {
+  if (activeTab.value === '积分商城') {
+    await refetchGoods()
+  }
+  else {
+    await refetchExchanges()
+  }
+  uni.stopPullDownRefresh()
+})
+
+const activeRecord = ref<ExchangeRecordVM | null>(null)
+const qrModalVisible = ref(false)
+const activeGood = ref<GoodsVM | null>(null)
+const goodDetailVisible = ref(false)
+
+const exchangeCount = ref(1)
+const exchangeInputStr = ref('1')
+
+function openQrModal(record: ExchangeRecordVM) {
+  if (record.status !== 'pending')
+    return
+  activeRecord.value = record
+  qrModalVisible.value = true
+}
+
+function openGoodDetail(good: GoodsVM) {
+  activeGood.value = good
+  exchangeCount.value = 1
+  exchangeInputStr.value = '1'
+  goodDetailVisible.value = true
+}
+
+function handleCountInput(e: any) {
+  const valStr = e.detail?.value ?? e.target?.value ?? ''
+  let num = parseInt(valStr, 10)
+  if (isNaN(num)) {
+    exchangeInputStr.value = ''
+    return
+  }
+  if (activeGood.value && num > activeGood.value.stock) {
+    num = activeGood.value.stock
+    uni.showToast({ title: `最多可兑换 ${activeGood.value.stock} 件`, icon: 'none' })
+  }
+  if (num < 1)
+    num = 1
+  exchangeCount.value = num
+  exchangeInputStr.value = String(num)
+}
+
+function handleCountBlur() {
+  if (!exchangeCount.value || exchangeCount.value < 1) {
+    exchangeCount.value = 1
+    exchangeInputStr.value = '1'
+  }
+  else if (activeGood.value && exchangeCount.value > activeGood.value.stock) {
+    exchangeCount.value = activeGood.value.stock
+    exchangeInputStr.value = String(activeGood.value.stock)
+  }
+}
+
+function decreaseCount() {
+  if (exchangeCount.value > 1) {
+    exchangeCount.value--
+    exchangeInputStr.value = String(exchangeCount.value)
+  }
+}
+
+function increaseCount() {
+  if (activeGood.value && exchangeCount.value < activeGood.value.stock) {
+    exchangeCount.value++
+    exchangeInputStr.value = String(exchangeCount.value)
+  }
+  else if (activeGood.value) {
+    uni.showToast({ title: `最多可兑换 ${activeGood.value.stock} 件`, icon: 'none' })
+  }
+}
+
+function handleExchange(goodId: number) {
+  if (!requireLogin())
+    return
+
+  if (!activeGood.value)
+    return
+
+  const totalScore = activeGood.value.scorePrice * exchangeCount.value
+  const goodName = activeGood.value.name
+  const count = exchangeCount.value
+
+  uni.showModal({
+    title: '确认兑换商品？',
+    content: `将消耗 ${totalScore} 积分兑换 ${count} 件“${goodName}”，确认继续？`,
+    confirmText: '确认兑换',
+    cancelText: '取消',
+    confirmColor: '#B69171',
+    success: (res) => {
+      if (res.confirm) {
+        const idempotencyKey = `ex-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        exchangeMutation.mutate({ goodId, quantity: count, idempotencyKey }, {
+          onSuccess: () => {
+            goodDetailVisible.value = false
+            uni.showToast({ title: '兑换成功！', icon: 'success' })
+          },
+        })
+      }
+    },
+  })
+}
+</script>
+
 <template>
-  <view class="page-mall safe-bottom-page box-border h-100vh flex flex-col bg-[#f6f4ef] pt-28rpx">
-    <view class="flex items-start justify-between gap-20rpx p-[10rpx_24rpx_24rpx]">
-      <view>
-        <text class="block text-46rpx text-[#1f1b14] font-900 leading-[1.12]">积分商城</text>
-        <text class="mt-8rpx block text-24rpx text-[#81786c]">兑换活动周边</text>
+  <view class="page-mall swiper-page bg-[#F1DFC5] px-3 pt-3">
+    <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
+    <view class="flex flex-shrink-0 items-end justify-between px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+      <view class="flex items-center gap-6">
+        <view
+          v-for="opt in tabOptions"
+          :key="opt"
+          class="relative cursor-pointer pb-2.5 text-base transition-all active:scale-95"
+          :class="activeTab === opt ? 'text-[#1E1E1E] font-black' : 'text-[#8A7E70] font-bold'"
+          @tap="activeTab = opt"
+        >
+          <text>{{ opt }}</text>
+          <view
+            v-if="activeTab === opt"
+            class="absolute left-0 right-0 h-[2.5px] rounded-full bg-[#B69171] -bottom-[1px]"
+          />
+        </view>
       </view>
-      <view class="mall-search-button u-circle-btn" @tap="goSearch">
-        <wd-icon name="search-line" color="#1f1b14" size="30rpx" />
+
+      <!-- 右侧：仅在积分商城 Tab 显示搜索图标按钮 + 竖向分割线 + 总积分展示 -->
+      <view class="flex items-center gap-2.5 pb-2.5">
+        <template v-if="activeTab === '积分商城'">
+          <view
+            class="h-7 w-7 flex cursor-pointer items-center justify-center rounded-full transition-all active:scale-90"
+            :class="showSearchInput ? 'bg-[#B69171] text-white shadow-2xs' : 'text-[#756C5E] hover:text-[#1E1E1E]'"
+            @tap="showSearchInput = !showSearchInput"
+          >
+            <text class="i-carbon:search text-base" />
+          </view>
+          <view class="h-3 w-[1px] bg-[#D3BA9F]/60" />
+        </template>
+        <view class="flex items-center gap-1">
+          <text class="i-my-icons-points text-base text-[#B69171]" />
+          <text class="font-num text-lg text-[#1E1E1E] font-bold">{{ userStore.userInfo?.points ?? 0 }}</text>
+        </view>
       </view>
     </view>
 
-    <view v-if="searchKeyword" class="flex items-center gap-16rpx p-[0_24rpx_18rpx]">
+    <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
+    <view v-if="activeTab === '积分商城' && showSearchInput" class="w-full border-b border-[#D3BA9F]/50 pb-2 pt-2">
       <wd-search
-        :model-value="searchKeyword"
+        v-model="searchKeyword"
+        :focus="true"
+        placeholder="搜索商品名称..."
         hide-cancel
         custom-class="tx-search"
         placeholder-left
-        disabled
-        @click="goSearch"
+        @clear="searchKeyword = ''"
       />
-      <view class="box-border h-64rpx w-64rpx flex flex-shrink-0 cursor-pointer items-center justify-center border border-[rgba(31,27,20,0.08)] rounded-full border-solid bg-white" @tap="clearSearch">
-        <wd-icon name="close" color="#1f1b14" size="28rpx" />
-      </view>
     </view>
 
-    <!-- 横向 Tabs 切换 -->
-    <sliding-tabs
-      :list="tabs"
-      :model-value="activeTab"
-      @change="onTabChange"
-    />
-
-    <!-- 左右滑动分页 -->
+    <!-- 支持左右连贯手势滑屏的 Swiper 容器 -->
     <swiper
-      class="min-h-0 w-full flex-1"
-      :current="currentTab"
-      @change="onSwiperChange"
+      class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
+      :current="currentTabIndex"
+      :duration="300"
+      @change="(e) => activeTab = tabOptions[e.detail.current]"
     >
-      <!-- 商品列表页 -->
-      <swiper-item>
-        <scroll-view scroll-y class="h-full">
-          <view class="flex gap-16rpx p-[16rpx_24rpx_calc(40rpx+env(safe-area-inset-bottom))]">
-            <view class="min-w-0 flex flex-1 flex-col gap-16rpx">
+      <!-- 滑块 1：积分商城 -->
+      <swiper-item class="box-border">
+        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextGoods()">
+          <view class="bottom-space px-3 pt-2.5 space-y-3">
+            <view v-if="goodsLoading" class="grid grid-cols-2 gap-2.5">
+              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }]" />
+              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }]" />
+            </view>
+            <view v-else-if="goodsList.length" class="grid grid-cols-2 gap-2.5">
+              <!-- 干净相纸卡片 (包含大图、商品名称、所需积分与库存数量) -->
               <view
-                v-for="item in list1"
+                v-for="item in goodsList"
                 :key="item.id"
-                class="mb-10rpx overflow-hidden rounded-12rpx bg-white shadow-[0_10rpx_28rpx_rgba(31,26,18,0.06)]"
+                class="shadow-2xs flex flex-col cursor-pointer justify-between overflow-hidden border border-[#D3BA9F]/60 rounded-lg bg-white transition-all active:scale-[0.98]"
+                @tap="openGoodDetail(item)"
               >
-                <view class="relative overflow-hidden bg-[#eee6d6]" :style="getCoverStyle(item)">
-                  <image
-                    class="absolute inset-0 block h-full w-full"
-                    :src="item.cover"
-                    lazy-load
-                    mode="aspectFill"
-                    @tap.stop="previewImage(item.cover)"
-                  />
-                  <text v-if="item.badge" class="absolute left-12rpx top-12rpx rounded-full bg-brand px-10rpx py-6rpx text-20rpx text-[#1f1b14] font-800">
-                    {{ item.badge }}
-                  </text>
+                <view class="aspect-square w-full overflow-hidden bg-[#B69171]/10">
+                  <wd-img custom-class="h-full w-full object-cover" lazy-load :src="item.image.url" mode="aspectFill" width="100%" height="100%" />
                 </view>
-                <view class="px-12rpx pb-12rpx pt-10rpx">
-                  <text class="line-clamp-1 block text-24rpx text-[#1f1b14] font-900 leading-[1.28]">{{ item.title }}</text>
-                  <text class="line-clamp-1 mt-5rpx block text-20rpx text-[#746b60] leading-[1.3]">{{ item.desc }}</text>
-                  <view class="mt-9rpx flex items-center justify-between gap-8rpx">
-                    <text class="block text-22rpx text-[#b98200] font-900">{{ item.points }} 积分</text>
-                    <text class="block truncate text-18rpx text-[#999999]">{{ item.stockText }}</text>
+                <view class="flex flex-1 flex-col justify-between p-2.5 space-y-1">
+                  <text class="line-clamp-2 block min-h-[2.6em] text-sm text-[#1E1E1E] font-medium leading-snug">{{ item.name }}</text>
+                  <view class="flex items-center justify-between pt-0.5">
+                    <view class="flex items-center gap-0.5">
+                      <text class="i-my-icons-points text-xs text-[#B69171]" />
+                      <text class="font-num text-xs text-[#B69171] font-bold">{{ item.scorePrice }}</text>
+                    </view>
+                    <text class="text-xs text-[#756C5E] font-medium">库存: {{ item.stock }}</text>
                   </view>
-                  <button
-                    class="mt-10rpx h-46rpx w-full flex items-center justify-center border-0 rounded-full p-0 text-22rpx font-900 after:border-none"
-                    :class="canExchangeProduct(item) ? 'bg-brand text-[#1f1b14]' : 'bg-[#ece7dc] text-[#8a8175]'"
-                    :disabled="!canExchangeProduct(item)"
-                    @tap.stop="handleExchangeTap(item)"
-                  >
-                    {{ getExchangeButtonText(item) }}
-                  </button>
                 </view>
               </view>
             </view>
-
-            <view class="min-w-0 flex flex-1 flex-col gap-16rpx">
-              <view
-                v-for="item in list2"
-                :key="item.id"
-                class="mb-10rpx overflow-hidden rounded-12rpx bg-white shadow-[0_10rpx_28rpx_rgba(31,26,18,0.06)]"
-              >
-                <view class="relative overflow-hidden bg-[#eee6d6]" :style="getCoverStyle(item)">
-                  <image
-                    class="absolute inset-0 block h-full w-full"
-                    :src="item.cover"
-                    lazy-load
-                    mode="aspectFill"
-                    @tap.stop="previewImage(item.cover)"
-                  />
-                  <text v-if="item.badge" class="absolute left-12rpx top-12rpx rounded-full bg-brand px-10rpx py-6rpx text-20rpx text-[#1f1b14] font-800">
-                    {{ item.badge }}
-                  </text>
-                </view>
-                <view class="px-12rpx pb-12rpx pt-10rpx">
-                  <text class="line-clamp-1 block text-24rpx text-[#1f1b14] font-900 leading-[1.28]">{{ item.title }}</text>
-                  <text class="line-clamp-1 mt-5rpx block text-20rpx text-[#746b60] leading-[1.3]">{{ item.desc }}</text>
-                  <view class="mt-9rpx flex items-center justify-between gap-8rpx">
-                    <text class="block text-22rpx text-[#b98200] font-900">{{ item.points }} 积分</text>
-                    <text class="block truncate text-18rpx text-[#999999]">{{ item.stockText }}</text>
-                  </view>
-                  <button
-                    class="mt-10rpx h-46rpx w-full flex items-center justify-center border-0 rounded-full p-0 text-22rpx font-900 after:border-none"
-                    :class="canExchangeProduct(item) ? 'bg-brand text-[#1f1b14]' : 'bg-[#ece7dc] text-[#8a8175]'"
-                    :disabled="!canExchangeProduct(item)"
-                    @tap.stop="handleExchangeTap(item)"
-                  >
-                    {{ getExchangeButtonText(item) }}
-                  </button>
-                </view>
-              </view>
+            <view v-else class="py-20">
+              <wd-empty icon="no-result" tip="暂无上架商品" />
             </view>
-          </view>
-          <view v-if="!visibleProducts.length" class="py-[80rpx_0_120rpx]">
-            <wd-empty icon="no-result" tip="没有找到相关商品" />
+            <wd-loadmore v-if="isFetchingGoods" :state="isFetchingGoods ? 'loading' : undefined" @reload="fetchNextGoods" />
           </view>
         </scroll-view>
       </swiper-item>
 
-      <!-- 兑换记录页 -->
-      <swiper-item>
-        <scroll-view scroll-y class="h-full">
-          <view class="flex flex-col gap-18rpx p-[16rpx_24rpx_calc(40rpx+env(safe-area-inset-bottom))]">
-            <view v-if="!userStore.isLoggedIn()" class="flex flex-col items-center py-120rpx">
-              <wd-empty icon="no-content" :tip="exchangeRecordsEmptyText" />
+      <!-- 滑块 2：兑换记录 -->
+      <swiper-item class="box-border">
+        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextExchanges()">
+          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
+            <wd-empty icon="no-result" tip="登录后查看兑换记录" />
+            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+              去登录
+            </wd-button>
+          </view>
+          <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
+            <view v-if="exchangeLoading" class="space-y-3">
+              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
             </view>
-            <view
-              v-for="record in visibleExchangeRecords"
-              :key="record.id"
-              class="flex flex-col gap-16rpx border border-[rgba(31,27,20,0.06)] rounded-18rpx border-solid bg-white p-18rpx shadow-[0_8rpx_24rpx_rgba(31,27,20,0.05)]"
-            >
-              <view class="w-full flex gap-18rpx">
-                <image
-                  class="h-150rpx w-150rpx flex-shrink-0 rounded-14rpx bg-[#eeeeee]"
-                  :src="record.cover"
-                  lazy-load
-                  mode="aspectFill"
-                />
-                <view class="box-border min-h-150rpx min-w-0 flex flex-1 flex-col justify-between">
-                  <view class="flex items-start justify-between gap-14rpx">
-                    <text class="line-clamp-2 block text-29rpx text-[#1f1b14] font-900 leading-[1.35]">{{ record.title }}</text>
-                  </view>
+            <view v-else-if="exchangeList.length" class="space-y-3">
+              <view
+                v-for="item in exchangeList"
+                :key="item.id"
+                class="shadow-2xs min-h-[80px] flex items-stretch justify-between overflow-hidden border border-[#D3BA9F]/60 rounded-lg bg-white transition-all"
+                :class="item.status === 'pending' ? 'cursor-pointer active:scale-[0.99]' : 'opacity-85'"
+                @tap="openQrModal(item)"
+              >
+                <!-- 左侧图片：完全撑满卡片上下高度，零四周留白 -->
+                <view class="w-20 flex-shrink-0 self-stretch bg-[#B69171]/10">
+                  <wd-img custom-class="h-full w-full object-cover" lazy-load :src="item.good.image.url" mode="aspectFill" width="80px" height="100%" />
+                </view>
 
-                  <view class="mt-10rpx flex items-center justify-between">
-                    <text class="text-23rpx text-[#8f8679]">{{ record.time }}</text>
-                    <text class="text-23rpx text-[#b98200] font-800">共消耗 {{ record.totalPoints }} 积分</text>
-                  </view>
-
-                  <view class="mt-14rpx flex items-center justify-between">
-                    <text class="text-24rpx text-[#8f8679] font-900">数量: x{{ record.count }}</text>
-                    <status-tag
-                      :status="record.status === 'pending' ? 'pending' : 'approved'"
-                      :label="record.status === 'pending' ? '待领取' : '已完成'"
-                    />
+                <!-- 中间说明区：上下顶底分布并带有恰当内缩边距 -->
+                <view class="min-w-0 flex flex-1 flex-col self-stretch justify-between py-2 pl-5 pr-1.5">
+                  <text class="line-clamp-2 block text-sm text-[#1E1E1E] font-bold leading-snug">{{ item.good.name }}</text>
+                  <view class="flex items-center justify-between gap-1">
+                    <view class="flex flex-shrink-0 items-center gap-0.5">
+                      <text class="i-my-icons-points text-xs text-[#B69171]" />
+                      <text class="font-num text-xs text-[#B69171] font-bold">-{{ item.scoreCost }}</text>
+                    </view>
+                    <text class="truncate u-meta-time">{{ item.exchangeAt || '尚未核销' }}</text>
                   </view>
                 </view>
-              </view>
 
-              <!-- 核销码展示 -->
-              <view v-if="record.status === 'pending' && record.exchangeCode" class="flex items-center justify-between rounded-8rpx bg-[#f5c542]/8 p-[12rpx_16rpx]">
-                <text class="text-28rpx text-[#9b7621] font-900">核销码：{{ record.exchangeCode }}</text>
-                <text class="cursor-pointer rounded-6rpx bg-[#42a661]/10 p-[4rpx_12rpx] text-26rpx text-[#2f8f4c] font-900" @tap.stop="copyText(record.exchangeCode)">复制</text>
+                <!-- 右侧状态 Tag 与二维码 UI 图标 -->
+                <view class="flex flex-col items-center self-stretch justify-center py-2 pl-1 pr-2.5 space-y-1">
+                  <view
+                    v-if="item.status === 'pending'"
+                    class="flex items-center justify-center text-[#B69171] transition-transform active:scale-90"
+                  >
+                    <text class="i-carbon:qr-code text-2xl" />
+                  </view>
+                  <wd-tag
+                    :type="item.status === 'pending' ? 'warning' : (item.status === 'verified' ? 'success' : 'default')"
+                    round
+                    size="medium"
+                    custom-class="!font-bold !text-xs !px-2.5 !py-0.5"
+                  >
+                    {{ item.status === 'pending' ? '待核销' : (item.status === 'verified' ? '已核销' : '已取消') }}
+                  </wd-tag>
+                </view>
               </view>
             </view>
-
-            <view v-if="userStore.isLoggedIn() && !visibleExchangeRecords.length" class="py-120rpx">
-              <wd-empty icon="no-content" :tip="exchangeRecordsEmptyText" />
+            <view v-else class="py-20">
+              <wd-empty icon="no-result" tip="暂无兑换记录" />
             </view>
+            <wd-loadmore v-if="isFetchingExchanges" :state="isFetchingExchanges ? 'loading' : undefined" @reload="fetchNextExchanges" />
           </view>
         </scroll-view>
       </swiper-item>
     </swiper>
 
-    <search-overlay
-      v-model:visible="searchVisible"
-      scope="mall"
-      title="搜索积分商城"
-      @search="handleSearch"
-    />
-
-    <!-- 自定义轻量兑换确认抽屉 -->
-    <view v-if="exchangeVisible && selectedProduct" class="fixed inset-0 bottom-[-1px] z-999 flex items-end bg-[#1f1b14]/48" @tap="closeExchange">
-      <view class="box-border w-full rounded-[30rpx_30rpx_0_0] bg-white p-[40rpx_36rpx_calc(40rpx+env(safe-area-inset-bottom))] animate-slide-up" @tap.stop>
-        <view class="relative flex items-start gap-28rpx">
-          <image class="h-140rpx w-140rpx border border-[rgba(31,27,20,0.08)] rounded-18rpx border-solid bg-[#f8f6f2] shadow-[0_8rpx_20rpx_rgba(31,27,20,0.05)]" :src="selectedProduct.cover" lazy-load mode="aspectFill" />
-          <view class="min-w-0 flex-1">
-            <text class="block text-32rpx text-[#1f1b14] font-900 leading-1.3">{{ selectedProduct.title }}</text>
-            <text class="mt-10rpx block text-28rpx text-[#b98200] font-800">{{ selectedProduct.points }} 积分 / 件</text>
-            <text class="mt-8rpx block text-22rpx text-[#9a9286]">{{ selectedProduct.stockText }}</text>
-          </view>
-          <view class="absolute right-[-10rpx] top-[-10rpx] h-44rpx w-44rpx flex cursor-pointer items-center justify-center text-36rpx text-[#c8c1b8] font-300" @tap="closeExchange">
-            ×
-          </view>
+    <!-- 商品详情与兑换弹窗 (展示完整描述、支持手动输入及按钮限制的计数器与兑换计算) -->
+    <wd-popup v-model="goodDetailVisible" position="center" custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;" @close="goodDetailVisible = false">
+      <view v-if="activeGood" class="relative mx-auto w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-white shadow-2xl">
+        <!-- 右上角关闭按钮 -->
+        <view
+          class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-transform active:scale-90"
+          @tap="goodDetailVisible = false"
+        >
+          <wd-icon name="close" size="16px" />
         </view>
+        <wd-img custom-class="h-48 w-full bg-[#B69171]/10 object-cover" lazy-load :src="activeGood.image.originUrl" mode="aspectFill" width="100%" height="384rpx" />
+        <view class="p-5 space-y-4">
+          <view class="flex items-baseline justify-between gap-3">
+            <text class="min-w-0 flex-1 text-base text-[#1E1E1E] font-bold leading-snug">{{ activeGood.name }}</text>
+            <text class="flex-shrink-0 whitespace-nowrap text-xs text-[#756C5E] font-mono">库存: {{ activeGood.stock }}</text>
+          </view>
 
-        <view class="my-32rpx h-1rpx bg-[#1f1b14]/6" />
+          <text class="block text-sm text-[#555555] leading-relaxed">{{ activeGood.description }}</text>
 
-        <view class="mb-24rpx flex items-center justify-between gap-20rpx">
-          <text class="block text-28rpx text-[#1f1b14] font-800">兑换数量</text>
-          <view class="h-60rpx flex items-center overflow-hidden rounded-12rpx bg-[#f8f6f2]">
-            <view
-              class="h-60rpx w-60rpx flex cursor-pointer items-center justify-center bg-[#eeeae4] text-28rpx text-[#1f1b14] font-900 transition-colors duration-150 ease-in-out active:bg-[#e2dcd4]"
-              :class="[exchangeCount <= 1 ? 'text-[#c8c1b8] bg-[#f8f6f2] pointer-events-none' : '']"
-              @tap="adjustCount(-1)"
-            >
-              -
-            </view>
-            <input
-              v-model.number="exchangeCount"
-              type="number"
-              class="h-60rpx w-80rpx border-0 bg-transparent text-center text-26rpx text-[#1f1b14] font-800"
-              @blur="onStepperBlur"
-            >
-            <view
-              class="h-60rpx w-60rpx flex cursor-pointer items-center justify-center bg-[#eeeae4] text-28rpx text-[#1f1b14] font-900 transition-colors duration-150 ease-in-out active:bg-[#e2dcd4]"
-              :class="[exchangeCount >= maxStock ? 'text-[#c8c1b8] bg-[#f8f6f2] pointer-events-none' : '']"
-              @tap="adjustCount(1)"
-            >
-              +
+          <!-- 数量选择器（支持点击 - / + 以及直接键盘手动输入数字，自动限制不超过库存） -->
+          <view class="flex items-center justify-between border-t border-[#D3BA9F]/30 pt-3">
+            <text class="text-sm text-[#1E1E1E] font-bold">兑换数量</text>
+            <view class="flex items-center gap-2">
+              <view
+                class="h-7 w-7 flex cursor-pointer items-center justify-center border border-[#D3BA9F] rounded-lg bg-stone-100 text-[#1E1E1E] active:scale-90"
+                :class="exchangeCount <= 1 ? 'opacity-40 cursor-not-allowed' : ''"
+                @tap="decreaseCount"
+              >
+                <text class="text-base font-bold">-</text>
+              </view>
+              <input
+                v-model="exchangeInputStr"
+                type="number"
+                class="font-num h-7 w-12 border border-[#D3BA9F]/60 rounded-md bg-stone-50 py-0.5 text-center text-sm text-[#1E1E1E] font-bold"
+                @input="handleCountInput"
+                @blur="handleCountBlur"
+              >
+              <view
+                class="h-7 w-7 flex cursor-pointer items-center justify-center border border-[#D3BA9F] rounded-lg bg-stone-100 text-[#1E1E1E] active:scale-90"
+                :class="exchangeCount >= activeGood.stock ? 'opacity-40 cursor-not-allowed' : ''"
+                @tap="increaseCount"
+              >
+                <text class="text-base font-bold">+</text>
+              </view>
             </view>
           </view>
-        </view>
 
-        <view class="mb-40rpx mt-32rpx flex items-center justify-between gap-20rpx">
-          <text class="block text-28rpx text-[#1f1b14] font-800">总计消耗</text>
-          <text class="block text-34rpx text-[#b98200] font-900">{{ totalPoints }} 积分</text>
+          <!-- 底部确认与积分统计 -->
+          <view class="flex items-center justify-between border-t border-[#D3BA9F]/30 pt-3">
+            <view class="flex flex-col">
+              <text class="text-xs text-[#756C5E]">合计积分</text>
+              <view class="flex items-center gap-0.5">
+                <text class="i-my-icons-points text-sm text-[#B69171]" />
+                <text class="font-num text-base text-[#B69171] font-bold">{{ activeGood.scorePrice * exchangeCount }}</text>
+              </view>
+            </view>
+            <wd-button type="warning" round size="medium" custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] shadow-xs" :disabled="activeGood.stock <= 0 || exchangeMutation.isPending.value" @click="handleExchange(activeGood.id)">
+              {{ activeGood.stock > 0 ? '确认兑换' : '暂时缺货' }}
+            </wd-button>
+          </view>
         </view>
-
-        <button class="m-0 h-88rpx w-full flex items-center justify-center border-0 rounded-full bg-brand p-0 text-30rpx text-[#1f1b14] font-900 shadow-[0_10rpx_28rpx_rgba(245,197,66,0.3)] after:border-0" @tap="confirmExchange">
-          确认兑换
-        </button>
       </view>
-    </view>
+    </wd-popup>
+
+    <!-- 二维码核销弹窗 -->
+    <wd-popup v-model="qrModalVisible" position="center" custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;" @close="qrModalVisible = false">
+      <VerifyCodeQr v-if="activeRecord" :verify-code="activeRecord.verifyCode" :good-name="activeRecord.good.name" class="w-full flex justify-center" @close="qrModalVisible = false" />
+    </wd-popup>
   </view>
 </template>
-
-<script setup lang="ts">
-import { useMall } from './composables/useMall'
-import { canExchangeProduct, getExchangeButtonText } from './features'
-import type { ProductItem } from './features'
-import { useUserStore } from '@/store/user'
-import { previewImage } from '@/utils'
-
-definePage({
-  style: {
-    navigationBarTitleText: '%page.mall%',
-  },
-})
-
-const userStore = useUserStore()
-const {
-  tabs,
-  activeTab,
-  currentTab,
-  onTabChange,
-  onSwiperChange,
-  searchVisible,
-  searchKeyword,
-  visibleProducts,
-  list1,
-  list2,
-  goSearch,
-  handleSearch,
-  clearSearch,
-  exchangeVisible,
-  selectedProduct,
-  exchangeCount,
-  visibleExchangeRecords,
-  exchangeRecordsEmptyText,
-  totalPoints,
-  maxStock,
-  handleExchangeTap,
-  closeExchange,
-  adjustCount,
-  onStepperBlur,
-  copyText,
-  confirmExchange,
-} = useMall()
-
-function getCoverStyle(item: ProductItem) {
-  return {
-    paddingBottom: `${(item.coverHeight / item.coverWidth) * 100}%`,
-  }
-}
-</script>

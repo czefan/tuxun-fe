@@ -46,12 +46,6 @@ declare module '@uni-helper/vite-plugin-uni-pages' {
      * 当前属性供 https://github.com/uni-helper/vite-plugin-uni-layouts 插件使用
      */
     layout?: 'default' | false
-    /**
-     * 是否从需要登录的路径中排除
-     *
-     * 登录授权(可选)：跟以前的 needLogin 类似功能，但是同时支持黑白名单，详情请见 src/router 文件夹
-     */
-    excludeLoginPath?: boolean
   }
 }
 

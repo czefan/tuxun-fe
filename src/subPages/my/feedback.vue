@@ -1,119 +1,8 @@
-<template>
-  <view class="page-feedback safe-bottom-page box-border min-h-100vh bg-[#fffaf0] p-[30rpx_30rpx_calc(40rpx+env(safe-area-inset-bottom))]">
-    <text class="mb-24rpx block text-42rpx text-[#1f1b14] font-900">意见反馈</text>
-    <template v-if="userStore.isLoggedIn()">
-      <!-- 反馈类型 -->
-      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
-        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
-          选择类型
-        </view>
-        <view class="grid grid-cols-2 gap-16rpx">
-          <view
-            v-for="item in typeOptions"
-            :key="item.value"
-            class="h-80rpx flex cursor-pointer items-center justify-center border-2rpx border-[rgba(31,27,20,0.05)] rounded-12rpx border-solid bg-[#fdfcf9] text-26rpx text-[#756c5e] transition-all duration-200 ease-in-out"
-            :class="[selectedType === item.value ? 'bg-[#fef9eb] border-[#f5c542] text-[#b28000] font-700' : '']"
-            @tap="selectedType = item.value"
-          >
-            {{ item.label }}
-          </view>
-        </view>
-      </view>
-
-      <!-- 设备环境 -->
-      <view v-if="selectedType === 'bug'" class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-[#fbfaf8] p-28rpx">
-        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
-          设备环境 (可编辑)
-        </view>
-        <textarea
-          v-model="deviceEnvText"
-          class="box-border max-h-400rpx min-h-120rpx w-full whitespace-pre-wrap border border-[rgba(31,27,20,0.08)] rounded-8rpx border-solid bg-white p-[16rpx_20rpx] text-24rpx text-[#7c7468] leading-[1.6em]"
-          placeholder="请描述您的手机型号、系统版本等设备环境..."
-          auto-height
-        />
-        <view class="mt-12rpx text-22rpx text-[#a39c91] leading-1.4">
-          自动识别可能存在偏差，如不准确可手动修改。
-        </view>
-      </view>
-
-      <!-- 反馈内容 -->
-      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
-        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
-          反馈内容
-        </view>
-        <wd-textarea
-          v-model="content"
-          :placeholder="contentPlaceholder"
-          custom-class="tx-textarea"
-          placeholder-class="feedback-textarea-placeholder"
-          show-word-limit
-          :maxlength="500"
-          auto-height
-        />
-      </view>
-
-      <!-- 媒体上传 -->
-      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
-        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
-          图片与视频 (最多3个)
-        </view>
-        <view class="grid grid-cols-3 gap-18rpx">
-          <view
-            v-for="(item, index) in mediaList"
-            :key="index"
-            class="relative box-border h-0 w-full cursor-pointer overflow-hidden border border-[rgba(31,27,20,0.08)] rounded-12rpx border-solid bg-[#f7f4ee] pb-[100%]"
-            @tap="previewMedia(item)"
-          >
-            <image v-if="item.type === 'image'" class="absolute inset-0 h-full w-full" :src="item.url" mode="aspectFill" />
-            <view v-else class="absolute inset-0 h-full w-full flex flex-col items-center justify-center gap-6rpx bg-[#2b2b2b]">
-              <wd-icon name="play-circle" color="#ffffff" size="48rpx" />
-              <text class="text-20rpx text-white/70">视频</text>
-            </view>
-            <view v-if="item.uploading" class="absolute inset-0 z-2 h-full w-full flex flex-col items-center justify-center gap-6rpx bg-black/55">
-              <wd-loading type="circular" color="#ffffff" size="36rpx" />
-              <text class="text-20rpx text-white">上传中</text>
-            </view>
-            <view class="absolute right-6rpx top-6rpx z-3 h-34rpx w-34rpx flex items-center justify-center rounded-full bg-black/65" @tap.stop="removeMedia(index)">
-              <wd-icon name="close" color="#ffffff" size="18rpx" />
-            </view>
-          </view>
-          <view v-if="mediaList.length < 3" class="relative box-border h-0 w-full cursor-pointer overflow-hidden border-2rpx border-[rgba(31,27,20,0.15)] rounded-12rpx border-dashed bg-[#fdfcf9] pb-[100%]" @tap="chooseAndUploadMedia">
-            <view class="absolute inset-0 h-full w-full flex flex-col items-center justify-center gap-6rpx">
-              <wd-icon name="camera" color="#a09688" size="48rpx" />
-              <text class="text-20rpx text-[#8b8273]">添加图片/视频</text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 联系方式 -->
-      <view class="mb-24rpx border border-[rgba(31,27,20,0.04)] rounded-16rpx border-solid bg-white p-28rpx">
-        <view class="mb-18rpx text-28rpx text-[#1f1b14] font-700">
-          联系方式 (选填)
-        </view>
-        <input
-          v-model="contact"
-          class="box-border h-80rpx w-full border border-[rgba(31,27,20,0.08)] rounded-12rpx border-solid bg-white px-24rpx text-28rpx text-[#1f1b14]"
-          placeholder="手机号、微信号或邮箱，方便与您沟通"
-          placeholder-class="feedback-input-placeholder"
-        >
-      </view>
-
-      <wd-button type="warning" round block custom-style="margin-top: 36rpx; height: 88rpx;" :disabled="isSubmitting" @click="submit">
-        {{ isSubmitting ? '提交中...' : '提交反馈' }}
-      </wd-button>
-    </template>
-    <view v-else class="py-120rpx">
-      <wd-empty icon="no-content" tip="未登录" />
-    </view>
-  </view>
-</template>
-
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import { useUserStore } from '@/store/user'
-import { submitFeedback, uploadFeedbackImage } from '@/service/api/user'
-import type { FeedbackType } from '@/service/api/user'
+import { reactive, ref } from 'vue'
+import { useSubmitFeedback } from '@/features/feedback/query'
+import { useAuth } from '@/features/user/composables/use-auth'
+import { smartCompressImage } from '@/utils/image-compress'
 
 definePage({
   style: {
@@ -121,183 +10,297 @@ definePage({
   },
 })
 
-interface MediaItem {
-  url: string
-  type: 'image' | 'video'
-  uploading: boolean
-  remoteUrl: string
-}
+const { isLoggedIn, loginDirectly, requireLogin } = useAuth()
 
-// 静态常量提升，避免实例重复声明
-const TYPE_OPTIONS = [
-  { label: '内容问题', value: 'content' as FeedbackType },
-  { label: '玩法建议', value: 'suggestion' as FeedbackType },
-  { label: '技术报错', value: 'bug' as FeedbackType },
-  { label: '其他', value: 'other' as FeedbackType },
-] as const
+const feedbackTypes = [
+  { label: '内容问题', value: 1 },
+  { label: '玩法建议', value: 2 },
+  { label: '功能异常', value: 3 },
+  { label: '其他问题', value: 4 },
+]
 
-const PLACEHOLDER_MAP: Record<FeedbackType, string> = {
-  bug: '请详细描述您遇到的技术报错、异常现象或重现步骤，以便我们定位解决...',
-  suggestion: '分享您对游戏玩法的绝妙建议，让我们一起把游戏做得更好...',
-  content: '请指出具体的内容错误，如题目、地名、地图标注等，并说明正确的内容...',
-  other: '请输入您想反馈的其他内容或意见...',
-}
-
-const userStore = useUserStore()
-const content = ref('')
-const contact = ref('')
-const selectedType = ref<FeedbackType>('content')
-const isSubmitting = ref(false)
-const mediaList = ref<MediaItem[]>([])
-const deviceEnvText = ref(getDeviceEnvInfo())
-
-const typeOptions = TYPE_OPTIONS
-
-const contentPlaceholder = computed(() => {
-  return PLACEHOLDER_MAP[selectedType.value] || '请输入反馈内容...'
+const formData = reactive({
+  type: 1 as 1 | 2 | 3 | 4,
+  title: '',
+  content: '',
+  phone: '',
 })
 
-// 并行上传媒体文件
-function chooseAndUploadMedia() {
+const mediaPath = ref<string>('')
+const mediaType = ref<'image' | 'video' | ''>('')
+const submitMutation = useSubmitFeedback()
+
+function chooseMedia() {
   uni.chooseMedia({
-    count: 3 - mediaList.value.length,
+    count: 1,
     mediaType: ['image', 'video'],
-    success: (res) => {
-      const uploadTasks = res.tempFiles.map(async (file) => {
-        const isImage = file.fileType === 'image'
-        const limit = isImage ? 10 * 1024 * 1024 : 50 * 1024 * 1024
-        if (file.size > limit) {
-          uni.showToast({
-            title: `${isImage ? '图片' : '视频'}大小不能超过 ${isImage ? '10MB' : '50MB'}`,
-            icon: 'none',
-          })
+    success: async (res) => {
+      const file = res.tempFiles[0]
+      if (!file)
+        return
+
+      const type = res.type as 'image' | 'video'
+      const sizeMB = file.size / (1024 * 1024)
+
+      if (type === 'image') {
+        if (sizeMB > 20) {
+          uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
           return
         }
-
-        const item = reactive<MediaItem>({
-          url: file.tempFilePath,
-          type: file.fileType as 'image' | 'video',
-          uploading: true,
-          remoteUrl: '',
-        })
-        mediaList.value.push(item)
-
-        try {
-          const uploadRes = await uploadFeedbackImage(file.tempFilePath)
-          item.remoteUrl = uploadRes.url
-          item.uploading = false
+        const compressed = await smartCompressImage(file.tempFilePath)
+        mediaPath.value = compressed
+        mediaType.value = 'image'
+      }
+      else if (type === 'video') {
+        if (sizeMB > 50) {
+          uni.showToast({ title: '视频大小不能超过 50MB', icon: 'none' })
+          return
         }
-        catch (e) {
-          uni.showToast({ title: '上传失败', icon: 'none' })
-          mediaList.value = mediaList.value.filter(m => m !== item)
-        }
-      })
-      Promise.all(uploadTasks)
+        mediaPath.value = file.tempFilePath
+        mediaType.value = 'video'
+      }
     },
   })
 }
 
-// 预览媒体
-function previewMedia(item: MediaItem) {
-  if (item.uploading)
-    return
-  if (item.type === 'image') {
-    uni.previewImage({
-      urls: mediaList.value.filter(m => m.type === 'image').map(m => m.remoteUrl || m.url),
-      current: item.remoteUrl || item.url,
-    })
-  }
-  else if (uni.previewMedia) {
-    uni.previewMedia({
-      sources: [{ url: item.remoteUrl || item.url, type: 'video' }],
-    })
-  }
+function removeMedia() {
+  mediaPath.value = ''
+  mediaType.value = ''
 }
 
-// 删除媒体
-function removeMedia(index: number) {
-  mediaList.value.splice(index, 1)
-}
-
-// 获取设备环境信息
-function getDeviceEnvInfo(): string {
+/** 静默无感获取用户系统、设备与环境诊断信息（选择「功能异常」提交时自动拼接到 content 末尾发给后端） */
+function getEnvironmentDiagnosticString(): string {
   try {
-    const systemInfo = uni.getSystemInfoSync()
-    return `手机品牌: ${systemInfo.brand || '未知'}
-手机型号: ${systemInfo.model || '未知'}
-系统版本: ${systemInfo.system || '未知'}
-客户端版本: ${systemInfo.version || '未知'}
-运行平台: ${systemInfo.platform || '未知'}`
+    const info = uni.getSystemInfoSync()
+    const parts: string[] = []
+
+    const platform = info.uniPlatform || info.hostName || info.appName || ''
+    if (platform) {
+      parts.push(`平台: ${platform}`)
+    }
+    const os = `${info.osName || ''} ${info.osVersion || info.system || ''}`.trim()
+    if (os) {
+      parts.push(`系统: ${os}`)
+    }
+    const device = `${info.deviceBrand || info.brand || ''} ${info.deviceModel || info.model || ''}`.trim()
+    if (device) {
+      parts.push(`设备: ${device}`)
+    }
+    if (info.screenWidth && info.screenHeight) {
+      parts.push(`分辨率: ${info.screenWidth}x${info.screenHeight} (DPR ${info.pixelRatio || 1})`)
+    }
+    if (info.language || info.osLanguage) {
+      parts.push(`语言: ${info.language || info.osLanguage}`)
+    }
+    if (info.appVersion) {
+      parts.push(`App版本: ${info.appVersion}`)
+    }
+    if (info.SDKVersion) {
+      parts.push(`SDK版本: ${info.SDKVersion}`)
+    }
+    // #ifdef H5
+    if (typeof navigator !== 'undefined' && navigator.userAgent) {
+      parts.push(`UA: ${navigator.userAgent}`)
+    }
+    // #endif
+
+    return parts.length ? `\n\n--- [环境信息 自动生成] ---\n${parts.join('\n')}` : ''
   }
-  catch (e) {
-    return '手机品牌: 未知\n手机型号: 未知\n系统版本: 未知\n客户端版本: 未知\n运行平台: 未知'
+  catch {
+    return ''
   }
 }
 
-// 提交反馈
-async function submit() {
-  if (!content.value.trim()) {
-    uni.showToast({ title: '请输入反馈内容', icon: 'none' })
+function handleSubmit() {
+  if (!requireLogin()) {
     return
   }
-  if (mediaList.value.some(m => m.uploading)) {
-    uni.showToast({ title: '媒体文件上传中，请稍后', icon: 'none' })
+  if (!formData.title.trim()) {
+    uni.showToast({ title: '请输入反馈标题', icon: 'none' })
+    return
+  }
+  if (!formData.content.trim()) {
+    uni.showToast({ title: '请输入详细描述内容', icon: 'none' })
     return
   }
 
-  isSubmitting.value = true
-  uni.showLoading({ title: '正在提交' })
-
-  let finalContent = content.value.trim()
-  if (selectedType.value === 'bug') {
-    finalContent += `\n\n--- 设备环境 ---\n${deviceEnvText.value}`
+  let finalContent = formData.content.trim()
+  // 选择「功能异常」(type === 3) 时静默拼接用户系统与设备诊断环境信息
+  if (formData.type === 3) {
+    finalContent += getEnvironmentDiagnosticString()
   }
 
-  try {
-    await submitFeedback({
+  submitMutation.mutate(
+    {
+      type: formData.type,
+      title: formData.title.trim(),
       content: finalContent,
-      type: selectedType.value,
-      contact: contact.value.trim(),
-      imageUrls: mediaList.value.map(m => m.remoteUrl).filter(Boolean),
-    })
-    uni.showToast({ title: '感谢您的反馈', icon: 'success' })
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 1500)
-  }
-  catch (e) {
-    uni.showToast({ title: '提交失败，请重试', icon: 'none' })
-  }
-  finally {
-    uni.hideLoading()
-    isSubmitting.value = false
-  }
+      phone: formData.phone.trim() || undefined,
+      mediaFile: mediaPath.value || undefined,
+    },
+    {
+      onSuccess: () => {
+        uni.showToast({ title: '反馈提交成功，感谢您的建议！', icon: 'success' })
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 1200)
+      },
+    },
+  )
 }
 </script>
 
-<style scoped lang="scss">
-:deep(.wd-textarea) {
-  background-color: #ffffff !important;
-  border-radius: 14rpx !important;
-  border: 1rpx solid rgba(31, 27, 20, 0.08) !important;
-  min-height: 200rpx;
-  padding: 16rpx 18rpx !important;
-}
+<template>
+  <view class="safe-bottom-page box-border min-h-screen bg-[#F1DFC5] px-4 pt-4">
+    <!-- 未登录页面级提示卡片（与通知界面保持100%样式一致） -->
+    <view v-if="!isLoggedIn()" class="min-h-[calc(100vh-120rpx)] flex flex-col items-center justify-center pb-12 -mt-12">
+      <wd-empty icon="no-result" tip="登录后提交意见反馈" />
+      <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+        去登录
+      </wd-button>
+    </view>
 
-:deep(.wd-textarea__inner) {
-  min-height: 160rpx;
-  max-height: 800rpx;
-  overflow-y: auto;
-  font-size: 28rpx;
-  line-height: 1.5;
-  color: #1f1b14;
-}
+    <!-- 已登录：4 卡片分块反馈表单 (与投稿界面 100% 保持一致设计) -->
+    <view v-else class="space-y-4">
+      <!-- 第一部分：选择反馈类型 (Feedback Type Section) -->
+      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
+        <view class="flex items-center gap-2 border-b border-[#D3BA9F]/30 pb-2.5">
+          <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+          <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+            反馈类型 <text class="text-rose-500">*</text>
+          </text>
+        </view>
 
-:deep(.wd-textarea__count) {
-  background-color: #ffffff !important;
-  color: #9a9286 !important;
-  font-size: 22rpx !important;
-  bottom: 8rpx !important;
-  right: 10rpx !important;
-}
-</style>
+        <view class="grid grid-cols-2 gap-2.5">
+          <view
+            v-for="item in feedbackTypes"
+            :key="item.value"
+            class="flex cursor-pointer items-center justify-center border rounded-xl py-2.5 text-xs font-bold transition-all active:scale-95"
+            :class="[
+              formData.type === item.value
+                ? 'border-[#D3BA9F] bg-[#F9DF95] text-[#1E1E1E] shadow-2xs'
+                : 'border-[#D3BA9F]/40 bg-[#B69171]/5 text-[#756C5E]',
+            ]"
+            @click="formData.type = item.value as any"
+          >
+            {{ item.label }}
+          </view>
+        </view>
+      </view>
+
+      <!-- 第二部分：文字信息 (Text Section) -->
+      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3.5">
+        <view class="flex items-center gap-2 border-b border-[#D3BA9F]/30 pb-2.5">
+          <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+          <text class="text-base text-[#1E1E1E] font-black tracking-tight">文字信息</text>
+        </view>
+
+        <wd-form :model="formData" custom-class="block space-y-3.5">
+          <!-- 1. 反馈标题 -->
+          <view class="space-y-1.5">
+            <text class="block text-xs text-[#756C5E] font-bold">
+              反馈标题 <text class="text-rose-500">*</text>
+            </text>
+            <wd-input
+              v-model="formData.title"
+              placeholder="输入反馈标题 (最多 30 字)"
+              :maxlength="30"
+              clearable
+              custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+            />
+          </view>
+
+          <!-- 2. 反馈详细内容 -->
+          <view class="space-y-1.5">
+            <text class="block text-xs text-[#756C5E] font-bold">
+              详细描述 <text class="text-rose-500">*</text>
+            </text>
+            <wd-textarea
+              v-model="formData.content"
+              placeholder="请详细描述遇到的问题或建议 (最多 500 字)..."
+              :maxlength="500"
+              clearable
+              custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+            />
+          </view>
+
+          <!-- 3. 联系电话 / 微信 -->
+          <view class="space-y-1.5">
+            <text class="block text-xs text-[#756C5E] font-bold">
+              联系方式 <text class="text-xs text-[#8A7E70] font-normal">(选填)</text>
+            </text>
+            <wd-input
+              v-model="formData.phone"
+              placeholder="电话/微信，方便跟进排查并联系您"
+              :maxlength="30"
+              clearable
+              custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+            />
+          </view>
+        </wd-form>
+      </view>
+
+      <!-- 第三部分：图片 / 视频 (Photo Section) -->
+      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
+        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-2.5">
+          <view class="flex items-center gap-2">
+            <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+            <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+              附件（图片/视频） <text class="text-xs text-[#8A7E70] font-normal">(选填，最多 1 个)</text>
+            </text>
+          </view>
+        </view>
+
+        <view class="flex flex-wrap gap-3">
+          <view v-if="mediaPath" class="relative h-28 w-28">
+            <wd-img
+              v-if="mediaType === 'image'"
+              custom-class="h-full w-full rounded-2xl bg-amber-50 object-cover ring-1 ring-[#D3BA9F] shadow-xs"
+              :src="mediaPath"
+              lazy-load
+              mode="aspectFill"
+              width="224rpx"
+              height="224rpx"
+            />
+            <video
+              v-else-if="mediaType === 'video'"
+              class="shadow-xs h-full w-full rounded-2xl bg-black"
+              :src="mediaPath"
+              :controls="false"
+            />
+            <view
+              class="absolute h-6 w-6 flex cursor-pointer items-center justify-center rounded-full bg-red-500 text-white shadow-md -right-2 -top-2 active:scale-90"
+              @tap="removeMedia"
+            >
+              <wd-icon name="close" size="14px" />
+            </view>
+          </view>
+          <view
+            v-else
+            class="h-28 w-28 flex flex-col cursor-pointer items-center justify-center border-2 border-[#D3BA9F] rounded-2xl border-dashed bg-[#F8F6F2] text-[#756C5E] transition-all active:scale-95"
+            @tap="chooseMedia"
+          >
+            <text class="i-carbon:camera mb-1 text-2xl text-[#B69171]" />
+            <text class="text-xs text-[#1E1E1E] font-bold">上传图片/视频</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 第四部分：提交反馈按钮 (Submit Section) -->
+      <view class="pt-2">
+        <wd-button
+          type="warning"
+          round
+          block
+          size="large"
+          custom-class="!font-black !bg-[#B69171] !text-white !border-0 shadow-md active:scale-[0.99] transition-transform"
+          :disabled="submitMutation.isPending.value"
+          :loading="submitMutation.isPending.value"
+          @click="handleSubmit"
+        >
+          提交反馈
+        </wd-button>
+      </view>
+    </view>
+  </view>
+</template>

@@ -1,116 +1,13 @@
-<template>
-  <view class="page-submit box-border min-h-100vh flex flex-col bg-[#f7f4ee] p-[28rpx_24rpx_calc(28rpx+env(safe-area-inset-bottom))]">
-    <view v-if="!isPageReady" class="min-h-70vh flex flex-1 flex-col items-center justify-center gap-22rpx">
-      <wd-loading v-if="!hasLoadingError" type="circular" :color="BRAND_PRIMARY_COLOR" size="42rpx" />
-      <text class="block text-28rpx text-[#81786c] font-800">
-        {{ hasLoadingError ? '页面加载失败' : '正在准备页面' }}
-      </text>
-      <button v-if="hasLoadingError" class="m-0 h-68rpx w-180rpx flex items-center justify-center border-0 rounded-full bg-brand p-0 text-26rpx text-[#1f1b14] font-900 after:border-0" @tap="preparePage">
-        重试
-      </button>
-    </view>
-
-    <template v-else>
-      <view class="flex items-start justify-between gap-20rpx p-[8rpx_6rpx_26rpx]">
-        <view class="min-w-0 flex-1">
-          <text class="block text-44rpx text-[#1f1b14] font-900 leading-[1.16]">投稿题目</text>
-          <text class="mt-10rpx block text-24rpx text-[#81786c] leading-1.4">审核通过后进入公开题库</text>
-        </view>
-        <view class="h-92rpx w-92rpx flex items-center justify-center rounded-22rpx bg-[#1f1b14] shadow-[0_14rpx_32rpx_rgba(31,27,20,0.16)]">
-          <text class="block text-24rpx text-brand font-900">图寻</text>
-        </view>
-      </view>
-
-      <view class="submit-form flex flex-col gap-22rpx">
-        <view class="form-field">
-          <text class="form-label">题目标题</text>
-          <input
-            v-model.trim="form.title"
-            class="form-input"
-            :maxlength="24"
-            placeholder="例如：午后走廊的光"
-            placeholder-class="form-placeholder"
-          >
-        </view>
-
-        <view class="form-field">
-          <text class="form-label">题目描述</text>
-          <textarea
-            v-model.trim="form.description"
-            class="form-textarea"
-            :maxlength="80"
-            placeholder="补充画面特征或安全提示"
-            placeholder-class="form-placeholder"
-            auto-height
-          />
-          <text class="form-count">{{ form.description.length }}/80</text>
-        </view>
-
-        <view class="form-field">
-          <view class="field-top">
-            <text class="form-label">题目图片</text>
-            <text class="block text-22rpx text-[#9a9286]">{{ images.length }}/3</text>
-          </view>
-          <view class="grid grid-cols-3 mt-18rpx gap-14rpx">
-            <view
-              v-for="(image, index) in images"
-              :key="image"
-              class="relative aspect-square overflow-hidden rounded-16rpx"
-            >
-              <image
-                class="h-full w-full"
-                :src="image"
-                mode="aspectFill"
-                @tap.stop="previewImage(image, images)"
-              />
-              <view class="absolute right-8rpx top-8rpx h-40rpx w-40rpx flex cursor-pointer items-center justify-center rounded-full bg-[#1f1b14]/72" @tap.stop="removeImage(index)">
-                <wd-icon name="close" color="#ffffff" size="20rpx" />
-              </view>
-            </view>
-            <view v-if="images.length < 3" class="relative box-border aspect-square flex flex-col cursor-pointer items-center justify-center gap-10rpx overflow-hidden border-2rpx border-[rgba(31,27,20,0.16)] rounded-16rpx border-dashed bg-[#f8f6f2]" @tap="chooseImages">
-              <wd-icon name="camera" color="#7c7468" size="40rpx" />
-              <text class="block text-22rpx text-[#7c7468] font-800">添加图片</text>
-            </view>
-          </view>
-        </view>
-
-        <form-location-picker
-          v-model:address="form.address"
-          v-model:latitude="form.latitude"
-          v-model:longitude="form.longitude"
-          label="地点"
-          selected-text="已选择地点"
-          unselected-text="未选择地点"
-        />
-
-        <view class="form-field">
-          <text class="form-label">联系方式（选填）</text>
-          <input
-            v-model.trim="form.contact"
-            class="form-input"
-            :maxlength="40"
-            placeholder="微信、QQ 或手机号"
-            placeholder-class="form-placeholder"
-          >
-        </view>
-      </view>
-
-      <view class="mt-auto p-[40rpx_0_calc(20rpx+env(safe-area-inset-bottom))]">
-        <button class="h-88rpx w-full border-0 rounded-full bg-brand p-0 text-30rpx text-[#1f1b14] font-900 leading-88rpx after:border-0 disabled:(text-[#1f1b14]/58_bg-[#e7ddc9])" :disabled="isSubmitting" @tap="submit">
-          {{ isSubmitting ? '提交中' : '提交投稿' }}
-        </button>
-      </view>
-    </template>
-  </view>
-</template>
-
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { onLoad, onUnload } from '@dcloudio/uni-app'
-import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
-import { useAuth } from '@/composables/useAuth'
-import { useImagePicker, useSubmitGuard } from '@/composables/useSubmitFormTools'
-import { previewImage } from '@/utils'
+import { computed, reactive, ref, watch } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { createPhoto } from '@/features/photo/api'
+import { useActiveActivities } from '@/features/activity/query'
+import { smartCompressImage } from '@/utils/image-compress'
+
+import { useAuth } from '@/composables/use-auth'
+import { AppRoute } from '@/router/routes'
+import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
 
 definePage({
   style: {
@@ -118,92 +15,324 @@ definePage({
   },
 })
 
-interface SubmitForm {
-  title: string
-  description: string
-  contact: string
-  address: string
-  latitude: number
-  longitude: number
-}
+const { isLoggedIn, loginDirectly, requireLogin } = useAuth()
 
-const form = reactive<SubmitForm>({
+const form = reactive({
+  activityId: 0,
   title: '',
   description: '',
-  contact: '',
+  filePath: '',
   address: '',
   latitude: 0,
   longitude: 0,
+  coordType: DEFAULT_COORD_TYPE as 'wgs84' | 'gcj02',
 })
 
-const { ensureLogin } = useAuth()
-const isPageReady = ref(false)
-const hasLoadingError = ref(false)
-const isUnmounted = ref(false)
-const { images, chooseImages, removeImage } = useImagePicker({
-  limit: 3,
-  sourceType: ['album', 'camera'],
-})
-const { isSubmitting, submitWithGuard } = useSubmitGuard()
+const DRAFT_KEY = 'tuxun_contribute_draft'
+const { data: activityData } = useActiveActivities()
 
-onLoad(() => {
-  preparePage()
+// 驳回回填时 filePath 是远端 URL，仅作预览，提交前必须重新选图
+const isRemoteImage = computed(() => /^https?:\/\//i.test(form.filePath))
+
+onLoad((options) => {
+  if (!isLoggedIn())
+    return
+  if (activityData.value?.list?.length) {
+    form.activityId = activityData.value.list[0].id
+  }
+  if (options?.refill) {
+    try {
+      const refillData = JSON.parse(decodeURIComponent(options.refill))
+      Object.assign(form, refillData)
+      return
+    }
+    catch {}
+  }
+  checkDraft()
 })
 
-onUnload(() => {
-  isUnmounted.value = true
-})
+function checkDraft() {
+  const saved = uni.getStorageSync(DRAFT_KEY)
+  if (saved) {
+    uni.showModal({
+      title: '恢复草稿',
+      content: '检测到您上次有未完成的投稿草稿，是否恢复？',
+      confirmText: '恢复',
+      cancelText: '放弃',
+      success: (res) => {
+        if (res.confirm) {
+          try {
+            const parsed = JSON.parse(saved)
+            Object.assign(form, parsed)
+          }
+          catch {}
+        }
+        else if (res.cancel) {
+          uni.removeStorageSync(DRAFT_KEY)
+        }
+      },
+    })
+  }
+}
 
-async function preparePage() {
-  hasLoadingError.value = false
+watch(
+  form,
+  (newVal) => {
+    if (newVal.title || newVal.filePath || newVal.address) {
+      uni.setStorageSync(DRAFT_KEY, JSON.stringify(newVal))
+    }
+  },
+  { deep: true },
+)
+
+function choosePhoto() {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['original', 'compressed'],
+    sourceType: ['album', 'camera'],
+    success: async (res) => {
+      if (res.tempFilePaths && res.tempFilePaths.length > 0) {
+        form.filePath = await smartCompressImage(res.tempFilePaths[0])
+      }
+    },
+  })
+}
+
+function handleFileDrop(e: any) {
+  // #ifdef H5
+  e.preventDefault?.()
+  const files = e.dataTransfer?.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file)
+      void smartCompressImage(url).then((path) => {
+        form.filePath = path
+      })
+    }
+    else {
+      uni.showToast({ title: '请拖拽图片文件', icon: 'none' })
+    }
+  }
+  // #endif
+}
+
+async function handleSubmit() {
+  if (!requireLogin())
+    return
+  if (!form.activityId) {
+    uni.showToast({ title: '请选择关联活动', icon: 'none' })
+    return
+  }
+  if (!form.title.trim()) {
+    uni.showToast({ title: '请输入题目标题', icon: 'none' })
+    return
+  }
+  if (!form.filePath) {
+    uni.showToast({ title: '请上传题目图片', icon: 'none' })
+    return
+  }
+  if (/^https?:\/\//i.test(form.filePath)) {
+    uni.showToast({ title: '请重新选择题目图片后再提交', icon: 'none' })
+    return
+  }
+  if (!isSubmittableLocation(form.latitude, form.longitude)) {
+    uni.showToast({ title: '请选择地点位置', icon: 'none' })
+    return
+  }
 
   try {
-    const canEnter = await ensureLogin()
+    await createPhoto({
+      activityId: form.activityId,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      filePath: form.filePath,
+      latitude: form.latitude,
+      longitude: form.longitude,
+      coordType: form.coordType,
+    })
 
-    if (isUnmounted.value) {
-      return
-    }
+    uni.removeStorageSync(DRAFT_KEY)
 
-    if (!canEnter) {
-      return
-    }
-
-    isPageReady.value = true
+    uni.showToast({ title: '投稿成功，等待审核', icon: 'success' })
+    setTimeout(() => {
+      uni.redirectTo({ url: AppRoute.MyContributions })
+    }, 1000)
   }
-  catch (error) {
-    if (isUnmounted.value || isSilentAuthError(error)) {
-      return
-    }
-
-    hasLoadingError.value = true
+  catch {
+    // Handled by request error interceptor
   }
 }
 
-function submit() {
-  submitWithGuard(validateForm)
-}
-
-function validateForm() {
-  if (!form.title) {
-    return '请填写标题'
-  }
-
-  if (!form.description) {
-    return '请填写描述'
-  }
-
-  if (images.value.length === 0) {
-    return '请添加图片'
-  }
-
-  if (form.latitude === 0 || form.longitude === 0) {
-    return '请选择地点'
-  }
-
-  return ''
-}
-
-function isSilentAuthError(error: unknown) {
-  return !!error && typeof error === 'object' && (error as { isSilent?: boolean }).isSilent === true
-}
+const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void } | null>(null)
 </script>
+
+<template>
+  <view class="page-contribute safe-bottom-page box-border min-h-screen bg-[#F1DFC5] px-4 pt-4">
+    <!-- 未登录页面级提示卡片（与意见反馈/通知界面保持 100% 统一样式） -->
+    <view v-if="!isLoggedIn()" class="min-h-[calc(100vh-120rpx)] flex flex-col items-center justify-center pb-12 -mt-12">
+      <wd-empty icon="no-result" tip="登录后提交题目投稿" />
+      <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+        去登录
+      </wd-button>
+    </view>
+
+    <!-- 已登录：完整投稿表单卡片 -->
+    <view v-else class="space-y-4">
+      <!-- 第一部分：文字部分 (Text Section) -->
+      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3.5">
+        <view class="flex items-center gap-2 border-b border-[#D3BA9F]/30 pb-2.5">
+          <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+          <text class="text-base text-[#1E1E1E] font-black tracking-tight">文字信息</text>
+        </view>
+
+        <!-- wd-form 只负责标签与排版；必填与坐标校验仍在 handleSubmit 显式判断（见 location-guard 测试） -->
+        <wd-form :model="form" custom-class="block space-y-3.5">
+          <!-- 1. 选择活动 -->
+          <view class="space-y-1.5">
+            <text class="block text-xs text-[#756C5E] font-bold">
+              选择关联活动 <text class="text-rose-500">*</text>
+            </text>
+            <picker
+              :range="activityData?.list || []"
+              range-key="title"
+              @change="(e: any) => form.activityId = activityData?.list[e.detail.value]?.id || 0"
+            >
+              <view class="flex items-center justify-between border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-3 text-sm text-[#1E1E1E] font-bold transition-colors active:bg-[#EFECE6]">
+                <text>{{ activityData?.list?.find(a => a.id === form.activityId)?.title || '点击选择活动' }}</text>
+                <text class="i-carbon:chevron-down text-[#B69171]" />
+              </view>
+            </picker>
+          </view>
+
+          <!-- 2. 题目名称 -->
+          <view class="space-y-1.5">
+            <text class="block text-xs text-[#756C5E] font-bold">
+              题目名称 <text class="text-rose-500">*</text>
+            </text>
+            <wd-input
+              v-model="form.title"
+              placeholder="例如：图书馆东门石雕 (≤20字)"
+              :maxlength="20"
+              clearable
+              custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+            />
+          </view>
+
+          <!-- 3. 题目线索描述 -->
+          <view class="space-y-1.5">
+            <text class="block text-xs text-[#756C5E] font-bold">
+              题目线索描述 <text class="text-xs text-[#8A7E70] font-normal">(选填)</text>
+            </text>
+            <wd-textarea
+              v-model="form.description"
+              placeholder="描述地标周围特征 (≤50字)..."
+              :maxlength="50"
+              clearable
+              custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+            />
+          </view>
+        </wd-form>
+      </view>
+
+      <!-- 第二部分：图片部分 (Photo Section) -->
+      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
+        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-2.5">
+          <view class="flex items-center gap-2">
+            <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+            <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+              图片 <text class="text-rose-500">*</text>
+            </text>
+          </view>
+        </view>
+
+        <view
+          class="relative h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-[#D3BA9F] rounded-2xl border-dashed bg-[#F8F6F2] transition-colors active:bg-[#EFECE6]"
+          @tap="choosePhoto"
+          @dragover.prevent
+          @drop.prevent="handleFileDrop"
+        >
+          <wd-img
+            v-if="form.filePath"
+            custom-class="h-full w-full object-cover"
+            :src="form.filePath"
+            lazy-load
+            mode="aspectFill"
+            width="100%"
+            height="100%"
+          />
+          <view v-else class="flex flex-col items-center p-3 text-center space-y-1.5">
+            <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E]">
+              <text class="i-carbon:cloud-upload text-2xl font-black" />
+            </view>
+            <text class="block text-sm text-[#1E1E1E] font-black">
+              点击选择 或 拖拽上传图片
+            </text>
+            <text class="block text-xs text-[#756C5E] font-bold">
+              支持 JPG / PNG 原图（建议清晰无遮挡）
+            </text>
+          </view>
+
+          <view v-if="form.filePath" class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md">
+            <text class="i-carbon:renew text-xs" />
+            <text class="text-xs font-bold">重新选择</text>
+          </view>
+        </view>
+        <text v-if="isRemoteImage" class="block text-center text-xs text-amber-600 font-bold">
+          已回填原图预览，重新提交请点击图片重新选取
+        </text>
+      </view>
+
+      <!-- 第三部分：位置部分 (Location Section) -->
+      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
+        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-2.5">
+          <view class="flex items-center gap-2">
+            <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
+            <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+              位置 <text class="text-rose-500">*</text>
+            </text>
+          </view>
+          <view class="flex items-center gap-3">
+            <view
+              class="flex cursor-pointer items-center gap-1 text-sm text-[#B69171] font-bold transition-opacity active:opacity-70"
+              @click="locationPickerRef?.locate()"
+            >
+              <text class="i-carbon:location text-sm text-[#B69171]" />
+              <text>定位</text>
+            </view>
+            <view
+              class="flex cursor-pointer items-center gap-1 text-sm text-[#756C5E] font-medium transition-opacity active:opacity-70"
+              @click="locationPickerRef?.chooseLocation()"
+            >
+              <text class="i-carbon:map text-sm text-[#756C5E]" />
+              <text>全屏</text>
+            </view>
+          </view>
+        </view>
+
+        <form-location-picker
+          ref="locationPickerRef"
+          v-model:latitude="form.latitude"
+          v-model:longitude="form.longitude"
+          v-model:address="form.address"
+          selected-text="已选择地标坐标"
+          unselected-text="点击地图选取坐标"
+        />
+      </view>
+
+      <!-- 第四部分：提交投稿按钮 (Submit Section) -->
+      <view class="pt-2">
+        <wd-button
+          type="warning"
+          round
+          block
+          size="large"
+          custom-class="!font-black !bg-[#B69171] !text-white !border-0 shadow-md active:scale-[0.99] transition-transform"
+          @click="handleSubmit"
+        >
+          提交投稿
+        </wd-button>
+      </view>
+    </view>
+  </view>
+</template>
