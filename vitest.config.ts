@@ -52,6 +52,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(process.cwd(), 'src'),
       '@img': path.resolve(process.cwd(), 'src/static/images'),
+      // UnoCSS 的虚拟模块由 vite 插件注入，测试环境没有该插件，stub 成空样式
+      'virtual:uno.css': path.resolve(process.cwd(), 'src/test-stub.css'),
     },
   },
 })

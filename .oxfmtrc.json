@@ -22,7 +22,6 @@
   "vueIndentScriptAndStyle": false,
   "ignorePatterns": [
     ".agents/**",
-    ".trae/**",
     ".vscode/**",
     "dist/**",
     "node_modules/**",
@@ -33,7 +32,7 @@
     "uni-pages.d.ts",
     "src/pages.json",
     "src/manifest.json",
-    "src/service/**",
+    "src/service/contract/schema.d.ts",
     "pnpm-lock.yaml"
   ]
 }

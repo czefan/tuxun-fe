@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename)
 const srcDir = path.resolve(__dirname, '../src')
 const manifestPath = path.resolve(srcDir, 'manifest.json')
 const pagesPath = path.resolve(srcDir, 'pages.json')
-const placeholderConfigText = `${JSON.stringify({}, null, 2)}\n`
 
 if (!fs.existsSync(srcDir)) {
   fs.mkdirSync(srcDir, { recursive: true })

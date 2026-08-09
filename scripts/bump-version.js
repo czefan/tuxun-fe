@@ -5,8 +5,29 @@ import enquirer from 'enquirer'
 import pc from 'picocolors'
 
 const manifestPath = path.resolve(process.cwd(), 'manifest.config.ts')
+const packageJsonPath = path.resolve(process.cwd(), 'package.json')
 // 获取是否只是测试运行
 const dryRun = process.argv.includes('--dry-run')
+
+/**
+ * 把 versionName 同步回 package.json。
+ *
+ * 版本号的事实源是 manifest.config.ts（小程序上传读的是 versionName / versionCode），
+ * 但 package.json 里也有一个 version。不同步的话两个数会越差越远，
+ * changelogen 之类按 package.json 取版本的工具就会给出错误的版本。
+ */
+function syncPackageVersion(nextVersionName) {
+  const raw = fs.readFileSync(packageJsonPath, 'utf8')
+  const pkg = JSON.parse(raw)
+  if (pkg.version === nextVersionName) {
+    return false
+  }
+  pkg.version = nextVersionName
+  if (!dryRun) {
+    fs.writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`, 'utf8')
+  }
+  return true
+}
 
 /**
  * 将语义化版本号根据传递的类型进行递增
@@ -138,6 +159,7 @@ async function run() {
   if (!dryRun) {
     fs.writeFileSync(manifestPath, updated, 'utf8')
   }
+  const packageSynced = syncPackageVersion(nextVersionName)
 
   // 美化成功提示输出
   console.log('')
@@ -145,6 +167,9 @@ async function run() {
 
   if (bumpType !== 'none') {
     console.log(`  ${pc.gray('versionName:')} ${pc.strikethrough(pc.gray(currentVersionName))} → ${pc.bold(pc.green(nextVersionName))}`)
+    if (packageSynced) {
+      console.log(`  ${pc.gray('package.json:')} ${pc.dim('已同步为')} ${pc.green(nextVersionName)}`)
+    }
   }
   else {
     console.log(`  ${pc.gray('versionName:')} ${pc.dim(currentVersionName)} (未更改)`)

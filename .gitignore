@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 .DS_Store
 dist
+/tmp/
 *.local
 
 # Secrets and Keys
@@ -21,8 +22,8 @@ dist
 
 # Editor directories and files
 .idea
-.agents/
 .codex/
+.claude/
 *.suo
 *.ntvs*
 *.njsproj

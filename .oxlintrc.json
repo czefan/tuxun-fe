@@ -14,7 +14,7 @@
     "uni-pages.d.ts",
     "src/pages.json",
     "src/manifest.json",
-    "src/service/**",
+    "src/service/contract/schema.d.ts",
     "src/typings.d.ts"
   ],
   "rules": {

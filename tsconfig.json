@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "composite": true,
-    "lib": ["esnext", "dom"],
+    "target": "esnext",
+    "lib": ["esnext", "dom", "dom.iterable"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "paths": {
@@ -35,7 +36,10 @@
     "src/**/*.tsx",
     "src/**/*.jsx",
     "src/**/*.vue",
-    "src/**/*.json"
+    "src/**/*.json",
+    "build/**/*.ts",
+    "wot-ui-resolver.ts",
+    "scripts/**/*.js"
   ],
   "exclude": ["node_modules", "dist"]
 }

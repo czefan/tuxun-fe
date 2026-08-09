@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "paths": {
+    "@/*": ["./src/*"],
+    "@img/*": ["./src/static/images/*"]
+  },
+  "entry": [
+    "src/App.ku.vue",
+    "src/pages/**/*.vue",
+    "src/subPages/**/*.vue",
+    "src/app/**/*.vue",
+    "src/components/**/*.vue",
+    "src/mocks/browser.ts",
+    "src/mocks/node.ts",
+    "src/**/*.test.ts",
+    "pages.config.ts",
+    "manifest.config.ts",
+    "build/**/*.ts",
+    "scripts/*.js"
+  ],
+  "project": ["src/**/*.{ts,vue,scss,sass}", "build/**/*.ts"],
+  "ignore": ["src/env.d.ts", "src/uni.scss"],
+  "ignoreDependencies": ["@dcloudio/.*", "postcss"],
+  "vite": false,
+  "ignoreBinaries": ["uv"]
+}

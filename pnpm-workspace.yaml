@@ -1,16 +1,94 @@
+# pnpm 10 起，安装行为的配置从 .npmrc 迁到了这里；写在 .npmrc 里的
+# shamefully-hoist / auto-install-peers 等键会被静默忽略（pnpm config get 返回 undefined）。
+#
+# shamefullyHoist 必须开：@dcloudio/vite-plugin-uni 强制
+# resolve.preserveSymlinks = true，模块解析只会沿 node_modules/ 逐级向上找，
+# 看不到 pnpm 的 .pnpm 隔离目录。不提升的话，msw、@tanstack/vue-query 等包的
+# 间接依赖必须逐个补进 package.json 才能构建（历史上就是这么绕过去的）。
+strictPeerDependencies: false
+autoInstallPeers: true
+ignoreWorkspaceRootCheck: true
+
+shamefullyHoist: true
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true
   '@uni-helper/unocss-preset-uni': true
   core-js: true
   core-js-pure: true
-  es5-ext: true
   esbuild: true
   less: true
+  msw: true
   protobufjs: true
   simple-git-hooks: true
+  unrs-resolver: true
   vue-demi: true
 
-overrides:
-  bin-wrapper: npm:bin-wrapper-china
-  unconfig: 7.3.2
+catalog:
+  '@antfu/eslint-config': ^9.1.0
+  '@commitlint/cli': ^21.2.1
+  '@commitlint/config-conventional': ^21.2.0
+  '@dcloudio/types': ^3.4.31
+  '@dcloudio/uni-app': 3.0.0-5010520260709002
+  '@dcloudio/uni-automator': 3.0.0-5010520260709002
+  '@dcloudio/uni-cli-shared': 3.0.0-5010520260709002
+  '@dcloudio/uni-components': 3.0.0-5010520260709002
+  '@dcloudio/uni-h5': 3.0.0-5010520260709002
+  '@dcloudio/uni-mp-weixin': 3.0.0-5010520260709002
+  '@dcloudio/uni-stacktracey': 3.0.0-5010520260709002
+  '@dcloudio/vite-plugin-uni': 3.0.0-5010520260709002
+  '@iconify-json/carbon': ^1.2.24
+  '@iconify/utils': ^3.1.4
+  '@tanstack/vue-query': ^5.101.4
+  '@types/node': ^22.20.1
+  '@uni-helper/eslint-config': 0.7.4
+  '@uni-helper/plugin-uni': 0.1.0
+  '@uni-helper/uni-env': 0.3.1
+  '@uni-helper/uni-types': 1.1.0
+  '@uni-helper/unocss-preset-uni': 0.3.1
+  '@uni-helper/vite-plugin-uni-components': 0.3.2
+  '@uni-helper/vite-plugin-uni-manifest': 0.4.1
+  '@uni-helper/vite-plugin-uni-pages': 0.4.7
+  '@uni-helper/vite-plugin-uni-platform': 0.1.2
+  '@uni-ku/bundle-optimizer': ^2.2.0
+  '@uni-ku/root': 1.4.1
+  '@unocss/eslint-plugin': ^66.7.4
+  '@unocss/preset-legacy-compat': 66.7.5
+  '@vitejs/plugin-vue': ^6.0.8
+  '@vue/test-utils': ^2.4.11
+  '@wot-ui/ui': ^2.2.0
+  ajv: ^8.20.0
+  ajv-formats: ^3.0.1
+  changelogen: ^0.6.2
+  cross-env: ^10.1.0
+  dayjs: ^1.11.21
+  enquirer: ^2.4.1
+  eslint: ^10.7.0
+  eslint-import-resolver-typescript: ^4.4.5
+  eslint-plugin-boundaries: ^7.1.0
+  eslint-plugin-format: ^2.0.1
+  jsdom: ^29.1.1
+  knip: ^6.29.0
+  lint-staged: ^17.0.8
+  miniprogram-api-typings: ^5.2.1
+  miniprogram-ci: ^2.1.31
+  msw: ^2.15.0
+  openapi-typescript: ^7.13.0
+  oxfmt: ^0.59.0
+  oxlint: ^1.74.0
+  picocolors: ^1.1.1
+  pinia: ^3.0.4
+  pinia-plugin-persistedstate: ^4.7.1
+  postcss: ^8.5.19
+  qrcode-generator: ^1.4.4
+  rollup: 4.14.3
+  rollup-plugin-visualizer: ^7.0.1
+  sass: ^1.101.0
+  simple-git-hooks: ^2.13.1
+  typescript: ^6.0.3
+  unocss: 66.7.5
+  unplugin-auto-import: ^21.0.0
+  vite: ^5.2.8
+  vitest: 3.2.6
+  vue: ^3.5.39
+  vue-tsc: ^3.3.7

@@ -1,4 +1,5 @@
 import type { Preset } from 'unocss'
+import { icons as carbonIcons } from '@iconify-json/carbon'
 import { FileSystemIconLoader } from '@iconify/utils/lib/loader/node-loaders'
 
 // https://www.npmjs.com/package/@uni-helper/unocss-preset-uni
@@ -11,9 +12,18 @@ import {
   transformerDirectives,
   transformerVariantGroup,
 } from 'unocss'
-import { BRAND_PRIMARY_COLOR, BRAND_PRIMARY_DARK_COLOR, BRAND_PRIMARY_LIGHT_COLOR } from './src/styles/constants'
+
+import { rules, shortcuts, theme, transitions } from './src/styles/uno'
 
 export default defineConfig({
+  // 显式声明配置文件依赖，当子配置文件修改时自动触发 UnoCSS 热更新，无需重启服务
+  configDeps: [
+    './src/styles/uno/index.ts',
+    './src/styles/uno/theme.ts',
+    './src/styles/uno/rules.ts',
+    './src/styles/uno/shortcuts.ts',
+    './src/styles/uno/transitions.ts',
+  ],
   presets: [
     presetUni({
       attributify: false,
@@ -26,6 +36,7 @@ export default defineConfig({
         'vertical-align': 'middle',
       },
       collections: {
+        'carbon': () => carbonIcons,
         // 注册本地 SVG 图标集合, 从本地文件系统加载图标
         // 在 './src/static/my-icons' 目录下的所有 svg 文件将被注册为图标，
         // my-icons 是图标集合名称，使用 `i-my-icons-图标名` 调用
@@ -65,104 +76,40 @@ export default defineConfig({
     // 启用指令功能：主要用于支持 @apply、@screen 和 theme() 等 CSS 指令
     transformerDirectives(),
     // 启用 () 分组功能
-    // 支持css class组合，eg: `<div class="hover:(bg-gray-400 font-medium) font-(light mono)">测试 unocss</div>`
     transformerVariantGroup(),
   ],
   shortcuts: [
-    {
-      'center': 'flex justify-center items-center',
-      'u-circle-btn': 'flex items-center justify-center flex-shrink-0 w-62rpx h-62rpx bg-white border-2rpx border-solid border-[rgba(31,27,20,0.08)] rounded-full shadow-[0_8rpx_20rpx_rgba(31,26,18,0.05)] box-border',
-      'u-page-viewport': 'safe-bottom-page flex flex-col h-100vh pt-34rpx bg-[#f6f4ef] box-border',
-      'u-header-flex': 'flex items-start justify-between gap-18rpx px-24rpx pb-28rpx pt-4rpx',
-      'u-list-wrapper': 'flex flex-col gap-18rpx px-24rpx pt-16rpx',
-      'u-card-item': 'flex gap-18rpx p-18rpx bg-white border border-solid border-[rgba(31,27,20,0.06)] rounded-18rpx shadow-[0_8rpx_24rpx_rgba(31,27,20,0.05)]',
-      'u-card-cover': 'flex-shrink-0 w-150rpx h-150rpx bg-[#eeeeee] rounded-14rpx',
-      'u-card-main': 'flex flex-col justify-between flex-1 min-w-0 h-150rpx box-border py-4rpx',
-      'u-card-title': 'block line-clamp-2 text-29rpx font-900 leading-[1.35] text-[#1f1b14]',
-    },
+    ...shortcuts,
+    ...transitions,
   ],
   // 动态图标需要在这里配置，或者写在vue页面中注释掉
   safelist: [
-    'i-carbon-code',
     'i-carbon-home',
-    'i-carbon-user',
-    'i-carbon-user-filled',
+    'i-carbon-app',
+    'i-carbon-email',
+    'i-carbon-location',
+    'i-carbon-location-filled',
+    'i-carbon-event',
+    'i-carbon-event-schedule',
+    'i-carbon-calendar',
+    'i-carbon-calendar-heat-map',
+    'i-carbon-flag',
+    'i-carbon-flag-filled',
+    'i-carbon-activity',
+    'i-carbon-trophy',
+    'i-carbon-trophy-filled',
+    'i-carbon-fire',
+    'i-carbon-time',
+    'i-carbon-time-filled',
     'i-carbon-notification',
     'i-carbon-notification-filled',
-    'i-carbon-ibm-watson-language-translator',
-    'i-carbon-menu',
+    'i-carbon-user',
+    'i-carbon-user-filled',
+    'i-carbon-user-avatar-filled',
   ],
-  rules: [
-    [
-      'p-safe',
-      {
-        padding:
-          'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
-      },
-    ],
-    ['pt-safe', { 'padding-top': 'env(safe-area-inset-top)' }],
-    ['pb-safe', { 'padding-bottom': 'env(safe-area-inset-bottom)' }],
-    [
-      /^scrollbar-none$/,
-      (_, { rawSelector }) => `
-        .${rawSelector}::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
-          -webkit-appearance: none !important;
-          background: transparent !important;
-        }
-      `,
-    ],
-    [
-      /^animate-scale-in$/,
-      (_, { rawSelector }) => `
-        @keyframes scale-in {
-          from {
-            transform: scale(0.9);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-        .${rawSelector} {
-          animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-      `,
-    ],
-    [
-      /^animate-slide-up$/,
-      (_, { rawSelector }) => `
-        @keyframes slide-up {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0);
-          }
-        }
-        .${rawSelector} {
-          animation: slide-up 0.23s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
-        }
-      `,
-    ],
-  ],
-  theme: {
-    colors: {
-      /** 主题色，用法如: text-primary */
-      'primary': 'var(--wot-color-theme,#0957DE)',
-      'brand': BRAND_PRIMARY_COLOR,
-      'brand-dark': BRAND_PRIMARY_DARK_COLOR,
-      'brand-light': BRAND_PRIMARY_LIGHT_COLOR,
-    },
-    fontSize: {
-      /** 提供更小号的字体，用法如：text-2xs */
-      '2xs': ['20rpx', '28rpx'],
-      '3xs': ['18rpx', '26rpx'],
-    },
-  },
+  rules,
+  theme,
+  // 触发重新编译的标记
   // windows 系统会报错：[plugin:unocss:transformers:pre] Cannot overwrite a zero-length range - use append Left or prependRight instead.
   // 去掉下面的就正常了
   // content: {
