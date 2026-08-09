@@ -1,20 +1,104 @@
-import { API_BASE_PATH, getEnvBaseUrl } from '@/service/request/env'
 import { AppRoute } from '@/router/routes'
 import { useAuthStore } from '@/store/auth'
 
-/** 统一身份认证入口 GET /user/login（302 全页重定向，前端只用它拼跳转地址，须直连后端完整 URL 避免 Node 代理吃掉 302） */
-export function getLoginUrl(): string {
-  const apiPath = `${API_BASE_PATH}/user/login?client=fe`
-  const baseUrl = getEnvBaseUrl()
-  return `${baseUrl}${apiPath}`
-}
-
 const isDev = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK === 'true'
 
-/** 真正跳转统一身份认证。不含开发模式分支——调用方已经决定要去 CAS 了。 */
-export function redirectToCas() {
-  const url = getLoginUrl()
+/** tz-oauth 授权服务地址（生产 https://oauth.tiaozhan.com，本地 http://localhost:8088） */
+function getOAuthBaseUrl(): string {
+  return (import.meta.env.VITE_OAUTH_BASE_URL || '').replace(/\/+$/, '')
+}
+
+/** 本服务的 OAuth Client ID */
+function getClientId(): string {
+  return import.meta.env.VITE_OAUTH_CLIENT_ID || ''
+}
+
+/** H5 登录回调页完整 URL（需与 tz-oauth 管理端注册的 redirect_uri 一致） */
+export function getCallbackUrl(): string {
   // #ifdef H5
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  // VITE_APP_PUBLIC_BASE 支持子路径部署（如 /doc/）；去掉尾斜杠避免与回调页实际地址不一致
+  const base = (import.meta.env.VITE_APP_PUBLIC_BASE || '/').replace(/\/+$/, '')
+  return `${origin}${base}${AppRoute.AuthCallback}`
+  // #endif
+  // #ifndef H5
+  // 小程序走 web-view 内嵌 H5，回调地址是 H5 的线上地址，需通过环境变量注入。
+  // 去掉尾斜杠：后端白名单要求授权阶段的 redirect_uri 与回跳页实际 URL 完全一致，
+  // 配成带斜杠会两边不一致直接 400。
+  return (import.meta.env.VITE_MP_CALLBACK_URL || '').replace(/\/+$/, '')
+  // #endif
+}
+
+/** 生成密码学安全 state 并存入 sessionStorage，用于 CSRF 防护（RFC 6749 §10.12） */
+function generateState(): string {
+  // #ifdef H5
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  const state = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+  try {
+    sessionStorage.setItem('oauth_state', state)
+  }
+  catch {}
+  return state
+  // #endif
+  // #ifndef H5
+  // 小程序端不携带 state（无 sessionStorage 可存，回调也在另一份 H5 产物里）
+  return ''
+  // #endif
+}
+
+/** 校验回调中的 state 是否与发起时一致，校验后立即清除 */
+export function validateAndClearState(state: string): boolean {
+  // #ifdef H5
+  try {
+    const stored = sessionStorage.getItem('oauth_state')
+    sessionStorage.removeItem('oauth_state')
+    // stored 为空表示本端没发起过这次登录（非本站跳转）；state 为空表示回调没带 state，一律拒绝
+    return !!stored && !!state && stored === state
+  }
+  catch {
+    return false
+  }
+  // #endif
+  // #ifndef H5
+  return true
+  // #endif
+}
+
+/**
+ * 拼接 tz-oauth 授权页 URL。
+ *
+ * state 只在 H5 追加：state 由发起端生成并存入 sessionStorage，回跳后的回调页
+ * 也是同一份 H5 产物，才能校验通过。小程序 web-view 流程的发起端（mp 构建）
+ * 没有 sessionStorage，state 无处可存；而回跳目标是线上 H5 回调页，它校验时
+ * 只会查自己的 sessionStorage（为空）→ 必然「登录状态校验失败」。
+ * 所以小程序端不携带 state（SERVICE_INTEGRATION.md 中 state 为强烈建议非必填）。
+ */
+export function getAuthorizeUrl(): string {
+  const base = getOAuthBaseUrl()
+  const clientId = getClientId()
+  const redirectUri = encodeURIComponent(getCallbackUrl())
+  let url = `${base}/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20profile`
+  // #ifdef H5
+  url += `&state=${generateState()}`
+  // #endif
+  return url
+}
+
+/** 真正跳转统一身份认证。不含开发模式分支——调用方已经决定要去 OAuth 了。 */
+export function redirectToOAuth() {
+  const url = getAuthorizeUrl()
+  // #ifdef H5
+  // 与 webview.vue 的守卫对称：VITE_OAUTH_BASE_URL 未配置时 URL 是相对路径，
+  // 直接跳转会落到 SPA fallback 上白屏，这里给出可操作的提示。
+  if (!/^https?:\/\//.test(url)) {
+    uni.showModal({
+      title: '登录服务未配置',
+      content: '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL 与 VITE_OAUTH_CLIENT_ID。',
+      showCancel: false,
+    })
+    return
+  }
   window.location.href = url
   // #endif
   // #ifndef H5
@@ -24,13 +108,13 @@ export function redirectToCas() {
   // #endif
 }
 
-/** 触发登录流程：开发模式先弹调试确认框，生产模式直达 CAS */
+/** 触发登录流程：开发模式先弹调试确认框，生产模式直达 OAuth */
 export function loginDirectly() {
   if (isDev) {
     useAuthStore().openLoginModal()
     return
   }
-  redirectToCas()
+  redirectToOAuth()
 }
 
 /** 具体操作的前置登录拦截：未登录时弹「取消 / 去登录」确认框 */

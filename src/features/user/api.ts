@@ -37,12 +37,12 @@ export async function testLogin(userId = 1, password = ''): Promise<LoginResultV
   return toLoginResultVM(raw)
 }
 
-/** 登录回调 GET /user/logincallback（无需登录，用 CAS 回传的一次性凭据 guid 换取会话） */
-export async function loginByGuid(guid: string): Promise<LoginResultVM> {
+/** 登录回调 GET /user/logincallback（无需登录，用 OAuth2 code + redirect_uri 换取会话） */
+export async function loginCallback(code: string, redirectUri: string): Promise<LoginResultVM> {
   const raw = await request<LoginResult>({
     url: '/user/logincallback',
     method: 'GET',
-    query: { guid },
+    query: { code, redirect_uri: redirectUri },
   })
 
   return toLoginResultVM(raw)

@@ -5,6 +5,7 @@ import * as userApi from '@/features/user/api'
 import { useAuth as useUserAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
 import { useAuthStore } from '@/store/auth'
+import { validateAndClearState } from '@/service/auth/login'
 
 const PROFILE = {
   id: 1,
@@ -97,5 +98,51 @@ describe('登录态一致性', () => {
     expect(logoutSpy).toHaveBeenCalledTimes(1)
 
     logoutSpy.mockRestore()
+  })
+})
+
+/**
+ * OAuth2 state CSRF 防护校验。
+ *
+ * validateAndClearState 在 H5 端（jsdom）通过 sessionStorage 判断本次登录是否由本站发起：
+ * - stored 为空 → 本端没发起过这次登录（非本站跳转），拒绝
+ * - state 为空  → 回调没带 state（攻击者构造的裸回调），拒绝
+ * - 两者不匹配 → 拒绝
+ * - 完全匹配   → 放行并清除
+ */
+describe('oAuth2 state CSRF 防护', () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it('sessionStorage 无记录时（非本站发起的登录）必须拒绝，无论 state 是否存在', () => {
+    expect(validateAndClearState('any-state')).toBe(false)
+    expect(validateAndClearState('')).toBe(false)
+  })
+
+  it('state 为空串时必须拒绝（攻击者构造的不带 state 的裸回调）', () => {
+    sessionStorage.setItem('oauth_state', 'stored-state')
+    expect(validateAndClearState('')).toBe(false)
+    // 校验失败也必须清除，防止重放
+    expect(sessionStorage.getItem('oauth_state')).toBeNull()
+  })
+
+  it('state 与 sessionStorage 不匹配时必须拒绝', () => {
+    sessionStorage.setItem('oauth_state', 'stored-state')
+    expect(validateAndClearState('tampered-state')).toBe(false)
+    expect(sessionStorage.getItem('oauth_state')).toBeNull()
+  })
+
+  it('state 与 sessionStorage 完全匹配时放行，且校验后立即清除', () => {
+    sessionStorage.setItem('oauth_state', 'correct-state')
+    expect(validateAndClearState('correct-state')).toBe(true)
+    expect(sessionStorage.getItem('oauth_state')).toBeNull()
+  })
+
+  it('state 一次性使用：校验通过即作废，未重新发起授权时重放同一 state 必须拒绝', () => {
+    sessionStorage.setItem('oauth_state', 'one-time-state')
+    expect(validateAndClearState('one-time-state')).toBe(true)
+    // 校验后记录已被清除，不重新发起授权（不补写）的情况下重放必拒
+    expect(validateAndClearState('one-time-state')).toBe(false)
   })
 })

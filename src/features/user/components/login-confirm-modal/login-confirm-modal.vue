@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { redirectToCas } from '@/service/auth/login'
+import { redirectToOAuth } from '@/service/auth/login'
 import { useAuthStore } from '@/store/auth'
 import { getUserInfo, testLogin } from '../../api'
 import { useUserStore } from '../../store/user'
@@ -69,8 +69,8 @@ async function handleTestLogin() {
   }
 }
 
-function handleCASLogin() {
-  redirectToCas()
+function handleOAuthLogin() {
+  redirectToOAuth()
 }
 
 function handleClose() {
@@ -165,7 +165,7 @@ function handleClose() {
           :type="isDev ? 'info' : 'warning'"
           size="medium"
           custom-class="!font-bold !text-sm"
-          @click="handleCASLogin"
+          @click="handleOAuthLogin"
         >
           {{ isDev ? '前往统一身份认证' : '前往统一身份认证登录' }}
         </wd-button>

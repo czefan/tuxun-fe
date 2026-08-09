@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getLoginUrl } from '@/service/auth/login'
+import { getAuthorizeUrl, getCallbackUrl } from '@/service/auth/login'
 import { useAuthStore } from '@/store/auth'
 
 definePage({
@@ -13,7 +13,7 @@ definePage({
 /**
  * 小程序侧的登录宿主页。
  *
- * 小程序没有 cookie，登录态只能走 `X-Session-Id`。这里用 `<web-view>` 装载统一认证，
+ * 小程序没有 cookie，登录态只能走 `X-Session-Id`。这里用 `<web-view>` 装载 tz-oauth 授权页，
  * 认证完成后由内部的 H5 回调页 postMessage 把 session_id 送回来。
  *
  * **handleMessage 里只做同步的事。** 微信的 postMessage 是在 web-view 销毁时
@@ -25,11 +25,14 @@ const webviewUrl = ref('')
 const authStore = useAuthStore()
 
 onLoad(() => {
-  const url = getLoginUrl()
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+  const url = getAuthorizeUrl()
+  // 小程序构建里 getCallbackUrl() 取 VITE_MP_CALLBACK_URL，未配置时 authorize URL
+  // 会带上空的 redirect_uri —— URL 前缀合法但授权页打开即报错，必须一并拦截。
+  const callbackUrl = getCallbackUrl()
+  if ((!url.startsWith('http://') && !url.startsWith('https://')) || !callbackUrl) {
     uni.showModal({
       title: '登录服务未配置',
-      content: '当前构建缺少 API 域名配置，请联系管理员配置 VITE_SERVER_BASEURL。',
+      content: '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL、VITE_OAUTH_CLIENT_ID 与 VITE_MP_CALLBACK_URL。',
       showCancel: false,
     })
     return

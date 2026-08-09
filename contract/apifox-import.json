@@ -109,44 +109,6 @@
         }
       }
     },
-    "/user/login": {
-      "get": {
-        "tags": ["用户认证"],
-        "summary": "登录（重定向）",
-        "operationId": "userLogin",
-        "security": [],
-        "parameters": [
-          {
-            "name": "client",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["fe", "admin"],
-              "default": "fe",
-              "example": "fe"
-            },
-            "description": "指定统一认证完成后回跳的前端应用：fe = C 端（tuxun-fe，回调页 {FE_ORIGIN}/subPages/auth/callback），admin = B 端（tuxun-admin-fe，回调页 {ADMIN_ORIGIN}/login/callback）。回调页地址由后端按部署侧配置映射得到，接口不接受任意 URL 形式的回跳地址，从根上杜绝开放重定向。不传按 fe 处理。"
-          }
-        ],
-        "responses": {
-          "302": {
-            "description": "重定向到学校统一认证，回调地址（CAS service）为 client 映射出的前端登录回调页；若当前 Cookie 已有有效登录态，则不走 CAS，直接重定向到该 client 的站点首页"
-          },
-          "400": {
-            "description": "client 为枚举外的非法值，或该 client 未在部署侧配置回调地址；此时返回错误响应，不执行任何重定向",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "重定向至学校统一身份认证登录页面。CAS 回调地址指向前端页面而非后端：后端按 client 查出对应前端的登录回调页作为 CAS 的 service（fe → {FE_ORIGIN}/subPages/auth/callback，admin → {ADMIN_ORIGIN}/login/callback，两端部署源由后端配置项提供），认证完成后由 CAS 携带一次性凭据 guid 重定向回该页面，前端页面再以 AJAX 调用 GET /user/logincallback?guid=... 换取会话。两端均为 history 路由，guid 以普通 query 参数追加到回调页地址上（如 {FE_ORIGIN}/subPages/auth/callback?guid=xxx），回调页原有 query 存在时用 & 拼接。两个回调页地址需在学校统一认证侧登记为合法 service，新增端必须先登记后端配置，前端无法通过参数指定任意地址。若当前 Cookie 已有有效登录态，直接重定向到该 client 的站点首页。前端与 API 非同源时，调用 logincallback 需携带凭据且服务端 CORS 精确回显 Origin 并允许凭据，或改用响应中的 session_id 走 X-Session-Id 请求头。"
-      }
-    },
     "/user/logincallback": {
       "get": {
         "tags": ["用户认证"],
@@ -155,14 +117,24 @@
         "security": [],
         "parameters": [
           {
-            "name": "guid",
+            "name": "code",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
               "example": "abc123"
             },
-            "description": "学校统一认证回调凭证"
+            "description": "学校统一认证回调返回的一次性凭据"
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "https://tuxun.example.com/subPages/auth/callback"
+            },
+            "description": "前端授权阶段传给认证服务的登录回调页地址，须与该值完全一致；后端按环境变量配置的白名单（C 端、B 端各一项）校验，不一致或不在白名单内返回 400 且不执行换取。因两端回调页地址不同，该值由前端传入，可取范围受后端白名单约束。"
           }
         ],
         "responses": {
@@ -190,7 +162,7 @@
             }
           },
           "400": {
-            "description": "guid 缺失、无效、已使用或已过期，换取用户身份失败",
+            "description": "code 缺失、无效、已使用或已过期，或 redirect_uri 与授权阶段不一致、不在后端白名单内",
             "content": {
               "application/json": {
                 "schema": {
@@ -225,7 +197,7 @@
             }
           }
         },
-        "description": "统一身份认证回调接口，用 Query 参数 guid 换取用户身份，创建或更新本地用户记录并写入登录态（tz-sessions Cookie），返回 LoginResult（UserSummary 加上用于跨端鉴权的 session_id；UserSummary 本身不含该字段）。本接口由前端登录回调页在拿到 CAS 回传的 guid 后以 AJAX 方式调用（回调页地址由 GET /user/login 的 client 参数在后端映射得到），不再由浏览器直接跳转访问。guid 为一次性凭据，换取成功后必须立即作废，并设置不超过 5 分钟的有效期（guid 会出现在 URL 与网关访问日志中，避免被重放换取会话）。guid 缺失、无效、过期或换取失败返回 400（code=3）；账号已被封禁返回 403（code=7）。"
+        "description": "登录跳转由前端发起：前端重定向到学校统一身份认证页面，redirect_uri 指向自己的登录回调页；认证完成后认证服务携带一次性凭据 code 重定向回该页面，回调页再以 AJAX 调用本接口换取会话。后端不提供登录重定向接口。后端用 code 与 redirect_uri 向学校认证服务换取用户身份，创建或更新本地用户记录并写入登录态（tz-sessions Cookie），返回 LoginResult（UserSummary 加上用于跨端鉴权的 session_id；UserSummary 本身不含该字段）。redirect_uri 须与前端授权阶段传给认证服务的值完全一致，并命中后端环境变量配置的回调页白名单（C 端、B 端各一项），不一致或不在白名单内返回 400 且不执行换取；因两端回调页地址不同，该值由前端传入而非后端写死单一值，但可取范围仍受白名单约束。code 为一次性凭据，换取成功后立即作废，有效期不超过 5 分钟（code 会出现在 URL 与网关访问日志中，避免被重放换取会话）。小程序可通过 web-view 登录获取该 session_id 并存入本地，后续请求通过 X-Session-Id Header 传递凭据。两端回调页地址需同时登记在学校统一认证侧的合法 redirect_uri 与后端环境变量白名单中；两端均为 history 路由，认证服务回跳是对回调页地址的整页加载，静态服务须把未知路径回退到 index.html。前端与 API 非同源时，调用本接口需携带凭据且服务端 CORS 精确回显 Origin 并允许凭据，或改用响应中的 session_id 走 X-Session-Id 请求头。"
       }
     },
     "/user/logout": {

@@ -25,6 +25,8 @@ interface ImportMetaEnv {
   readonly VITE_SERVER_BASEURL__WEIXIN_TRIAL?: string
   /** 微信小程序正式版后台接口地址，不配置则使用 VITE_SERVER_BASEURL */
   readonly VITE_SERVER_BASEURL__WEIXIN_RELEASE?: string
+  /** 部署子路径（默认 /；子路径部署时如 /doc/，vite base 与 OAuth 回调 URL 均依赖它） */
+  readonly VITE_APP_PUBLIC_BASE: string
   /** H5是否需要代理 */
   readonly VITE_APP_PROXY_ENABLE: 'true' | 'false'
   /** H5是否需要代理，需要的话有个前缀 */
@@ -37,6 +39,12 @@ interface ImportMetaEnv {
   readonly VITE_AMAP_SECURITY_JSCODE?: string
   /** 高德服务代理地址，配置后 jscode 不会出现在前端产物里 */
   readonly VITE_AMAP_SERVICE_HOST?: string
+  /** tz-oauth 授权服务地址（生产 https://oauth.tiaozhan.com） */
+  readonly VITE_OAUTH_BASE_URL?: string
+  /** 本服务的 OAuth Client ID（在 tz-oauth 管理端注册） */
+  readonly VITE_OAUTH_CLIENT_ID?: string
+  /** 小程序专用：H5 回调页线上完整 URL（仅 #ifndef H5 条件编译块使用） */
+  readonly VITE_MP_CALLBACK_URL?: string
   // 更多环境变量...
 }
 

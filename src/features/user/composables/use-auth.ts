@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia'
 import { loginDirectly, requireLogin } from '@/service/auth/login'
 import { useAuthStore } from '@/store/auth'
 import { useUserStore } from '../store/user'
-import { getUserInfo, loginByGuid, logout as logoutApi } from '../api'
+import { getUserInfo, loginCallback, logout as logoutApi } from '../api'
 
 export function useAuth() {
   const userStore = useUserStore()
@@ -11,15 +11,13 @@ export function useAuth() {
 
   const isLoggedIn = computed(() => Boolean(userStore.isLoggedIn()))
 
-  async function handleCallback(guid: string) {
-    const loginResult = await loginByGuid(guid)
-    if (loginResult) {
-      if (loginResult.sessionId) {
-        useAuthStore().setSessionId(loginResult.sessionId)
-      }
-      const fullInfo = await getUserInfo()
-      userStore.setUserInfo(fullInfo)
+  async function handleCallback(code: string, redirectUri: string) {
+    const loginResult = await loginCallback(code, redirectUri)
+    if (loginResult.sessionId) {
+      useAuthStore().setSessionId(loginResult.sessionId)
     }
+    const fullInfo = await getUserInfo()
+    userStore.setUserInfo(fullInfo)
     return loginResult
   }
 

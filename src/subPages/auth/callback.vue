@@ -3,11 +3,11 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
-import { redirectToCas } from '@/service/auth/login'
+import { getCallbackUrl, redirectToOAuth, validateAndClearState } from '@/service/auth/login'
 import { AppRoute } from '@/router/routes'
 import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import { ApiRequestError } from '@/service/request/error'
-import { postSessionToMiniProgram } from '@/utils/mp-webview'
+import { isInMiniProgramWebview, postSessionToMiniProgram } from '@/utils/mp-webview'
 
 definePage({
   style: {
@@ -25,7 +25,7 @@ function retryLogin() {
   if (typeof window !== 'undefined') {
     window.history.replaceState({}, '', window.location.pathname)
   }
-  redirectToCas()
+  redirectToOAuth()
 }
 
 function extractParam(query: Record<string, any>, keys: string[]): string {
@@ -41,16 +41,6 @@ function extractParam(query: Record<string, any>, keys: string[]): string {
       if (val)
         return val
     }
-    // 保留以兼容 Hash 路由模式，History 模式下不会命中
-    const hashIndex = window.location.hash.indexOf('?')
-    if (hashIndex !== -1) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(hashIndex))
-      for (const k of keys) {
-        const val = hashParams.get(k)
-        if (val)
-          return val
-      }
-    }
   }
   return ''
 }
@@ -63,19 +53,28 @@ onLoad(async (query: Record<string, any> = {}) => {
     return
   }
 
-  // 严格按 contract/api.md 契约提取 CAS 一次性凭据：参数名固定为 guid。
-  // 不要"顺手兼容" OAuth 的 code / ticket —— 后端不认，取错值只会得到 400，
-  // 而 400 在下面被翻译成「登录链接已失效」，会把排查方向带偏到凭据有效期上。
-  const guid = extractParam(query, ['guid'])
+  // 非小程序 web-view 环境强制校验 state（防 CSRF）
+  // 小程序 web-view 豁免原因：发起端（mp 构建）无 sessionStorage 可存 state，
+  // 且回跳目标是另一份 H5 产物，校验时 sessionStorage 必然为空。
+  const state = extractParam(query, ['state'])
+  if (!isInMiniProgramWebview() && !validateAndClearState(state)) {
+    statusText.value = '登录状态校验失败，请重新登录'
+    isError.value = true
+    return
+  }
 
-  if (!guid) {
+  // 严格按 contract/api.md 契约提取 OAuth2 一次性凭据：参数名固定为 code。
+  const code = extractParam(query, ['code'])
+
+  if (!code) {
     statusText.value = '登录参数无效'
     isError.value = true
     return
   }
 
   try {
-    const res = await handleCallback(guid)
+    const redirectUri = getCallbackUrl()
+    const res = await handleCallback(code, redirectUri)
     statusText.value = '登录成功'
 
     // 跑在小程序 <web-view> 里时，把 session_id 回传给宿主并返回小程序。
@@ -95,8 +94,8 @@ onLoad(async (query: Record<string, any> = {}) => {
   catch (err: unknown) {
     userStore.logout()
     isError.value = true
-    // 注意：ApiRequestError.code 是**契约业务码**（code=0 成功），不是 HTTP 状态码，
-    // 判 HTTP 400 只能看 statusCode。OAuth code 一次性且 ≤5 分钟有效，过期/重放都是 400。
+    // ApiRequestError.code 是契约业务码，判 HTTP 400 看 statusCode。
+    // OAuth code 一次性且 ≤5 分钟有效，过期/重放都是 400。
     if (err instanceof ApiRequestError && err.statusCode === 400) {
       statusText.value = '登录链接已失效，请重新登录'
     }

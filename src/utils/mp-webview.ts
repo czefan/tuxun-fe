@@ -29,7 +29,7 @@ function getBridge(): MiniProgramBridge | null {
 }
 
 /** 当前 H5 是否跑在微信小程序的 `<web-view>` 里 */
-function isInMiniProgramWebview(): boolean {
+export function isInMiniProgramWebview(): boolean {
   const ua = (globalThis as any).navigator?.userAgent
   if (typeof ua !== 'string') {
     return false
