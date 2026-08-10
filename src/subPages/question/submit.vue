@@ -121,11 +121,18 @@ async function handleSubmit() {
       uni.removeStorageSync(`${DRAFT_KEY_PREFIX}${photoId.value}`)
     }
 
-    uni.showToast({ title: '作答已提交，等待审核', icon: 'success' })
-
-    setTimeout(() => {
-      uni.redirectTo({ url: withQuery(AppRoute.QuestionDetail, { id: photoId.value }) })
-    }, 1200)
+    uni.redirectTo({
+      url: withQuery(AppRoute.QuestionDetail, { id: photoId.value }),
+      success: () => {
+        uni.showModal({
+          title: '作答已提交',
+          content: '您的作答已成功提交，等待审核。',
+          showCancel: false,
+          confirmText: '我知道了',
+          confirmColor: '#B69171',
+        })
+      },
+    })
   }
   catch {
     // Handled by interceptor
@@ -194,6 +201,8 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
             <text class="i-carbon:location text-sm text-[#B69171]" />
             <text>定位</text>
           </view>
+          <!-- #ifndef H5 -->
+          <!-- H5 端无全屏选点：uni-h5 系统弹窗确认需先选 POI 列表项，高德安全密钥模式下列表加载失败；小程序端为微信原生弹窗，无此限制 -->
           <view
             class="flex cursor-pointer items-center gap-1 text-sm text-[#756C5E] font-medium transition-opacity active:opacity-70"
             @click="locationPickerRef?.chooseLocation()"
@@ -201,6 +210,7 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
             <text class="i-carbon:map text-sm text-[#756C5E]" />
             <text>全屏</text>
           </view>
+          <!-- #endif -->
         </view>
       </view>
 
@@ -212,7 +222,6 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
           v-model:longitude="formData.longitude"
           v-model:address="formData.address"
           selected-text="已选择打卡定位"
-          unselected-text="点击地图选取坐标"
         />
       </wd-form>
     </view>

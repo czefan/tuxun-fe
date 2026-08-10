@@ -7,7 +7,6 @@ import { getUserInfo } from '@/features/user/api'
 
 export function useAppLifecycle() {
   onLaunch(() => {
-    ensureEnvironmentFingerprint()
     registerH5UnhandledRejectionFilter()
     void validateStoredSession()
   })
@@ -30,21 +29,6 @@ function registerH5UnhandledRejectionFilter() {
     })
   }
   // #endif
-}
-
-/** 清理与初始化设备/环境指纹信息 */
-function ensureEnvironmentFingerprint() {
-  try {
-    const FINGERPRINT_KEY = 'tuxun_device_fingerprint'
-    let fp = uni.getStorageSync(FINGERPRINT_KEY)
-    if (!fp) {
-      fp = `fp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-      uni.setStorageSync(FINGERPRINT_KEY, fp)
-    }
-  }
-  catch {
-    // 忽略平台环境兼容异常
-  }
 }
 
 async function validateStoredSession() {

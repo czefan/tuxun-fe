@@ -30,9 +30,9 @@ onLoad((query) => {
         <text class="block text-sm text-[#756C5E] font-medium tracking-wide font-numeric">{{ detail.createdAt }}</text>
       </view>
 
-      <!-- 升级字号的正文内容 -->
-      <view class="text-base text-[#26221F] leading-relaxed tracking-normal">
-        <text class="block whitespace-pre-wrap leading-relaxed">{{ detail.content }}</text>
+      <!-- 正文内容：rich-text 渲染 HTML 富文本；容器不带字号/颜色 class，避免 H5 端继承污染内容（小程序端原生组件不继承外部样式） -->
+      <view>
+        <rich-text :nodes="detail.content" />
       </view>
 
       <!-- 通知配图 (居中展示) -->

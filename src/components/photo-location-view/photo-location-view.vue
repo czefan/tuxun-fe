@@ -32,19 +32,6 @@ const normalizedLocation = computed(() =>
   normalizeToGcj02(props.latitude, props.longitude, props.coordType),
 )
 
-const markers = computed(() => [
-  {
-    id: 1,
-    latitude: normalizedLocation.value.latitude,
-    longitude: normalizedLocation.value.longitude,
-    title: props.title,
-    iconPath: '/static/logo.png',
-    width: 28,
-    height: 28,
-    anchor: { x: 0.5, y: 1 },
-  },
-])
-
 /** 打开全屏交互地图 */
 function openFullScreenMap() {
   uni.openLocation({
@@ -84,12 +71,16 @@ function openFullScreenMap() {
         :latitude="normalizedLocation.latitude"
         :longitude="normalizedLocation.longitude"
         :scale="15"
-        :markers="markers"
         :enable-scroll="false"
         :enable-zoom="false"
       />
       <view v-else class="h-full w-full flex items-center justify-center bg-[#F1DFC5]/40">
         <text class="text-xs text-[#756C5E] font-bold">点击打开地图查看位置</text>
+      </view>
+
+      <!-- 答案中心定位针：与选点卡片完全一致的实心填充图标 i-carbon:location-filled -->
+      <view class="pointer-events-none absolute left-1/2 top-1/2 z-10 transform -translate-x-1/2 -translate-y-full">
+        <text class="i-carbon:location-filled block text-[24px] text-rose-500 drop-shadow-md" />
       </view>
     </view>
   </view>

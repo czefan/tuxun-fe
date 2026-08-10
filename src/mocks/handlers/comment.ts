@@ -7,7 +7,10 @@ export const commentHandlers = [
   http.get('*/api/photos/:id/comments', ({ params, request }) => {
     const photoId = Number(params.id)
     const { page, pageSize } = parsePaginationParams(request.url)
-    const list = db.getCommentsByPhotoId(photoId)
+    // 契约：GET 评论列表支持 sort_by=created_at/likes_count（均降序、同值按 id 倒序）；非法值回退默认排序
+    const rawSortBy = new URL(request.url).searchParams.get('sort_by')
+    const sortBy: 'created_at' | 'likes_count' | undefined = rawSortBy === 'created_at' || rawSortBy === 'likes_count' ? rawSortBy : undefined
+    const list = db.getCommentsByPhotoId(photoId, sortBy)
     const paginated = paginateArray(list, page, pageSize)
     return ok({
       total: list.length,
@@ -40,6 +43,7 @@ export const commentHandlers = [
         content: '示例评论',
         liked: false,
         likes_count: 5,
+        status: 'approved' as const,
         created_at: new Date().toISOString(),
       }
       db.comments.push(item)

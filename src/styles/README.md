@@ -4,6 +4,14 @@
 
 ---
 
+## 📂 目录结构
+
+- **`constants.ts`**：设计 Token 常量（品牌色等）。
+- **`index.scss`**：全局基础样式。
+- **`uno/`**：UnoCSS 配置 —— `theme.ts`（主题）、`shortcuts.ts`（简写）、`rules.ts`（自定义规则，如 `font-numeric`）、`transitions.ts`。
+
+---
+
 ## 🎨 样式架构与规则
 
 1. **UnoCSS 优先**：

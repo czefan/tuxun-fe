@@ -17,21 +17,6 @@ export interface RequestOptions {
   hideErrorToast?: boolean
 }
 
-export interface UploadFileOptions {
-  url: string
-  filePath?: string
-  files?: UniApp.UploadFileOptionFiles[]
-  name?: string
-  formData?: RequestData
-  header?: UniApp.UploadFileOption['header']
-  /** 是否需要携带 Token，默认 true */
-  auth?: boolean
-  /** 401 时是否静默处理，不自动跳登录页 */
-  silentAuth?: boolean
-  /** 出错时是否隐藏错误提示 */
-  hideErrorToast?: boolean
-}
-
 /**
  * 在 uniapp 的 RequestOptions 和 IUniUploadFileOptions 基础上，添加自定义参数
  */

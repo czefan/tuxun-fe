@@ -18,9 +18,10 @@ src/
 ├── pages/                       # 主包页面（底栏 TabBar 核心直属页面）
 ├── router/                      # 页面路由拦截与导航守卫
 ├── service/                     # 网络服务与契约处理
-│   ├── api/                     # 业务 API 调用定义
-│   ├── contract/                # OpenAPI 生成的具体契约类型 (schema.d.ts)
-│   └── request/                 # 适配 uni.request 的底层 HTTP 请求库与拦截器
+│   ├── auth/                    # tz-oauth 授权登录流程（跳转、state 校验、回跳）
+│   ├── contract/                # OpenAPI 生成的契约类型 (schema.d.ts) 与 VM 映射
+│   ├── query/                   # Vue Query client / Query Key 工厂 / 分页钳制
+│   └── request/                 # 适配 uni.request / uploadFile 的底层请求库与拦截器
 ├── store/                       # Pinia 客户端全局状态（如用户会话态、客户端点赞态等）
 ├── styles/                      # 全局公共样式、设计变量与 Sass mixins
 ├── subPages/                    # 分包页面（非核心业务页面，如详情、投稿、商城等）
@@ -66,7 +67,7 @@ src/
 
 ### 2. 客户端状态 (Client State)
 
-- 使用 **Pinia** 集中管理本地会话与偏好设置（如 `src/store/auth.ts` 管理 Token 与登录状态，`features/user` 管理用户信息与 ViewModel）。
+- 使用 **Pinia** 集中管理本地会话与偏好设置（如 `src/store/auth.ts` 管理会话凭据与登录状态——本项目为 cookie 会话，`sessionId` / `userId` 为准，token 恒为空；`features/user` 管理用户信息与 ViewModel）。
 
 ---
 

@@ -1,14 +1,12 @@
 export const StorageKey = {
   Token: 'token',
-  UserInfo: 'user_info',
-  OAuthRedirectUri: 'oauth:redirect-uri',
-  OAuthReturnUrl: 'oauth:return-url',
-  OAuthState: 'oauth:state',
-  OAuthRedirectUrl: 'oauth_redirect_url',
-  OAuthRedirectAttempts: 'oauth_redirect_attempts',
-  PendingActions: 'pending_actions',
-  EnvNamespaceFingerprint: 'env_namespace_fingerprint',
-  ReadNoticeIds: 'tuxun_read_notices',
+  ReadNoticeIds: 'tuxun_read_announcements',
+  /** H5 登录前保存来源页，登录成功后回跳；登出时清理 */
+  LoginReturnPath: 'login_return_path',
+  /** OAuth CSRF state（H5 端存于 sessionStorage，会话结束即清；同时注册到清理列表双保险） */
+  OAuthState: 'oauth_state',
+  /** 全站公告弹窗已读版本号 */
+  AnnouncementLastSeenVersion: 'announcement_last_seen_version',
 } as const
 
 /**
@@ -23,12 +21,7 @@ export function getSearchHistoryKey(scope: string) {
 
 export const AuthCleanupStorageKeys = [
   StorageKey.Token,
-  StorageKey.UserInfo,
-  StorageKey.OAuthRedirectUri,
-  StorageKey.OAuthReturnUrl,
-  StorageKey.OAuthState,
-  StorageKey.OAuthRedirectUrl,
-  StorageKey.OAuthRedirectAttempts,
-  StorageKey.PendingActions,
   StorageKey.ReadNoticeIds,
+  StorageKey.LoginReturnPath,
+  StorageKey.OAuthState,
 ] as const

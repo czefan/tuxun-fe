@@ -7,6 +7,12 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+/** uni storage 的内存实现：同步 API 要能真正存取值（如登录回跳路径、草稿箱），不能只返回 null */
+const storageStore = new Map<string, unknown>()
+beforeEach(() => {
+  storageStore.clear()
+})
+
 /** 在 Node 测试环境下模拟 uni.request -> 原生 fetch，以便 MSW Node server 正确拦截 */
 async function uniRequestPolyfill(options: any) {
   try {
@@ -129,9 +135,16 @@ const uniMock = {
   navigateBack: vi.fn(),
   switchTab: vi.fn(),
   reLaunch: vi.fn(),
-  getStorageSync: vi.fn().mockReturnValue(null),
-  setStorageSync: vi.fn(),
-  removeStorageSync: vi.fn(),
+  // key 不存在时返回空串，与 uni 真实行为一致（调用方常以 falsy 判断）
+  getStorageSync: vi.fn().mockImplementation((key: string) => {
+    return storageStore.has(key) ? storageStore.get(key) : ''
+  }),
+  setStorageSync: vi.fn().mockImplementation((key: string, value: unknown) => {
+    storageStore.set(key, value)
+  }),
+  removeStorageSync: vi.fn().mockImplementation((key: string) => {
+    storageStore.delete(key)
+  }),
   getStorageInfoSync: vi.fn().mockReturnValue({ keys: [], currentSize: 0, limitSize: 0 }),
   getStorage: vi.fn(),
   setStorage: vi.fn(),

@@ -4,9 +4,9 @@ import { onLoad } from '@dcloudio/uni-app'
 import { createPhoto } from '@/features/photo/api'
 import { useActiveActivities } from '@/features/activity/query'
 import { smartCompressImage } from '@/utils/image-compress'
+import { AppRoute } from '@/router/routes'
 
 import { useAuth } from '@/composables/use-auth'
-import { AppRoute } from '@/router/routes'
 import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
 
 definePage({
@@ -37,9 +37,9 @@ const isRemoteImage = computed(() => /^https?:\/\//i.test(form.filePath))
 onLoad((options) => {
   if (!isLoggedIn())
     return
-  if (activityData.value?.list?.length) {
-    form.activityId = activityData.value.list[0].id
-  }
+  // 不默认选中第一个活动：onLoad 时活动列表请求通常未返回，仅当查询已被缓存
+  // （如投稿后 redirectTo 刷新自己）才会「碰巧」选中第一个——行为随缓存时序漂移。
+  // 统一不选：首次进入与刷新后都是空白态「点击选择活动」，由用户显式选择。
   if (options?.refill) {
     try {
       const refillData = JSON.parse(decodeURIComponent(options.refill))
@@ -154,10 +154,20 @@ async function handleSubmit() {
 
     uni.removeStorageSync(DRAFT_KEY)
 
-    uni.showToast({ title: '投稿成功，等待审核', icon: 'success' })
-    setTimeout(() => {
-      uni.redirectTo({ url: AppRoute.MyContributions })
-    }, 1000)
+    // 整页刷新：redirectTo 重开投稿页（全新实例，onLoad 重跑、地图组件重新初始化），
+    // 而不是逐字段重置——逐字段容易漏掉组件内部状态（如地图草稿坐标）。
+    uni.redirectTo({
+      url: AppRoute.Contribute,
+      success: () => {
+        uni.showModal({
+          title: '投稿成功',
+          content: '您的题目已成功提交，可在「我的投稿」中查看审核状态。',
+          showCancel: false,
+          confirmText: '我知道了',
+          confirmColor: '#B69171',
+        })
+      },
+    })
   }
   catch {
     // Handled by request error interceptor
@@ -300,6 +310,8 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
               <text class="i-carbon:location text-sm text-[#B69171]" />
               <text>定位</text>
             </view>
+            <!-- #ifndef H5 -->
+            <!-- H5 端无全屏选点：uni-h5 系统弹窗确认需先选 POI 列表项，高德安全密钥模式下列表加载失败；小程序端为微信原生弹窗，无此限制 -->
             <view
               class="flex cursor-pointer items-center gap-1 text-sm text-[#756C5E] font-medium transition-opacity active:opacity-70"
               @click="locationPickerRef?.chooseLocation()"
@@ -307,6 +319,7 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
               <text class="i-carbon:map text-sm text-[#756C5E]" />
               <text>全屏</text>
             </view>
+            <!-- #endif -->
           </view>
         </view>
 
@@ -316,7 +329,6 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
           v-model:longitude="form.longitude"
           v-model:address="form.address"
           selected-text="已选择地标坐标"
-          unselected-text="点击地图选取坐标"
         />
       </view>
 

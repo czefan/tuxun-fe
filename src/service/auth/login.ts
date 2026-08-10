@@ -1,7 +1,45 @@
 import { AppRoute } from '@/router/routes'
+import { currRoute } from '@/router/page'
 import { useAuthStore } from '@/store/auth'
+import { StorageKey } from '@/constants/storage'
 
 const isDev = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK === 'true'
+
+/** 记录发起登录时所在页面，登录成功后回到这里（仅 H5 有效） */
+function saveReturnPath() {
+  // #ifdef H5
+  // 小程序走 web-view + navigateBack，页面栈里原页面还在，不需要回跳路径；
+  // 且回调页是线上 H5 产物，读不到小程序的 uni.setStorageSync，存了也无人消费。
+  try {
+    const { path, query } = currRoute()
+    if (!path || path.startsWith(AppRoute.AuthCallback) || path.startsWith(AppRoute.AuthWebview)) {
+      return
+    }
+    const qs = Object.entries(query || {})
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+      .join('&')
+    uni.setStorageSync(StorageKey.LoginReturnPath, qs ? `${path}?${qs}` : path)
+  }
+  catch {}
+  // #endif
+}
+
+/**
+ * 取出并清除回跳地址。
+ * 只接受站内绝对路径（/pages/ 或 /subPages/ 开头），
+ * 杜绝开放重定向风险。
+ */
+export function takeReturnPath(): string {
+  try {
+    const saved = uni.getStorageSync(StorageKey.LoginReturnPath)
+    uni.removeStorageSync(StorageKey.LoginReturnPath)
+    if (typeof saved === 'string' && /^\/(?:pages|subPages)\//.test(saved)) {
+      return saved
+    }
+  }
+  catch {}
+  return ''
+}
 
 /** tz-oauth 授权服务地址（生产 https://oauth.tiaozhan.com，本地 http://localhost:8088） */
 function getOAuthBaseUrl(): string {
@@ -36,7 +74,7 @@ function generateState(): string {
   crypto.getRandomValues(bytes)
   const state = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
   try {
-    sessionStorage.setItem('oauth_state', state)
+    sessionStorage.setItem(StorageKey.OAuthState, state)
   }
   catch {}
   return state
@@ -51,8 +89,8 @@ function generateState(): string {
 export function validateAndClearState(state: string): boolean {
   // #ifdef H5
   try {
-    const stored = sessionStorage.getItem('oauth_state')
-    sessionStorage.removeItem('oauth_state')
+    const stored = sessionStorage.getItem(StorageKey.OAuthState)
+    sessionStorage.removeItem(StorageKey.OAuthState)
     // stored 为空表示本端没发起过这次登录（非本站跳转）；state 为空表示回调没带 state，一律拒绝
     return !!stored && !!state && stored === state
   }
@@ -87,6 +125,7 @@ export function getAuthorizeUrl(): string {
 
 /** 真正跳转统一身份认证。不含开发模式分支——调用方已经决定要去 OAuth 了。 */
 export function redirectToOAuth() {
+  saveReturnPath()
   const url = getAuthorizeUrl()
   // #ifdef H5
   // 与 webview.vue 的守卫对称：VITE_OAUTH_BASE_URL 未配置时 URL 是相对路径，

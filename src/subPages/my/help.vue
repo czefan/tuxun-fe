@@ -43,7 +43,10 @@ const faqList = ref([
     <view v-if="data?.content" class="pt-2 space-y-2">
       <text class="block text-base text-[#1E1E1E] font-extrabold tracking-tight">官方规则说明</text>
       <view class="border-y border-[#B69171] py-3.5">
-        <rich-text :nodes="data.content" class="text-sm text-[#554738] font-normal leading-relaxed" />
+        <!-- 富文本容器不带字号/颜色 class：H5 端 rich-text 内容为真实 DOM，会继承容器样式（font-size 等），
+             导致内容字号被外部改掉且与小程序端不一致；内容按原样渲染，两端默认字号一致。
+             break-words 是断行规则（可继承属性，小程序端也生效），不改字号颜色，用于长 URL/英文串防横向溢出 -->
+        <rich-text :nodes="data.content" class="block break-words" />
       </view>
     </view>
   </view>

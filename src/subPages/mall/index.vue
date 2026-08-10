@@ -210,7 +210,7 @@ function handleExchange(goodId: number) {
       <wd-search
         v-model="searchKeyword"
         :focus="true"
-        placeholder="搜索商品名称..."
+        placeholder="搜索名称或描述..."
         hide-cancel
         custom-class="tx-search"
         placeholder-left
@@ -259,7 +259,7 @@ function handleExchange(goodId: number) {
             <view v-else class="py-20">
               <wd-empty icon="no-result" tip="暂无上架商品" />
             </view>
-            <wd-loadmore v-if="isFetchingGoods" :state="isFetchingGoods ? 'loading' : undefined" @reload="fetchNextGoods" />
+            <wd-loadmore v-if="isFetchingGoods" state="loading" @reload="fetchNextGoods" />
           </view>
         </scroll-view>
       </swiper-item>
@@ -324,7 +324,7 @@ function handleExchange(goodId: number) {
             <view v-else class="py-20">
               <wd-empty icon="no-result" tip="暂无兑换记录" />
             </view>
-            <wd-loadmore v-if="isFetchingExchanges" :state="isFetchingExchanges ? 'loading' : undefined" @reload="fetchNextExchanges" />
+            <wd-loadmore v-if="isFetchingExchanges" state="loading" @reload="fetchNextExchanges" />
           </view>
         </scroll-view>
       </swiper-item>
@@ -340,6 +340,7 @@ function handleExchange(goodId: number) {
         >
           <wd-icon name="close" size="16px" />
         </view>
+        <!-- 详情大图用高清原图：契约把 originUrl 放进列表就是为了免详情请求 -->
         <wd-img custom-class="h-48 w-full bg-[#B69171]/10 object-cover" lazy-load :src="activeGood.image.originUrl" mode="aspectFill" width="100%" height="384rpx" />
         <view class="p-5 space-y-4">
           <view class="flex items-baseline justify-between gap-3">

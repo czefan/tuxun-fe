@@ -5,7 +5,7 @@ import * as userApi from '@/features/user/api'
 import { useAuth as useUserAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
 import { useAuthStore } from '@/store/auth'
-import { validateAndClearState } from '@/service/auth/login'
+import { takeReturnPath, validateAndClearState } from '@/service/auth/login'
 
 const PROFILE = {
   id: 1,
@@ -144,5 +144,38 @@ describe('oAuth2 state CSRF 防护', () => {
     expect(validateAndClearState('one-time-state')).toBe(true)
     // 校验后记录已被清除，不重新发起授权（不补写）的情况下重放必拒
     expect(validateAndClearState('one-time-state')).toBe(false)
+  })
+})
+
+describe('takeReturnPath 回跳地址安全校验', () => {
+  beforeEach(() => {
+    uni.removeStorageSync('login_return_path')
+  })
+
+  it('无存储或不是字符串时返回空串', () => {
+    expect(takeReturnPath()).toBe('')
+  })
+
+  it('只允许 /pages/ 或 /subPages/ 开头的站内路径', () => {
+    uni.setStorageSync('login_return_path', '/subPages/question/detail?id=123')
+    expect(takeReturnPath()).toBe('/subPages/question/detail?id=123')
+
+    // 只能消费一次，再次调用应为空
+    expect(takeReturnPath()).toBe('')
+  })
+
+  it('拒绝外部域名与非法相对路径 (开放重定向防护)', () => {
+    const invalidPaths = [
+      'https://evil.com',
+      '//evil.com',
+      '../subPages/question/detail',
+      'javascript:alert(1)',
+      '/other/path',
+    ]
+
+    for (const p of invalidPaths) {
+      uni.setStorageSync('login_return_path', p)
+      expect(takeReturnPath(), `路径 ${p} 应被拦截`).toBe('')
+    }
   })
 })

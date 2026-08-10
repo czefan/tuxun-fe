@@ -222,6 +222,11 @@ onLoad((query) => {
   if (typeof query?.id === 'string') {
     questionId.value = Number(query.id)
   }
+  // 互动消息跳转带 tab：评论消息/评论点赞 → 评论区、破解点赞 → 已破解
+  // （见 pages/notice/index.vue handleInteractionTap；默认即为评论区，无需处理 undefined）
+  if (query?.tab === 'solves' || query?.tab === 'myAttempts' || query?.tab === 'comments') {
+    activeTab.value = query.tab
+  }
   if (query?.fromCut === '1') {
     showUndoBanner.value = true
     setTimeout(() => {

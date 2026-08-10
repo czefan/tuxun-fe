@@ -31,6 +31,40 @@ const mediaType = ref<'image' | 'video' | ''>('')
 const submitMutation = useSubmitFeedback()
 
 function chooseMedia() {
+  // #ifdef H5
+  // H5 端动态创建隐藏 input[type=file]，触发系统文件选择器并根据 file.type 自动判断图片/视频。
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*,video/*'
+  input.onchange = async () => {
+    const file = input.files?.[0]
+    if (!file)
+      return
+    const sizeMB = file.size / (1024 * 1024)
+    if (file.type.startsWith('video/')) {
+      if (sizeMB > 50) {
+        uni.showToast({ title: '视频大小不能超过 50MB', icon: 'none' })
+        return
+      }
+      mediaPath.value = URL.createObjectURL(file)
+      mediaType.value = 'video'
+    }
+    else if (file.type.startsWith('image/')) {
+      if (sizeMB > 20) {
+        uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
+        return
+      }
+      mediaPath.value = await smartCompressImage(URL.createObjectURL(file))
+      mediaType.value = 'image'
+    }
+    else {
+      // accept 是软限制，用户可切到「所有文件」选任意类型，兜底拦截非图片/视频
+      uni.showToast({ title: '请选择图片或视频文件', icon: 'none' })
+    }
+  }
+  input.click()
+  // #endif
+  // #ifndef H5
   uni.chooseMedia({
     count: 1,
     mediaType: ['image', 'video'],
@@ -38,17 +72,14 @@ function chooseMedia() {
       const file = res.tempFiles[0]
       if (!file)
         return
-
       const type = res.type as 'image' | 'video'
       const sizeMB = file.size / (1024 * 1024)
-
       if (type === 'image') {
         if (sizeMB > 20) {
           uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
           return
         }
-        const compressed = await smartCompressImage(file.tempFilePath)
-        mediaPath.value = compressed
+        mediaPath.value = await smartCompressImage(file.tempFilePath)
         mediaType.value = 'image'
       }
       else if (type === 'video') {
@@ -61,6 +92,7 @@ function chooseMedia() {
       }
     },
   })
+  // #endif
 }
 
 function removeMedia() {
@@ -125,7 +157,6 @@ function handleSubmit() {
   }
 
   let finalContent = formData.content.trim()
-  // 选择「功能异常」(type === 3) 时静默拼接用户系统与设备诊断环境信息
   if (formData.type === 3) {
     finalContent += getEnvironmentDiagnosticString()
   }
@@ -140,10 +171,14 @@ function handleSubmit() {
     },
     {
       onSuccess: () => {
-        uni.showToast({ title: '反馈提交成功，感谢您的建议！', icon: 'success' })
-        setTimeout(() => {
-          uni.navigateBack()
-        }, 1200)
+        uni.showModal({
+          title: '反馈提交成功',
+          content: '感谢您的建议！我们会尽快跟进处理。',
+          showCancel: false,
+          confirmText: '我知道了',
+          confirmColor: '#B69171',
+          success: () => uni.navigateBack(),
+        })
       },
     },
   )

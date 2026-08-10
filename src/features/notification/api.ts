@@ -10,6 +10,7 @@ import type {
 } from './types'
 
 import { formatDate } from '@/utils/date'
+import { normalizeRichText } from '@/utils/rich-text'
 
 /** 系统通知列表 GET /announcements（权限：L1） */
 export async function getAnnouncements(params?: AnnouncementQueryParams): Promise<NotificationPageResult<AnnouncementVM>> {
@@ -47,6 +48,8 @@ export async function getAnnouncements(params?: AnnouncementQueryParams): Promis
 
 /** 系统通知详情 GET /announcements/{id}（权限：L1，读取即已读） */
 export async function getAnnouncementDetail(id: number): Promise<AnnouncementDetailVM> {
+  // content 与内容位/公告弹窗一样是后端富文本，走 normalizeRichText
+  // 保证长 URL/表格/大图不横向溢出（与弹窗渲染同一份内容时表现一致）
   const raw = await request<{
     id: number
     title: string
@@ -66,7 +69,7 @@ export async function getAnnouncementDetail(id: number): Promise<AnnouncementDet
   return {
     id: raw.id,
     title: raw.title,
-    content: raw.content,
+    content: normalizeRichText(raw.content),
     isRead: raw.is_read,
     createdAt: formatDate(raw.created_at),
     image,

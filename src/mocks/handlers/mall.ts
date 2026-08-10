@@ -7,9 +7,16 @@ import { paginateArray, parsePaginationParams } from '../utils'
 export const mallHandlers = [
   http.get('*/api/goods', ({ request }) => {
     const { page, pageSize } = parsePaginationParams(request.url)
-    const paginated = paginateArray(db.goods, page, pageSize)
+    // 契约：keyword 按名称或描述文字模糊搜索（最长 50）
+    const keyword = new URL(request.url).searchParams.get('keyword')?.trim().toLowerCase() || ''
+    const list = db.goods.filter((g) => {
+      if (!keyword)
+        return true
+      return g.name.toLowerCase().includes(keyword) || g.description.toLowerCase().includes(keyword)
+    })
+    const paginated = paginateArray(list, page, pageSize)
     return ok({
-      total: db.goods.length,
+      total: list.length,
       list: paginated.map(g => ({
         ...g,
         image: toBothMedia(g.image),

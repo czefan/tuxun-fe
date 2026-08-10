@@ -334,7 +334,7 @@ class MockDatabase {
       {
         id: 301,
         title: '图寻前端契约升级公告',
-        content: '全面重构接口契约与域驱动架构，提升跨端兼容性与离线状态恢复体验。',
+        content: '<p>为了提供更流畅的探秘寻宝体验，图寻前端平台现已全面完成接口契约与域驱动架构的重构升级。</p><p>1. 提升了跨端移动设备与 H5 的地图选点交互兼容性；</p><p>2. 优化了离线状态恢复与离线草稿箱体验，探秘打卡更安心；</p><p>3. 感谢广大探秘者对图寻平台一贯的支持与厚爱。</p>',
         get content_preview() {
           return generateContentPreview(this.content)
         },
@@ -347,7 +347,7 @@ class MockDatabase {
       {
         id: 302,
         title: '关于防范暑期作弊与虚拟定位的通知',
-        content: '请广大探秘者遵守真实探秘规则，系统已引入精确定位比对校验算法。',
+        content: '<p>随着暑期探秘活动的火热开展，为保障竞赛公平公正，平台已正式上线全新精确定位比对与防作弊校验算法。</p><p>特别提醒：</p><p>1. 请广大探秘者前往真实地点完成打卡选点；</p><p>2. 严禁使用任何形式的模拟器、虚拟定位软件或抓包篡改坐标；</p><p>3. 一经查实违规行为，系统将自动取消参赛成绩并封禁账号。</p>',
         get content_preview() {
           return generateContentPreview(this.content)
         },
@@ -357,20 +357,44 @@ class MockDatabase {
         is_read: true,
         created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
       },
-      ...Array.from({ length: 10 }, (_, i) => ({
-        id: 303 + i,
-        title: `系统多数据公告通知 #${i + 3} - 规则与活动更新说明`,
-        content: `这是第 ${i + 3} 条系统通知的详细文字说明内容。`,
+      {
+        id: 303,
+        title: '新一期校园地标打卡挑战赛开启通知',
+        content: '<p>全新一期的校园风光与地标建筑打卡挑战赛现已正式上线！</p><p>本次赛事涵盖了多处特色历史建筑与风景名胜：</p><p>1. 参赛者可通过上传打卡图片与精准定位参与比赛；</p><p>2. 答对得分最高与用时最短的选手将获得精美礼品；</p><p>3. 详情请点击下方关联活动按钮查看细则。</p>',
         get content_preview() {
           return generateContentPreview(this.content)
         },
-        image: i % 2 === 0 ? mockMedia(1080 + i, 800, 450) : null,
+        image: mockMedia(1081, 800, 450),
+        related_type: 'activity' as const,
+        related_id: 2,
+        is_read: false,
+        created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+      },
+      {
+        id: 304,
+        title: '平台服务器例行维护与性能优化完成通知',
+        content: '<p>尊贵的探秘者们，平台服务器已于今晨完成例行架构维护与高并发节点扩容。</p><p>维护优化事项如下：</p><p>1. 提升了图片上传与定位校验接口的回包响应速度；</p><p>2. 修复了部分机型地图选点卡顿与平移延迟问题；</p><p>3. 如在探秘过程中遇到任何异常，欢迎在「意见反馈」中提交意见。</p>',
+        get content_preview() {
+          return generateContentPreview(this.content)
+        },
+        image: null,
+        related_type: null,
+        related_id: null,
+        is_read: false,
+        created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
+      },
+      ...Array.from({ length: 8 }, (_, i) => ({
+        id: 305 + i,
+        title: `系统多数据公告通知 #${i + 5} - 规则与活动更新说明`,
+        content: `<p>这是第 ${i + 5} 条系统通知的详细文字说明内容，包含多段落格式与规则细节补充说明。</p>`,
+        get content_preview() {
+          return generateContentPreview(this.content)
+        },
+        image: i % 2 === 0 ? mockMedia(1082 + i, 800, 450) : null,
         related_type: i % 2 === 0 ? ('activity' as const) : null,
         related_id: i % 2 === 0 ? 1 : null,
-        is_read: i > 5,
-        // 日期按 本周 / 本月 / 更早 三档分布，以当前时间为基准生成；
-        // 最后两档（365 / 400 天前）落在去年，用于验证“今年不显示年份、往年显示年份”的展示规则
-        created_at: new Date(Date.now() - [2, 4, 6, 9, 13, 18, 30, 45, 365, 400][i] * 86400000).toISOString(),
+        is_read: i > 3,
+        created_at: new Date(Date.now() - [4, 6, 9, 13, 18, 30, 365, 400][i] * 86400000).toISOString(),
       })),
     ]
     this.notifications = [
@@ -398,6 +422,29 @@ class MockDatabase {
         // 最后两档（365 / 400 天前）落在去年，用于验证“今年不显示年份、往年显示年份”的展示规则
         created_at: new Date(Date.now() - [0, 0, 0, 0, 4, 6, 9, 14, 20, 35, 50, 365, 400][i] * 86400000 - (i % 4) * 3600000).toISOString(),
       })),
+      // 覆盖契约其余 related_type 取值：赞了评论 → 评论区 Tab、赞了破解记录 → 已破解 Tab（前端据此跳转）
+      {
+        id: 216,
+        type: 'like' as const,
+        user: { id: 6, nickname: '铁粉', avatar: mockImageString(1031, 200, 200) },
+        related_type: 'comment' as const,
+        related_id: 1,
+        photo_id: 101,
+        content: '赞了你的评论："这里的石雕角落太隐蔽了！"',
+        is_read: false,
+        created_at: new Date(Date.now() - 50 * 60000).toISOString(),
+      },
+      {
+        id: 217,
+        type: 'like' as const,
+        user: { id: 7, nickname: '通关者', avatar: mockImageString(1032, 200, 200) },
+        related_type: 'solve' as const,
+        related_id: 1,
+        photo_id: 101,
+        content: '赞了你的破解记录',
+        is_read: false,
+        created_at: new Date(Date.now() - 3 * 3600000).toISOString(),
+      },
     ]
     this.comments = [
       {
@@ -407,6 +454,7 @@ class MockDatabase {
         content: '这里的石雕角落太隐蔽了！清晨光线最好。',
         liked: false,
         likes_count: 5,
+        status: 'approved' as const,
         created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
       },
       ...Array.from({ length: 19 }, (_, i) => ({
@@ -416,6 +464,7 @@ class MockDatabase {
         content: `这是在题目 #101 下发布的第 ${i + 1} 条评论讨论内容 (契约 140 字限制内)。`,
         liked: i % 2 === 0,
         likes_count: i * 3,
+        status: 'approved' as const,
         created_at: new Date(Date.now() - i * 1800000).toISOString(),
       })),
     ]
@@ -550,10 +599,14 @@ class MockDatabase {
     }
   }
 
-  getCommentsByPhotoId(photoId: number) {
+  /**
+   * 公开评论列表：过滤 pending（契约：审核通过才进公开列表），
+   * 按 sort_by 排序（created_at/likes_count 均降序、同值按 id 倒序，不传默认 created_at 降序）。
+   */
+  getCommentsByPhotoId(photoId: number, sortBy?: 'created_at' | 'likes_count') {
     if (this.scenario === 'empty')
       return []
-    let list = this.comments.filter(c => c.photo_id === photoId)
+    let list = this.comments.filter(c => c.photo_id === photoId && c.status !== 'pending')
     if (list.length === 0) {
       const count = 3 + (photoId % 5)
       for (let i = 1; i <= count; i++) {
@@ -565,13 +618,17 @@ class MockDatabase {
           content: `这是在题目 #${photoId} 下发布的第 ${i} 条线索讨论评论。`,
           liked: i % 2 === 0,
           likes_count: i * 3,
+          status: 'approved' as const,
           created_at: new Date(Date.now() - i * 3600000).toISOString(),
         }
         this.comments.push(record)
       }
-      list = this.comments.filter(c => c.photo_id === photoId)
+      list = this.comments.filter(c => c.photo_id === photoId && c.status !== 'pending')
     }
-    return list
+    if (sortBy === 'likes_count') {
+      return [...list].sort((a, b) => b.likes_count - a.likes_count || b.id - a.id)
+    }
+    return [...list].sort((a, b) => (a.created_at < b.created_at ? 1 : -1) || b.id - a.id)
   }
 
   getSolvesByPhotoId(photoId: number) {
@@ -683,9 +740,12 @@ class MockDatabase {
       content,
       liked: false,
       likes_count: 0,
+      // 契约：提交后初始审核状态 pending，审核通过（approved）后才进公开评论列表——
+      // 不再 unshift 直显，避免「发完立即出现在列表头部」的假象与真实后端行为不一致
+      status: 'pending' as const,
       created_at: new Date().toISOString(),
     }
-    this.comments.unshift(record)
+    this.comments.push(record)
     return { id, status: 'pending' as const }
   }
 

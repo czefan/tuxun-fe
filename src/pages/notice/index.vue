@@ -10,6 +10,7 @@ import {
 import type { AnnouncementVM, InteractionMessageVM } from '@/features/notification/types'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
+import { StorageKey } from '@/constants/storage'
 import { formatRelativeTime } from '@/utils/date'
 import { debounce } from '@/utils/debounce'
 
@@ -171,9 +172,15 @@ function handleInteractionTap(item: InteractionMessageVM) {
   if (!item.isRead) {
     markReadMutation.mutate(item.id)
   }
-  if (item.photoId) {
-    uni.navigateTo({ url: withQuery(AppRoute.QuestionDetail, { id: item.photoId }) })
-  }
+  if (!item.photoId)
+    return
+  // 契约：related_type 指向触发事件的对象（like→photo/solve/comment；comment→photo），前端据此跳转。
+  // 轻量定位：评论消息/评论点赞 → 评论区 Tab；破解点赞 → 已破解 Tab；题目点赞 → 详情顶部即点赞位置，无需切 Tab。
+  // 滚动定位到具体评论需要评论列表接口按 id 定位（契约暂未提供），待后续 API 完善后再补。
+  const tab = item.relatedType === 'solve'
+    ? 'solves'
+    : (item.relatedType === 'comment' || item.type === 'comment') ? 'comments' : undefined
+  uni.navigateTo({ url: withQuery(AppRoute.QuestionDetail, { id: item.photoId, tab }) })
 }
 
 function handleReadAllInteractions() {
@@ -184,12 +191,11 @@ function handleReadAllInteractions() {
   })
 }
 
-const READ_ANNOUNCEMENTS_KEY = 'tuxun_read_announcements'
 const readAnnouncementIds = ref<number[]>(loadReadAnnouncementIds())
 
 function loadReadAnnouncementIds(): number[] {
   try {
-    const data = uni.getStorageSync(READ_ANNOUNCEMENTS_KEY)
+    const data = uni.getStorageSync(StorageKey.ReadNoticeIds)
     return data ? JSON.parse(data) : []
   }
   catch {
@@ -204,7 +210,7 @@ function isAnnouncementRead(id: number): boolean {
 function markAnnouncementRead(id: number) {
   if (!readAnnouncementIds.value.includes(id)) {
     readAnnouncementIds.value.push(id)
-    uni.setStorageSync(READ_ANNOUNCEMENTS_KEY, JSON.stringify(readAnnouncementIds.value))
+    uni.setStorageSync(StorageKey.ReadNoticeIds, JSON.stringify(readAnnouncementIds.value))
   }
 }
 
@@ -269,7 +275,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
       <wd-search
         v-model="searchKeyword"
         :focus="true"
-        placeholder="搜索系统通知主题..."
+        placeholder="搜索标题或正文..."
         hide-cancel
         custom-class="tx-search"
         placeholder-left

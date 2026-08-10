@@ -38,8 +38,3 @@ export function getEnvBaseUrl(): string {
   // 缺省必须是空串：拼接时 undefined 会变成字面量 "undefined/photos"
   return (baseUrl || '').replace(/\/+$/, '')
 }
-
-/** 接口请求前缀 = 服务源 + 契约基础路径 */
-export function getApiBaseUrl(): string {
-  return `${getEnvBaseUrl()}${API_BASE_PATH}`
-}

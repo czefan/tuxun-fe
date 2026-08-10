@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
-import { getCallbackUrl, redirectToOAuth, validateAndClearState } from '@/service/auth/login'
+import { getCallbackUrl, redirectToOAuth, takeReturnPath, validateAndClearState } from '@/service/auth/login'
+import { isTabBarPage } from '@/app/tab-bar/store'
 import { AppRoute } from '@/router/routes'
 import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import { ApiRequestError } from '@/service/request/error'
@@ -88,7 +89,21 @@ onLoad(async (query: Record<string, any> = {}) => {
     // #endif
 
     setTimeout(() => {
-      uni.switchTab({ url: AppRoute.Home })
+      const target = takeReturnPath()
+      if (!target) {
+        uni.switchTab({ url: AppRoute.Home })
+        return
+      }
+      const purePath = target.split('?')[0]
+      if (isTabBarPage(purePath)) {
+        uni.switchTab({ url: purePath })
+      }
+      else {
+        uni.redirectTo({
+          url: target,
+          fail: () => uni.switchTab({ url: AppRoute.Home }),
+        })
+      }
     }, 500)
   }
   catch (err: unknown) {

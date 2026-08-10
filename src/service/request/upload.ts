@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from './env'
+import { buildFullUrl } from './url'
 import { ApiRequestError } from './error'
 import { handleResponseError, showToastDeduplicated } from './error-code'
 
@@ -21,7 +21,12 @@ export interface UploadOptions {
  */
 export function upload<T>(options: UploadOptions): Promise<T> {
   const { url, filePath, files, name = 'file', header, formData, method = 'POST', hideErrorToast } = options
-  const fullUrl = url.startsWith('http') ? url : getApiBaseUrl() + url
+
+  if (!filePath && (!files || files.length === 0)) {
+    return Promise.reject(new ApiRequestError('缺少上传文件路径'))
+  }
+
+  const fullUrl = buildFullUrl(url)
 
   const headers: Record<string, string> = { ...header }
   if (method === 'PUT') {

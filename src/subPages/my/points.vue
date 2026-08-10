@@ -171,7 +171,8 @@ function handleLogTap(item: ScoreLogVM) {
         <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full">
           <view class="bottom-space px-3 pt-2.5">
             <view v-if="rulesData?.content" class="border-y border-[#B69171] px-1 pb-3 pt-2">
-              <rich-text :nodes="rulesData.content" class="block u-body-main" />
+              <!-- 不带字号/颜色 class（同 help/弹窗/通知详情）：H5 端 rich-text 内容继承容器样式会改字号，小程序端不继承，两端需一致 -->
+              <rich-text :nodes="rulesData.content" class="block break-words" />
             </view>
             <view v-else class="py-16">
               <wd-empty icon="no-result" tip="暂无积分规则说明" />

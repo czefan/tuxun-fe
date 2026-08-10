@@ -103,7 +103,7 @@ const filterVisible = ref(false)
         <view class="min-w-0 flex-1">
           <wd-search
             v-model="searchKeyword"
-            placeholder="搜索题目、线索或发布人..."
+            placeholder="搜索标题、线索或发布人..."
             hide-cancel
             custom-class="tx-search"
             placeholder-left

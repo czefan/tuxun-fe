@@ -54,7 +54,7 @@ function handlePost() {
     {
       onSuccess: () => {
         newCommentText.value = ''
-        uni.showToast({ title: '评论成功，等待审核', icon: 'success' })
+        uni.showToast({ title: '评论成功，等待审核', icon: 'none' })
       },
     },
   )

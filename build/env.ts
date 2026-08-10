@@ -22,4 +22,8 @@ export function warnMissingProductionBaseUrl(
   if (platform && platform !== 'h5' && !baseUrl) {
     console.warn(`[env] VITE_SERVER_BASEURL is empty for production ${platform} build. Confirm this platform can request relative API paths.`)
   }
+
+  if (platform === 'h5' && !env.VITE_AMAP_KEY?.trim()) {
+    console.warn('[env] VITE_AMAP_KEY is empty for H5 build. Map component will fail back to full screen location selection.')
+  }
 }

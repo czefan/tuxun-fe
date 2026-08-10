@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiRequestError, request, uploadFile } from './index'
+import { ApiRequestError, request, upload, uploadFile } from './index'
 
 // @uni-helper/uni-env 的 isH5 在模块加载时从 process.env.UNI_PLATFORM 固化成了常量，
 // 用例内无法直接改写。这里用 getter 让每次访问都取当前状态，从而可控地测两条平台分支。
@@ -129,9 +129,29 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe('uploadFile', () => {
+describe('upload URL resolution and execution', () => {
   beforeEach(() => {
     vi.mocked(uni.uploadFile).mockReset()
+  })
+
+  it('h5 平台开启代理时 upload 会走 /fg-api 前缀并补全 /api', async () => {
+    uniEnvState.isH5 = true
+    vi.stubEnv('VITE_APP_PROXY_ENABLE', 'true')
+    vi.stubEnv('VITE_ENABLE_MOCK', 'false')
+    vi.stubEnv('VITE_APP_PROXY_PREFIX', '/fg-api')
+    mockUploadSuccess({
+      statusCode: 200,
+      data: JSON.stringify({ code: 0, data: { url: '/avatar.png' } }),
+    } as UniApp.UploadFileSuccessCallbackResult)
+
+    await upload<{ url: string }>({
+      url: '/upload/avatar',
+      filePath: '/tmp/avatar.png',
+    })
+
+    expect(uni.uploadFile).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/fg-api/api/upload/avatar',
+    }))
   })
 
   it('unwraps successful response envelope data', async () => {
@@ -140,7 +160,7 @@ describe('uploadFile', () => {
       data: JSON.stringify({ code: 0, data: { url: '/avatar.png' } }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(uploadFile<{ url: string }>({
+    await expect(upload<{ url: string }>({
       url: '/api/upload/avatar',
       filePath: '/tmp/avatar.png',
     })).resolves.toEqual({ url: '/avatar.png' })
@@ -152,7 +172,7 @@ describe('uploadFile', () => {
       data: JSON.stringify({ url: '/raw.png' }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(uploadFile<{ url: string }>({
+    await expect(upload<{ url: string }>({
       url: '/api/upload/avatar',
       filePath: '/tmp/avatar.png',
     })).resolves.toEqual({ url: '/raw.png' })
@@ -164,7 +184,7 @@ describe('uploadFile', () => {
       data: JSON.stringify({ code: 500, message: '上传失败，请重试' }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(uploadFile({
+    await expect(upload({
       url: '/api/upload/avatar',
       filePath: '/tmp/avatar.png',
       hideErrorToast: true,
@@ -178,7 +198,7 @@ describe('uploadFile', () => {
       data: JSON.stringify({ success: true, resp: { id: 1 } }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(uploadFile<{ id: number }>({
+    await expect(upload<{ id: number }>({
       url: '/api/feedback',
       files: [
         { name: 'image_file1', uri: '/tmp/1.png' },
@@ -200,9 +220,21 @@ describe('uploadFile', () => {
   })
 
   it('rejects when no upload file is provided', async () => {
-    await expect(uploadFile({
+    await expect(upload({
       url: '/api/feedback',
     })).rejects.toBeInstanceOf(ApiRequestError)
     expect(uni.uploadFile).not.toHaveBeenCalled()
+  })
+
+  it('uploadFile alias stays compatible with upload', async () => {
+    mockUploadSuccess({
+      statusCode: 200,
+      data: JSON.stringify({ code: 0, data: { ok: true } }),
+    } as UniApp.UploadFileSuccessCallbackResult)
+
+    await expect(uploadFile<{ ok: boolean }>({
+      url: '/api/test',
+      filePath: '/tmp/test.png',
+    })).resolves.toEqual({ ok: true })
   })
 })

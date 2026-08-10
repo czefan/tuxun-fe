@@ -95,7 +95,7 @@ function handleModalGoActivity() {
         <view class="min-w-0 flex-1">
           <wd-search
             v-model="searchKeyword"
-            placeholder="搜索活动主题..."
+            placeholder="搜索标题或描述..."
             hide-cancel
             custom-class="tx-search"
             placeholder-left
