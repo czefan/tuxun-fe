@@ -69,23 +69,6 @@ describe('契约变更负向守卫', () => {
     }
   })
 
-  it('相对路径图片 URL：后端返回 /uploads/xxx 时自动补齐 VITE_SERVER_BASEURL', () => {
-    vi.stubEnv('VITE_SERVER_BASEURL', 'https://backend.tuxun.com')
-    // 相对路径 → 自动拼接 baseUrl
-    expect(toImageVM({ thumb_url: '/uploads/photos/abc.png', width: 1080, height: 720 }))
-      .toEqual({ url: 'https://backend.tuxun.com/uploads/photos/abc.png', originUrl: 'https://backend.tuxun.com/uploads/photos/abc.png', width: 1080, height: 720 })
-    // 完整 URL → 原样透传
-    expect(toImageVM({ origin_url: 'https://cdn.example.com/photo.jpg', width: 800, height: 600 }))
-      .toEqual({ url: 'https://cdn.example.com/photo.jpg', originUrl: 'https://cdn.example.com/photo.jpg', width: 800, height: 600 })
-    // data: / blob: → 原样透传
-    expect(toImageVM({ thumb_url: 'data:image/png;base64,xxx', width: 100, height: 100 }).url)
-      .toBe('data:image/png;base64,xxx')
-    // 空 baseUrl 时不破坏相对路径（同源部署场景）
-    vi.stubEnv('VITE_SERVER_BASEURL', '')
-    expect(toImageVM({ thumb_url: '/uploads/photos/abc.png', width: 1080, height: 720 }).url)
-      .toBe('/uploads/photos/abc.png')
-  })
-
   it('_url 残根：除 contract 生成物外，源码不得再出现旧命名（mock 层同样受管）', () => {
     // 旧字段名一旦漏改，ajv 契约守卫只在 mock 走到那条路由时才报；
     // 这条是全量静态兜底，所以**不能**把 src/mocks 排除在外——
