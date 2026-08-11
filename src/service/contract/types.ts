@@ -1,4 +1,5 @@
 import type { components, operations } from './schema'
+import { getEnvBaseUrl } from '../request/env'
 
 // 仅本文件内部使用的简写；对外一律用下面具名导出的契约类型
 type S = components['schemas']
@@ -6,6 +7,9 @@ type O = operations
 
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 20
+
+/** 已经是完整 URL 的协议前缀或 data/blob 协议 */
+const ABSOLUTE_URL_RE = /^(?:https?:|data:|blob:|\/\/)/i
 
 export interface PageParams {
   page?: number
@@ -53,6 +57,25 @@ export interface ImageVM {
 }
 
 /**
+ * 将图片 URL 规范化为可直接加载的完整地址。
+ *
+ * 契约约定 `origin_url` / `thumb_url` 为完整 URL，但后端有时返回本地相对路径
+ * （如 `/uploads/photos/xxx.png`）。这里做一层防御：相对路径自动拼接服务端基础地址，
+ * 已经是完整 URL、data: / blob: 则原样返回。
+ */
+function normalizeImageUrl(raw: string): string {
+  if (!raw || ABSOLUTE_URL_RE.test(raw)) {
+    return raw
+  }
+  const base = getEnvBaseUrl()
+  // base 也为空时（如同源部署 + 未配置 VITE_SERVER_BASEURL），相对路径本身即可用
+  if (!base) {
+    return raw
+  }
+  return `${base}${raw.startsWith('/') ? '' : '/'}${raw}`
+}
+
+/**
  * 将契约 Media 转化为统一 ImageVM
  * 包含宽高防御：当 width 或 height 缺失、非正数时，统一安全降级到 4:3 占位比例（800x600）
  */
@@ -60,8 +83,8 @@ export function toImageVM(m?: Media | null): ImageVM {
   if (!m) {
     return { url: '', originUrl: '', width: 800, height: 600 }
   }
-  const url = m.thumb_url ?? m.origin_url ?? ''
-  const originUrl = m.origin_url ?? m.thumb_url ?? ''
+  const url = normalizeImageUrl(m.thumb_url ?? m.origin_url ?? '')
+  const originUrl = normalizeImageUrl(m.origin_url ?? m.thumb_url ?? '')
   const w = Number(m.width)
   const h = Number(m.height)
   if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
