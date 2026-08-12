@@ -1,0 +1,37 @@
+kind: pipeline
+type: docker
+name: build
+
+steps:
+  - name: build
+    image: node:22-alpine
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@11.9.0 --activate
+      - pnpm config set registry http://registry.npmmirror.com
+      - pnpm config set store-dir /root/.pnpm-store
+      - pnpm install --frozen-lockfile
+      - pnpm build:h5
+    volumes:
+      - name: pnpm_store
+        path: /root/.pnpm-store
+
+  - name: deploy
+    image: alpine
+    commands:
+      - cp -r dist/build/h5/* /var/www
+    volumes:
+      - name: www
+        path: /var/www
+
+volumes:
+  - name: www
+    host:
+      path: /tz-master-data/app_data/front-end/${DRONE_REPO_NAME,,}
+  - name: pnpm_store
+    host:
+      path: /tz-master-data/app_cache/pnpm
+
+trigger:
+  event:
+    - tag
