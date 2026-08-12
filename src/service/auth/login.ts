@@ -1,9 +1,16 @@
-import { AppRoute } from '@/router/routes'
+import { AppRoute, withQuery } from '@/router/routes'
 import { currRoute } from '@/router/page'
 import { useAuthStore } from '@/store/auth'
 import { StorageKey } from '@/constants/storage'
 
 const isDev = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK === 'true'
+
+/** 本端绝对 URL；VITE_APP_PUBLIC_BASE 支持子路径部署。H5 页面与登出中转页复用 */
+export function absoluteUrl(path: string): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const base = (import.meta.env.VITE_APP_PUBLIC_BASE || '/').replace(/\/+$/, '')
+  return `${origin}${base}${path}`
+}
 
 /** 记录发起登录时所在页面，登录成功后回到这里（仅 H5 有效） */
 function saveReturnPath() {
@@ -41,6 +48,14 @@ export function takeReturnPath(): string {
   return ''
 }
 
+/** 顺手清除登录回跳路径 */
+export function clearReturnPath() {
+  try {
+    uni.removeStorageSync(StorageKey.LoginReturnPath)
+  }
+  catch {}
+}
+
 /** tz-oauth 授权服务地址（生产 https://oauth.tiaozhan.com，本地 http://localhost:8088） */
 function getOAuthBaseUrl(): string {
   return (import.meta.env.VITE_OAUTH_BASE_URL || '').replace(/\/+$/, '')
@@ -54,16 +69,52 @@ function getClientId(): string {
 /** H5 登录回调页完整 URL（需与 tz-oauth 管理端注册的 redirect_uri 一致） */
 export function getCallbackUrl(): string {
   // #ifdef H5
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  // VITE_APP_PUBLIC_BASE 支持子路径部署（如 /doc/）；去掉尾斜杠避免与回调页实际地址不一致
-  const base = (import.meta.env.VITE_APP_PUBLIC_BASE || '/').replace(/\/+$/, '')
-  return `${origin}${base}${AppRoute.AuthCallback}`
+  return absoluteUrl(AppRoute.AuthCallback)
   // #endif
   // #ifndef H5
   // 小程序走 web-view 内嵌 H5，回调地址是 H5 的线上地址，需通过环境变量注入。
   // 去掉尾斜杠：后端白名单要求授权阶段的 redirect_uri 与回跳页实际 URL 完全一致，
   // 配成带斜杠会两边不一致直接 400。
   return (import.meta.env.VITE_MP_CALLBACK_URL || '').replace(/\/+$/, '')
+  // #endif
+}
+
+/**
+ * tz-oauth OIDC 登出地址（SERVICE_INTEGRATION §6）。
+ * 未配置 OAuth（含 mock / 本地开发）时返回空串，调用方降级为「只清本地会话」。
+ */
+export function getLogoutUrl(postLogoutRedirectUri: string): string {
+  const base = getOAuthBaseUrl()
+  const clientId = getClientId()
+  if (!base || !clientId) {
+    return ''
+  }
+  const qs = [
+    `client_id=${encodeURIComponent(clientId)}`,
+    `post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirectUri)}`,
+  ].join('&')
+  return `${base}/oauth2/logout?${qs}`
+}
+
+/**
+ * 跳转 IdP 登出。
+ *
+ * ⚠️ 只能由「用户主动点退出登录」调用，不要塞进 use-auth 的 logout()。
+ * 401 自动登出、登录失败重试也会清会话，那些场景跳 IdP 会让用户下次登录
+ * 被迫完整重走一遍学校认证——不是他要求的。
+ */
+export function redirectToLogout() {
+  // #ifdef H5
+  // 回跳「我的」页而非首页：用户主动退出后通常留在原地继续操作
+  const url = getLogoutUrl(absoluteUrl(AppRoute.My))
+  if (!url) {
+    // 未配置 OAuth：本地与后端会话已清干净，降级为不跳 IdP，行为与接入前一致
+    return
+  }
+  window.location.href = url
+  // #endif
+  // #ifndef H5
+  uni.navigateTo({ url: withQuery(AppRoute.AuthWebview, { action: 'logout' }) })
   // #endif
 }
 

@@ -21,6 +21,7 @@ const JSSDK_URL = 'https://res.wx.qq.com/open/js/jweixin-1.6.0.js'
 interface MiniProgramBridge {
   postMessage: (options: { data: unknown }) => void
   navigateBack: (options?: { delta?: number }) => void
+  reLaunch: (options: { url: string }) => void
 }
 
 function getBridge(): MiniProgramBridge | null {
@@ -78,5 +79,18 @@ export async function postSessionToMiniProgram(sessionId: string): Promise<boole
   bridge.postMessage({ data: { sessionId } })
   // navigateBack 会销毁 web-view，这一步才真正触发上面那条消息的投递
   bridge.navigateBack()
+  return true
+}
+
+/** 登出完成后回小程序首页。reLaunch 而非 navigateBack：宿主页是登出中转，不该留在栈里 */
+export async function relaunchMiniProgram(url = '/pages/index/index'): Promise<boolean> {
+  if (!isInMiniProgramWebview()) {
+    return false
+  }
+  const bridge = await loadJssdk()
+  if (!bridge) {
+    return false
+  }
+  bridge.reLaunch({ url })
   return true
 }

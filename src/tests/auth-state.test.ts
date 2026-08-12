@@ -5,7 +5,8 @@ import * as userApi from '@/features/user/api'
 import { useAuth as useUserAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
 import { useAuthStore } from '@/store/auth'
-import { takeReturnPath, validateAndClearState } from '@/service/auth/login'
+import { clearReturnPath, getLogoutUrl, takeReturnPath, validateAndClearState } from '@/service/auth/login'
+import { relaunchMiniProgram } from '@/utils/mp-webview'
 
 const PROFILE = {
   id: 1,
@@ -177,5 +178,42 @@ describe('takeReturnPath 回跳地址安全校验', () => {
       uni.setStorageSync('login_return_path', p)
       expect(takeReturnPath(), `路径 ${p} 应被拦截`).toBe('')
     }
+  })
+})
+
+describe('getLogoutUrl 登出地址构建与降级', () => {
+  it('配置完整时应拼接带 client_id 与 post_logout_redirect_uri 的登出 URL', () => {
+    vi.stubEnv('VITE_OAUTH_BASE_URL', 'https://oauth.tiaozhan.com')
+    vi.stubEnv('VITE_OAUTH_CLIENT_ID', 'test_client')
+
+    const redirectUri = 'https://tuxun.tiaozhan.com/'
+    const logoutUrl = getLogoutUrl(redirectUri)
+    expect(logoutUrl).toBe(`https://oauth.tiaozhan.com/oauth2/logout?client_id=test_client&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`)
+
+    vi.unstubAllEnvs()
+  })
+
+  it('未配置 OAuth 时降级返回空串，不弹错也不报错', () => {
+    vi.stubEnv('VITE_OAUTH_BASE_URL', '')
+    vi.stubEnv('VITE_OAUTH_CLIENT_ID', '')
+
+    expect(getLogoutUrl('https://tuxun.tiaozhan.com/')).toBe('')
+
+    vi.unstubAllEnvs()
+  })
+})
+
+describe('clearReturnPath', () => {
+  it('应清空 login_return_path', () => {
+    uni.setStorageSync('login_return_path', '/pages/my/index')
+    clearReturnPath()
+    expect(uni.getStorageSync('login_return_path')).toBeFalsy()
+  })
+})
+
+describe('relaunchMiniProgram', () => {
+  it('非小程序环境下直接返回 false', async () => {
+    const res = await relaunchMiniProgram()
+    expect(res).toBe(false)
   })
 })

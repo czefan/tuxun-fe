@@ -5,6 +5,7 @@ import { useAuth } from '@/features/user/composables/use-auth'
 import { useUpdateAvatar, useUpdateNickname, useUserInfo } from '@/features/user/query'
 import { smartCompressImage } from '@/utils/image-compress'
 import { AppRoute } from '@/router/routes'
+import { clearReturnPath, redirectToLogout } from '@/service/auth/login'
 
 definePage({
   style: {
@@ -60,10 +61,11 @@ function handleLogout() {
         return
       }
       const { serverCleared } = await logout()
-      uni.showToast({
-        title: serverCleared ? '已退出登录' : '已退出登录（服务端会话清除失败）',
-        icon: 'none',
-      })
+      clearReturnPath()
+      if (!serverCleared) {
+        uni.showToast({ title: '服务端会话清除失败', icon: 'none' })
+      }
+      redirectToLogout()
     },
   })
 }
