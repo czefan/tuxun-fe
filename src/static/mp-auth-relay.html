@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>登录中</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f1dfc5;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <script>
+      ;(function () {
+        var q = new URLSearchParams(location.search)
+        var code = q.get('code') || ''
+        var state = q.get('state') || ''
+        var err = q.get('error_description') || q.get('error') || ''
+        var target =
+          '/subPages/auth/callback?' +
+          'code=' +
+          encodeURIComponent(code) +
+          '&state=' +
+          encodeURIComponent(state) +
+          (err ? '&error=' + encodeURIComponent(err) : '')
+        function go() {
+          // redirectTo 而非 navigateTo：web-view 宿主页是中转，不该留在页面栈里
+          if (window.wx && wx.miniProgram) {
+            wx.miniProgram.redirectTo({ url: target })
+          }
+        }
+        if (window.wx && wx.miniProgram) {
+          go()
+        } else {
+          window.addEventListener('load', go)
+        }
+      })()
+    </script>
+  </body>
+</html>

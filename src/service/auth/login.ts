@@ -66,16 +66,17 @@ function getClientId(): string {
   return import.meta.env.VITE_OAUTH_CLIENT_ID || ''
 }
 
-/** H5 登录回调页完整 URL（需与 tz-oauth 管理端注册的 redirect_uri 一致） */
+/** H5 / 小程序登录回调地址（需与 tz-oauth 管理端与后端白名单注册的 redirect_uri 一致） */
 export function getCallbackUrl(): string {
   // #ifdef H5
   return absoluteUrl(AppRoute.AuthCallback)
   // #endif
   // #ifndef H5
-  // 小程序走 web-view 内嵌 H5，回调地址是 H5 的线上地址，需通过环境变量注入。
-  // 去掉尾斜杠：后端白名单要求授权阶段的 redirect_uri 与回跳页实际 URL 完全一致，
-  // 配成带斜杠会两边不一致直接 400。
-  return (import.meta.env.VITE_MP_CALLBACK_URL || '').replace(/\/+$/, '')
+  // 小程序流程的 redirect_uri 是静态中转页，不是 H5 的 callback 路由：
+  // 中转页只把 code 搬进小程序，登录界面与换取逻辑都在原生端做。
+  const raw = import.meta.env.VITE_MP_AUTH_ORIGIN || import.meta.env.VITE_MP_CALLBACK_URL || ''
+  const origin = raw.replace(/\/+$/, '').replace(/\/subPages\/auth\/callback\/?$/, '')
+  return `${origin}/static/mp-auth-relay.html`
   // #endif
 }
 
@@ -118,22 +119,30 @@ export function redirectToLogout() {
   // #endif
 }
 
-/** 生成密码学安全 state 并存入 sessionStorage，用于 CSRF 防护（RFC 6749 §10.12） */
+/** 生成密码学安全 state 并存入 Storage，用于 CSRF 防护（RFC 6749 §10.12） */
 function generateState(): string {
+  let state = ''
   // #ifdef H5
   const bytes = new Uint8Array(16)
   crypto.getRandomValues(bytes)
-  const state = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+  state = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
   try {
     sessionStorage.setItem(StorageKey.OAuthState, state)
   }
   catch {}
-  return state
   // #endif
   // #ifndef H5
-  // 小程序端不携带 state（无 sessionStorage 可存，回调也在另一份 H5 产物里）
-  return ''
+  // 小程序没有 crypto.getRandomValues，用 uni.getRandomValues（Promise）不便于同步拼 URL；
+  // 退而用时间戳 + 多段 Math.random 拼足长度。CSRF state 的要求是「不可猜测」，
+  // 这里的强度弱于 H5，但远好于现状（现状是完全不发 state）。
+  // 若微信基础库支持，优先替换为 wx.getRandomValues 的同步封装。
+  state = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`
+  try {
+    uni.setStorageSync(StorageKey.OAuthState, state)
+  }
+  catch {}
   // #endif
+  return state
 }
 
 /** 校验回调中的 state 是否与发起时一致，校验后立即清除 */
@@ -150,27 +159,25 @@ export function validateAndClearState(state: string): boolean {
   }
   // #endif
   // #ifndef H5
-  return true
+  try {
+    const stored = uni.getStorageSync(StorageKey.OAuthState)
+    uni.removeStorageSync(StorageKey.OAuthState)
+    return !!stored && !!state && stored === state
+  }
+  catch {
+    return false
+  }
   // #endif
 }
 
 /**
  * 拼接 tz-oauth 授权页 URL。
- *
- * state 只在 H5 追加：state 由发起端生成并存入 sessionStorage，回跳后的回调页
- * 也是同一份 H5 产物，才能校验通过。小程序 web-view 流程的发起端（mp 构建）
- * 没有 sessionStorage，state 无处可存；而回跳目标是线上 H5 回调页，它校验时
- * 只会查自己的 sessionStorage（为空）→ 必然「登录状态校验失败」。
- * 所以小程序端不携带 state（SERVICE_INTEGRATION.md 中 state 为强烈建议非必填）。
  */
 export function getAuthorizeUrl(): string {
   const base = getOAuthBaseUrl()
   const clientId = getClientId()
   const redirectUri = encodeURIComponent(getCallbackUrl())
-  let url = `${base}/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20profile`
-  // #ifdef H5
-  url += `&state=${generateState()}`
-  // #endif
+  let url = `${base}/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20profile&state=${generateState()}`
   // #ifndef H5
   // 小程序端 web-view 装载统一认证需走 sso_proxy 代理（SSO 会话与图寻后端会话串联）
   url += `&sso_proxy=1`

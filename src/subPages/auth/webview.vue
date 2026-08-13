@@ -2,28 +2,23 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getAuthorizeUrl, getCallbackUrl } from '@/service/auth/login'
-import { useAuthStore } from '@/store/auth'
 import { AppRoute } from '@/router/routes'
 
 definePage({
   style: {
-    navigationBarTitleText: '登录认证',
+    navigationBarTitleText: '正在跳转登录',
+    navigationStyle: 'custom',
   },
 })
 
 /**
  * 小程序侧的登录宿主页。
  *
- * 小程序没有 cookie，登录态只能走 `X-Session-Id`。这里用 `<web-view>` 装载 tz-oauth 授权页，
- * 认证完成后由内部的 H5 回调页 postMessage 把 session_id 送回来。
- *
- * **handleMessage 里只做同步的事。** 微信的 postMessage 是在 web-view 销毁时
- * 才批量投递的——消息到达时本页正在被 navigateBack 拆掉，
- * 在这里 await 网络请求再跳转，等于把导航压在一个随时会消失的页面上。
- * 拉个人资料交给 App 级 onShow（use-app-lifecycle.ts 会接手 validateStoredSession）。
+ * 用 `<web-view>` 装载 tz-oauth 授权页。
+ * 认证完成后，授权页 302 重定向到 static/mp-auth-relay.html 静态中转页，
+ * 中转页通过 wx.miniProgram.redirectTo 跳转到原生 subPages/auth/callback 页面完成登录与换会话。
  */
 const webviewUrl = ref('')
-const authStore = useAuthStore()
 
 onLoad((query) => {
   const isLogout = query?.action === 'logout'
@@ -31,7 +26,9 @@ onLoad((query) => {
 
   if (isLogout) {
     const callbackUrl = getCallbackUrl()
-    const siteOrigin = callbackUrl ? callbackUrl.replace(/\/subPages\/auth\/callback\/?$/, '') : (typeof window !== 'undefined' ? window.location.origin : '')
+    const siteOrigin = callbackUrl
+      ? callbackUrl.replace(/\/static\/mp-auth-relay\.html\/?$/, '').replace(/\/subPages\/auth\/callback\/?$/, '')
+      : (typeof window !== 'undefined' ? window.location.origin : '')
     url = `${siteOrigin}${AppRoute.AuthLogout}?from=mp`
   }
   else {
@@ -42,34 +39,17 @@ onLoad((query) => {
   if ((!url.startsWith('http://') && !url.startsWith('https://')) || (!isLogout && !callbackUrl)) {
     uni.showModal({
       title: '登录服务未配置',
-      content: '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL、VITE_OAUTH_CLIENT_ID 与 VITE_MP_CALLBACK_URL。',
+      content: '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL、VITE_OAUTH_CLIENT_ID 与 VITE_MP_AUTH_ORIGIN。',
       showCancel: false,
     })
     return
   }
   webviewUrl.value = url
 })
-
-function handleMessage(e: { detail?: { data?: unknown } }) {
-  const dataList = e.detail?.data
-  if (!Array.isArray(dataList)) {
-    return
-  }
-
-  // 批量投递，倒序取最后一条有效消息
-  for (let i = dataList.length - 1; i >= 0; i--) {
-    const sessionId = (dataList[i] as { sessionId?: unknown })?.sessionId
-    if (typeof sessionId === 'string' && sessionId) {
-      // 同步写入并落盘（pinia-plugin-persistedstate 同步写 storage）
-      authStore.setSessionId(sessionId)
-      return
-    }
-  }
-}
 </script>
 
 <template>
   <view class="page-auth-webview h-100vh w-full">
-    <web-view v-if="webviewUrl" :src="webviewUrl" @message="handleMessage" />
+    <web-view v-if="webviewUrl" :src="webviewUrl" />
   </view>
 </template>

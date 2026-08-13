@@ -8,7 +8,6 @@ import { isTabBarPage } from '@/app/tab-bar/store'
 import { AppRoute } from '@/router/routes'
 import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import { ApiRequestError } from '@/service/request/error'
-import { isInMiniProgramWebview, postSessionToMiniProgram } from '@/utils/mp-webview'
 
 definePage({
   style: {
@@ -54,11 +53,9 @@ onLoad(async (query: Record<string, any> = {}) => {
     return
   }
 
-  // 非小程序 web-view 环境强制校验 state（防 CSRF）
-  // 小程序 web-view 豁免原因：发起端（mp 构建）无 sessionStorage 可存 state，
-  // 且回跳目标是另一份 H5 产物，校验时 sessionStorage 必然为空。
+  // 校验 state（防 CSRF）
   const state = extractParam(query, ['state'])
-  if (!isInMiniProgramWebview() && !validateAndClearState(state)) {
+  if (!validateAndClearState(state)) {
     statusText.value = '登录状态校验失败，请重新登录'
     isError.value = true
     return
@@ -75,19 +72,10 @@ onLoad(async (query: Record<string, any> = {}) => {
 
   try {
     const redirectUri = getCallbackUrl()
-    const res = await handleCallback(code, redirectUri)
+    await handleCallback(code, redirectUri)
     statusText.value = '登录成功'
 
-    // 跑在小程序 <web-view> 里时，把 session_id 回传给宿主并返回小程序。
-    // 成功交接后本页就不再自己跳转了——宿主会接管。
     // #ifdef H5
-    const handedOff = await postSessionToMiniProgram(res?.sessionId || '')
-    if (handedOff) {
-      statusText.value = '登录成功，正在返回小程序'
-      return
-    }
-    // #endif
-
     setTimeout(() => {
       const target = takeReturnPath()
       if (!target) {
@@ -105,6 +93,15 @@ onLoad(async (query: Record<string, any> = {}) => {
         })
       }
     }, 500)
+    // #endif
+    // #ifndef H5
+    // 小程序：webview 宿主页已被中转页 redirectTo 替换，栈里紧邻的就是发起登录的页面
+    setTimeout(() => {
+      uni.navigateBack({
+        fail: () => uni.switchTab({ url: AppRoute.Home }),
+      })
+    }, 500)
+    // #endif
   }
   catch (err: unknown) {
     userStore.logout()

@@ -43,8 +43,11 @@ interface ImportMetaEnv {
   readonly VITE_OAUTH_BASE_URL?: string
   /** 本服务的 OAuth Client ID（在 tz-oauth 管理端注册） */
   readonly VITE_OAUTH_CLIENT_ID?: string
+  /** 小程序专用：H5 站点源（用于拼接静态中转页 URL） */
+  readonly VITE_MP_AUTH_ORIGIN?: string
   /** 小程序专用：H5 回调页线上完整 URL（仅 #ifndef H5 条件编译块使用） */
   readonly VITE_MP_CALLBACK_URL?: string
+
   // 更多环境变量...
 }
 
