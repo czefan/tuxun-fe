@@ -171,6 +171,10 @@ export function getAuthorizeUrl(): string {
   // #ifdef H5
   url += `&state=${generateState()}`
   // #endif
+  // #ifndef H5
+  // 小程序端 web-view 装载统一认证需走 sso_proxy 代理（SSO 会话与图寻后端会话串联）
+  url += `&sso_proxy=1`
+  // #endif
   return url
 }
 

@@ -51,6 +51,7 @@ export default defineManifestConfig({
   /* 微信小程序特有相关 */
   'mp-weixin': {
     appid: VITE_WX_APPID,
+    lazyCodeLoading: 'requiredComponents',
     setting: {
       urlCheck: isProduction,
       // 是否启用 ES6 转 ES5
