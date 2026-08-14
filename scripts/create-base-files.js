@@ -35,7 +35,18 @@ function scanPages() {
   return pages.length ? pages : [{ path: 'pages/index/index' }]
 }
 
-const defaultManifestText = `${JSON.stringify({ name: 'tuxun', appid: '' }, null, 2)}\n`
+const defaultManifest = {
+  name: '图寻',
+  appid: '__UNI__D1E5001',
+  vueVersion: '3',
+  h5: {
+    router: {
+      mode: 'history',
+      base: '/',
+    },
+  },
+}
+const defaultManifestText = `${JSON.stringify(defaultManifest, null, 2)}\n`
 // 占位符必须是「多页」——只写 1 页会让 @dcloudio/vite-plugin-uni 把
 // __UNI_FEATURE_PAGES__ 定为 false，产物退化成单页应用，全站导航失效。
 const defaultPagesText = `${JSON.stringify({ pages: scanPages() }, null, 2)}\n`
