@@ -4,7 +4,6 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
 import { getCallbackUrl, redirectToOAuth, takeReturnPath, validateAndClearState } from '@/service/auth/login'
-import { isTabBarPage } from '@/app/tab-bar/store'
 import { AppRoute } from '@/router/routes'
 import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
 import { ApiRequestError } from '@/service/request/error'
@@ -77,22 +76,14 @@ onLoad(async (query: Record<string, any> = {}) => {
 
     // #ifdef H5
     setTimeout(() => {
-      const target = takeReturnPath()
-      if (!target) {
-        uni.switchTab({ url: AppRoute.Home })
-        return
-      }
-      const purePath = target.split('?')[0]
-      if (isTabBarPage(purePath)) {
-        uni.switchTab({ url: purePath })
+      const target = takeReturnPath() || AppRoute.Home
+      if (typeof window !== 'undefined') {
+        window.location.replace(target)
       }
       else {
-        uni.redirectTo({
-          url: target,
-          fail: () => uni.switchTab({ url: AppRoute.Home }),
-        })
+        uni.reLaunch({ url: target })
       }
-    }, 500)
+    }, 300)
     // #endif
     // #ifndef H5
     // 小程序：webview 宿主页已被中转页 redirectTo 替换，栈里紧邻的就是发起登录的页面

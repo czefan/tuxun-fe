@@ -135,48 +135,29 @@ function generateState(): string {
   const bytes = new Uint8Array(16)
   crypto.getRandomValues(bytes)
   state = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
-  try {
-    sessionStorage.setItem(StorageKey.OAuthState, state)
-  }
-  catch {}
   // #endif
   // #ifndef H5
-  // 小程序没有 crypto.getRandomValues，用 uni.getRandomValues（Promise）不便于同步拼 URL；
-  // 退而用时间戳 + 多段 Math.random 拼足长度。CSRF state 的要求是「不可猜测」，
-  // 这里的强度弱于 H5，但远好于现状（现状是完全不发 state）。
-  // 若微信基础库支持，优先替换为 wx.getRandomValues 的同步封装。
+  // 小程序没有 crypto.getRandomValues，退而用时间戳 + 多段 Math.random
   state = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`
+  // #endif
   try {
     uni.setStorageSync(StorageKey.OAuthState, state)
   }
   catch {}
-  // #endif
   return state
 }
 
 /** 校验回调中的 state 是否与发起时一致，校验后立即清除 */
 export function validateAndClearState(state: string): boolean {
-  // #ifdef H5
   try {
-    const stored = sessionStorage.getItem(StorageKey.OAuthState)
-    sessionStorage.removeItem(StorageKey.OAuthState)
+    const stored = uni.getStorageSync(StorageKey.OAuthState)
+    uni.removeStorageSync(StorageKey.OAuthState)
     // stored 为空表示本端没发起过这次登录（非本站跳转）；state 为空表示回调没带 state，一律拒绝
     return !!stored && !!state && stored === state
   }
   catch {
     return false
   }
-  // #endif
-  // #ifndef H5
-  try {
-    const stored = uni.getStorageSync(StorageKey.OAuthState)
-    uni.removeStorageSync(StorageKey.OAuthState)
-    return !!stored && !!state && stored === state
-  }
-  catch {
-    return false
-  }
-  // #endif
 }
 
 /**
