@@ -257,19 +257,18 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
         </view>
 
         <view
-          class="relative h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-[#D3BA9F] rounded-2xl border-dashed bg-[#F8F6F2] transition-colors active:bg-[#EFECE6]"
+          class="relative min-h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-[#D3BA9F] rounded-2xl border-dashed bg-[#F8F6F2] transition-colors active:bg-[#EFECE6]"
           @tap="choosePhoto"
           @dragover.prevent
           @drop.prevent="handleFileDrop"
         >
           <wd-img
             v-if="form.filePath"
-            custom-class="h-full w-full object-cover"
+            custom-class="w-full block"
             :src="form.filePath"
             lazy-load
-            mode="aspectFill"
+            mode="widthFix"
             width="100%"
-            height="100%"
           />
           <view v-else class="flex flex-col items-center p-3 text-center space-y-1.5">
             <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E]">

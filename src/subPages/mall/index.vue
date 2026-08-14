@@ -353,7 +353,18 @@ function handleExchange(goodId: number) {
           <wd-icon name="close" size="16px" />
         </view>
         <!-- 详情大图用高清原图：契约把 originUrl 放进列表就是为了免详情请求 -->
-        <wd-img custom-class="h-48 w-full bg-[#B69171]/10 object-cover" lazy-load :src="activeGood.image.originUrl" mode="aspectFill" width="100%" height="384rpx" />
+        <view class="relative w-full overflow-hidden bg-[#B69171]/10">
+          <wd-img
+            custom-class="w-full block"
+            lazy-load
+            :src="activeGood.image.originUrl"
+            mode="widthFix"
+            width="100%"
+            :style="{
+              aspectRatio: `${activeGood.image.width} / ${activeGood.image.height}`,
+            }"
+          />
+        </view>
         <view class="p-5 space-y-4">
           <view class="flex items-baseline justify-between gap-3">
             <text class="min-w-0 flex-1 text-base text-[#1E1E1E] font-bold leading-snug">{{ activeGood.name }}</text>

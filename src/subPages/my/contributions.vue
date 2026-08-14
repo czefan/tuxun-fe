@@ -228,14 +228,16 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
         </view>
 
         <!-- 投稿图片区（点击放大预览，右下角悬浮【查看位置】胶囊按钮） -->
-        <view class="relative h-48 w-full overflow-hidden rounded-xl bg-[#B69171]/10 ring-1 ring-[#D3BA9F]/50">
+        <view class="relative w-full">
           <wd-img
-            custom-class="h-full w-full cursor-pointer object-cover transition-opacity active:opacity-90"
+            custom-class="shadow-2xs block w-full cursor-pointer overflow-hidden border border-[#D3BA9F]/50 rounded-xl transition-opacity active:opacity-90"
             lazy-load
             :src="detailData.image.originUrl || detailData.image.url"
-            mode="aspectFill"
+            mode="widthFix"
             width="100%"
-            height="384rpx"
+            :style="{
+              aspectRatio: `${detailData.image.width} / ${detailData.image.height}`,
+            }"
             @click="handlePreviewDetailImage"
           />
 

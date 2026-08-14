@@ -13,7 +13,6 @@ import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
 import { qk } from '@/service/query/keys'
 import { useStickyTop } from '@/composables/use-sticky-top'
-
 import { closeActivePreviewImage, previewImage } from '@/utils/image-preview'
 import { serverNow } from '@/utils/server-time'
 import { formatCompactCount } from '@/utils/format-count'
@@ -33,83 +32,37 @@ const isSlideDowning = ref(false)
 const showUndoBanner = ref(false)
 const touchStartY = ref(0)
 
-/** 智能推算当前列表中位于下一个位置的题目 ID */
-function getNextQuestionId(): number | null {
-  const queries = queryClient.getQueriesData<any>({
-    queryKey: qk.photo.all(),
-  })
+/** 从缓存列表中推算前一个或后一个题目 ID */
+function getAdjacentPhotoId(offset: 1 | -1): number | null {
+  const queries = queryClient.getQueriesData<any>({ queryKey: qk.photo.all() })
   for (const [_, data] of queries) {
-    if (data?.pages) {
-      const allPhotos = data.pages.flatMap((p: any) => p.list ?? [])
-      const index = allPhotos.findIndex((p: any) => p.id === questionId.value)
-      if (index !== -1 && index + 1 < allPhotos.length) {
-        return allPhotos[index + 1].id
-      }
+    const list: any[] = data?.pages?.flatMap((p: any) => p.list ?? []) ?? []
+    const idx = list.findIndex(p => p.id === questionId.value)
+    if (idx !== -1 && list[idx + offset]) {
+      return list[idx + offset].id
     }
   }
   return null
 }
 
-/** 智能推算当前列表中位于上一个位置的题目 ID */
-function getPrevQuestionId(): number | null {
-  const queries = queryClient.getQueriesData<any>({
-    queryKey: qk.photo.all(),
-  })
-  for (const [_, data] of queries) {
-    if (data?.pages) {
-      const allPhotos = data.pages.flatMap((p: any) => p.list ?? [])
-      const index = allPhotos.findIndex((p: any) => p.id === questionId.value)
-      if (index > 0) {
-        return allPhotos[index - 1].id
-      }
-    }
-  }
-  return null
-}
-
-/** 切换到下一个题目 */
-function handleGoNextQuestion() {
+/** 统一切题处理（offset: 1 为下一题，-1 为上一题） */
+function switchQuestion(offset: 1 | -1) {
   if (isSlideUping.value || isSlideDowning.value)
     return
-  const nextId = getNextQuestionId()
-  if (!nextId) {
-    uni.showToast({ title: '已是最后一题了', icon: 'none' })
+  const targetId = getAdjacentPhotoId(offset)
+  if (!targetId) {
+    uni.showToast({ title: offset === 1 ? '已是最后一题了' : '已是第一题了', icon: 'none' })
     return
   }
-
-  isSlideUping.value = true
+  if (offset === -1)
+    showUndoBanner.value = false
+  const isUp = offset === 1
+  isUp ? (isSlideUping.value = true) : (isSlideDowning.value = true)
   setTimeout(() => {
     uni.redirectTo({
-      url: withQuery(AppRoute.QuestionDetail, { id: nextId, fromCut: 1 }),
-      success: () => {
+      url: withQuery(AppRoute.QuestionDetail, { id: targetId, ...(isUp ? { fromCut: 1 } : {}) }),
+      complete: () => {
         isSlideUping.value = false
-      },
-      fail: () => {
-        isSlideUping.value = false
-      },
-    })
-  }, 220)
-}
-
-/** 切换回上一个题目 / 撤销误触切题 */
-function handleGoPrevQuestion() {
-  if (isSlideDowning.value || isSlideUping.value)
-    return
-  const prevId = getPrevQuestionId()
-  if (!prevId) {
-    uni.showToast({ title: '已是第一题了', icon: 'none' })
-    return
-  }
-
-  showUndoBanner.value = false
-  isSlideDowning.value = true
-  setTimeout(() => {
-    uni.redirectTo({
-      url: withQuery(AppRoute.QuestionDetail, { id: prevId }),
-      success: () => {
-        isSlideDowning.value = false
-      },
-      fail: () => {
         isSlideDowning.value = false
       },
     })
@@ -117,69 +70,39 @@ function handleGoPrevQuestion() {
 }
 
 function handleTouchStart(e: TouchEvent) {
-  if (e.touches && e.touches.length > 0) {
+  if (e.touches?.[0])
     touchStartY.value = e.touches[0].clientY
-  }
 }
 
 function handleTouchEnd(e: TouchEvent) {
-  if (e.changedTouches && e.changedTouches.length > 0) {
-    const deltaY = e.changedTouches[0].clientY - touchStartY.value
-    // 仅在专属长方形 Bar 内向上滑动超过 60px 触发
-    if (deltaY < -60) {
-      handleGoNextQuestion()
-    }
+  // 仅在专属长方形 Bar 内向上滑动超过 60px 触发
+  if (e.changedTouches?.[0] && e.changedTouches[0].clientY - touchStartY.value < -60) {
+    switchQuestion(1)
   }
 }
 
 type CommentSortType = 'hottest' | 'latest'
 const commentSortType = ref<CommentSortType>('hottest') // 默认即最多点赞
 const showCommentSortPopover = ref(false)
-
 // 映射到后端接口 sort_by：默认即最多点赞 ('likes_count')
-const commentSortBy = computed(() => {
-  if (commentSortType.value === 'latest') {
-    return 'created_at'
-  }
-  return 'likes_count' // 默认即最多点赞
-})
+const commentSortBy = computed(() => (commentSortType.value === 'latest' ? 'created_at' : 'likes_count'))
+
+const detailTabsList = ['comments', 'solves', 'myAttempts'] as const
+const currentTabIndex = computed(() => detailTabsList.indexOf(activeTab.value))
 
 /** 点击包含评论和图标的整个 Tab 区域 */
-function handleTabClick(tabValue: 'comments' | 'solves' | 'myAttempts') {
-  if (tabValue === 'comments') {
-    if (activeTab.value !== 'comments') {
-      // 首次从其他 Tab 切换过来：仅进行 Tab 切换，显示评论内容，不弹气泡
-      activeTab.value = 'comments'
-      showCommentSortPopover.value = false
-    }
-    else {
-      // 已经在评论界面：再次点击整个评论框，Toggle 弹出/收起筛选气泡
-      showCommentSortPopover.value = !showCommentSortPopover.value
-    }
+function handleTabClick(tab: typeof detailTabsList[number]) {
+  if (tab === 'comments' && activeTab.value === 'comments') {
+    showCommentSortPopover.value = !showCommentSortPopover.value
   }
   else {
-    activeTab.value = tabValue
+    activeTab.value = tab
     showCommentSortPopover.value = false
   }
 }
 
-function handleSelectCommentSort(sortType: CommentSortType) {
-  commentSortType.value = sortType
-  showCommentSortPopover.value = false
-}
-
-const detailTabsList = ['comments', 'solves', 'myAttempts'] as const
-
-/** swiper 手势滑动切页时不走 handleTabClick，需在 change 里手动收起排序气泡 */
-function handleSwiperChange(e: any) {
-  activeTab.value = detailTabsList[e.detail.current] as any
-  showCommentSortPopover.value = false
-}
-
 const { isLoggedIn, isMe, loginDirectly, requireLogin } = useAuth()
 const { mutate: setLike } = useSetPhotoLike()
-
-const currentTabIndex = computed(() => detailTabsList.indexOf(activeTab.value))
 
 const { data: question } = usePhotoDetail(computed(() => questionId.value))
 const { data: commentPagesData } = useInfiniteCommentList(computed(() => questionId.value), computed(() => ({ sort_by: commentSortBy.value })))
@@ -221,14 +144,11 @@ const solves = computed<SolveRecordVM[]>(() => solvesPagesData.value?.pages.flat
 const myAttempts = computed<MyAttemptVM[]>(() => myAttemptsPagesData.value?.pages.flatMap(page => page.list) ?? [])
 
 onLoad((query) => {
-  if (typeof query?.id === 'string') {
+  if (typeof query?.id === 'string')
     questionId.value = Number(query.id)
-  }
   // 互动消息跳转带 tab：评论消息/评论点赞 → 评论区、破解点赞 → 已破解
-  // （见 pages/notice/index.vue handleInteractionTap；默认即为评论区，无需处理 undefined）
-  if (query?.tab === 'solves' || query?.tab === 'myAttempts' || query?.tab === 'comments') {
+  if (query?.tab === 'solves' || query?.tab === 'myAttempts' || query?.tab === 'comments')
     activeTab.value = query.tab
-  }
   if (query?.fromCut === '1') {
     showUndoBanner.value = true
     setTimeout(() => {
@@ -245,41 +165,21 @@ const isEnded = computed(() => {
   return Number.isFinite(end) && serverNow() >= end
 })
 
-const bottomButtonText = computed(() => {
+const buttonState = computed(() => {
   if (!question.value)
-    return '我要答题'
-  if (isEnded.value) {
-    return '答题已结束'
-  }
-  if (isMe(question.value.author?.id)) {
-    return '作者不可答题'
-  }
-  if (question.value.userAttemptsCount >= 5) {
-    return '次数上限 (5/5)'
-  }
-  return '我要答题'
-})
-
-const isButtonDisabled = computed(() => {
-  if (!question.value)
-    return false
-  if (isMe(question.value.author?.id)) {
-    return true
-  }
-  if (!isEnded.value && question.value.userAttemptsCount >= 5) {
-    return true
-  }
-  return false
+    return { text: '我要答题', disabled: false }
+  if (isEnded.value)
+    return { text: '答题已结束', disabled: false }
+  if (isMe(question.value.author?.id))
+    return { text: '作者不可答题', disabled: true }
+  if (question.value.userAttemptsCount >= 5)
+    return { text: '次数上限 (5/5)', disabled: true }
+  return { text: '我要答题', disabled: false }
 })
 
 function handleBottomAction() {
   if (isEnded.value) {
-    if (question.value?.location) {
-      uni.showToast({ title: '已定位到题目正确坐标', icon: 'none' })
-    }
-    else {
-      uni.showToast({ title: '答题已结束，正确坐标整理中', icon: 'none' })
-    }
+    uni.showToast({ title: question.value?.location ? '已定位到题目正确坐标' : '答题已结束，正确坐标整理中', icon: 'none' })
     return
   }
   if (isMe(question.value?.author?.id)) {
@@ -290,25 +190,19 @@ function handleBottomAction() {
 }
 
 function toggleLike() {
-  if (!requireLogin()) {
-    return
-  }
-  if (question.value) {
+  if (requireLogin() && question.value) {
     setLike({ id: question.value.id, liked: !question.value.liked })
   }
 }
 
 function goSubmit() {
-  if (!requireLogin()) {
+  if (!requireLogin() || !question.value)
+    return
+  if (question.value.userAttemptsCount >= 5) {
+    uni.showToast({ title: '单题作答次数已达上限 (5/5)', icon: 'none' })
     return
   }
-  if (question.value) {
-    if (question.value.userAttemptsCount >= 5) {
-      uni.showToast({ title: '单题作答次数已达上限 (5/5)', icon: 'none' })
-      return
-    }
-    uni.navigateTo({ url: withQuery(AppRoute.QuestionSubmit, { id: question.value.id }) })
-  }
+  uni.navigateTo({ url: withQuery(AppRoute.QuestionSubmit, { id: question.value.id }) })
 }
 </script>
 
@@ -325,33 +219,35 @@ function goSubmit() {
     <!-- 误触切题 4 秒内顶部弹出极简浅色撤销提示条 -->
     <view
       v-if="showUndoBanner"
-      class="fixed left-4 right-4 z-50 flex animate-fade-in-down items-center justify-between border border-[#D3BA9F] rounded-xl bg-white/95 px-4 py-2.5 text-xs text-[#332A22] shadow-2xl backdrop-blur-md"
+      class="fixed left-4 right-4 z-50 flex animate-fade-in-down items-center justify-between border border-[#D3BA9F] rounded-xl bg-white/95 px-4 py-2.5 text-sm text-[#332A22] shadow-2xl backdrop-blur-md"
       :style="undoBannerStyle"
     >
-      <view class="flex items-center gap-1.5 font-medium">
-        <text class="i-carbon:information text-sm text-[#B69171]" />
+      <view class="flex items-center gap-2 font-medium">
+        <text class="i-carbon:information text-base text-[#B69171]" />
         <text>已为您切至下一题</text>
       </view>
       <view
-        class="shadow-2xs flex cursor-pointer items-center gap-1 rounded-lg bg-[#F9DF95] px-2.5 py-1 text-[11px] text-[#1E1E1E] font-bold transition-transform active:scale-95"
-        @tap.stop="handleGoPrevQuestion"
+        class="shadow-2xs flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#F9DF95] px-3 py-2 text-xs text-[#1E1E1E] font-bold transition-transform active:scale-95"
+        @tap.stop="switchQuestion(-1)"
       >
-        <text class="i-carbon:undo text-xs" />
+        <text class="i-carbon:undo text-sm" />
         <text>撤销 / 上一题</text>
       </view>
     </view>
     <view v-if="question" class="px-4 pb-0 pt-4 space-y-4">
       <!-- 题目核心卡片 (Single-Layer Card) -->
       <view class="shadow-2xs overflow-hidden border border-[#D3BA9F] rounded-[18px] bg-white">
-        <view class="relative">
+        <view class="relative w-full overflow-hidden">
           <wd-img
-            custom-class="h-64 w-full cursor-pointer object-cover"
-            :style="{ 'view-transition-name': `photo-cover-${question.id}` }"
+            custom-class="w-full cursor-pointer block"
+            :style="{
+              'view-transition-name': `photo-cover-${question.id}`,
+              'aspectRatio': `${question.image.width} / ${question.image.height}`,
+            }"
             :src="question.image.originUrl"
             lazy-load
-            mode="aspectFill"
+            mode="widthFix"
             width="100%"
-            height="512rpx"
             @click="handlePreviewImage"
           />
         </view>
@@ -394,10 +290,10 @@ function goSubmit() {
               block
               size="large"
               custom-class="!font-black !bg-[#F9DF95] !text-[#1E1E1E] !border-0 shadow-2xs active:scale-[0.99] transition-transform"
-              :disabled="isButtonDisabled"
+              :disabled="buttonState.disabled"
               @click="handleBottomAction"
             >
-              {{ bottomButtonText }}
+              {{ buttonState.text }}
             </wd-button>
           </view>
         </view>
@@ -442,29 +338,21 @@ function goSubmit() {
           </view>
         </view>
 
-        <!-- 评论排序下拉气泡：提到与 swiper 同级，z-50 确保覆盖下方列表。
-             52px 构成来源：标头 pt-1(4px) + tab 行高(≈24px) + pb-2.5(10px) + 分割线(1px) + 额外间距(≈13px) -->
+        <!-- 评论排序下拉气泡 -->
         <view
           v-if="activeTab === 'comments' && showCommentSortPopover"
           class="absolute left-4 top-[52px] z-50 min-w-[132px] border border-[#D3BA9F]/40 rounded-2xl bg-white p-2 text-left font-normal shadow-2xl space-y-1"
           @click.stop
         >
           <view
+            v-for="opt in [{ key: 'hottest', label: '最多点赞' }, { key: 'latest', label: '最新' }] as const"
+            :key="opt.key"
             class="flex cursor-pointer items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-colors active:bg-[#F8F6F2]"
-            :class="commentSortType === 'hottest' ? 'font-bold text-[#1E1E1E]' : 'text-[#555555]'"
-            @click="handleSelectCommentSort('hottest')"
+            :class="commentSortType === opt.key ? 'font-bold text-[#1E1E1E]' : 'text-[#555555]'"
+            @click="() => { commentSortType = opt.key; showCommentSortPopover = false }"
           >
-            <text>最多点赞</text>
-            <text v-if="commentSortType === 'hottest'" class="i-carbon:checkmark text-base text-[#B69171] font-bold" />
-          </view>
-
-          <view
-            class="flex cursor-pointer items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-colors active:bg-[#F8F6F2]"
-            :class="commentSortType === 'latest' ? 'font-bold text-[#1E1E1E]' : 'text-[#555555]'"
-            @click="handleSelectCommentSort('latest')"
-          >
-            <text>最新</text>
-            <text v-if="commentSortType === 'latest'" class="i-carbon:checkmark text-base text-[#B69171] font-bold" />
+            <text>{{ opt.label }}</text>
+            <text v-if="commentSortType === opt.key" class="i-carbon:checkmark text-base text-[#B69171] font-bold" />
           </view>
         </view>
 
@@ -473,7 +361,7 @@ function goSubmit() {
           class="h-[420px] w-full"
           :current="currentTabIndex"
           :duration="300"
-          @change="handleSwiperChange"
+          @change="(e: any) => { activeTab = detailTabsList[e.detail.current] as any; showCommentSortPopover = false }"
         >
           <swiper-item class="box-border">
             <CommentList v-if="questionId > 0" :photo-id="questionId" :sort-by="commentSortBy" />
@@ -508,10 +396,10 @@ function goSubmit() {
         </swiper>
       </view>
 
-      <!-- 融入背景的全宽下部切题热区：死死压住最底部，与上卡片保持大方顶距 (mt-8) -->
+      <!-- 融入背景的全宽下部切题热区 -->
       <view
         class="mt-8 flex flex-col cursor-pointer items-center justify-center gap-1.5 pb-8 pt-6 text-[#756C5E] transition-opacity -mx-4 active:opacity-75"
-        @tap="handleGoNextQuestion"
+        @tap="switchQuestion(1)"
         @touchstart="handleTouchStart"
         @touchend="handleTouchEnd"
       >
@@ -526,47 +414,18 @@ function goSubmit() {
 
 <style lang="scss" scoped>
 @keyframes slideUpOut {
-  0% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-40px);
-    opacity: 0.15;
-  }
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-40px); opacity: 0.15; }
 }
-
 @keyframes slideDownOut {
-  0% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(40px);
-    opacity: 0.15;
-  }
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(40px); opacity: 0.15; }
 }
-
 @keyframes fadeInDown {
-  0% {
-    transform: translateY(-16px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(-16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
-
-.animate-slide-up-out {
-  animation: slideUpOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-slide-down-out {
-  animation: slideDownOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-fade-in-down {
-  animation: fadeInDown 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
+.animate-slide-up-out { animation: slideUpOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.animate-slide-down-out { animation: slideDownOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.animate-fade-in-down { animation: fadeInDown 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 </style>

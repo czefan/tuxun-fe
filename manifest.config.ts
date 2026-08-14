@@ -32,7 +32,8 @@ export default defineManifestConfig({
   'versionName': '1.0.0',
   'versionCode': '100',
   'transformPx': false,
-  'locale': VITE_FALLBACK_LOCALE, // 'zh-Hans'
+  'locale': VITE_FALLBACK_LOCALE || 'zh-Hans',
+  'fallbackLocale': VITE_FALLBACK_LOCALE || 'zh-Hans',
   'uniStatistics': {
     enable: false,
     version: '2',
