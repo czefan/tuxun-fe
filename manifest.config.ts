@@ -33,7 +33,14 @@ export default defineManifestConfig({
   'versionCode': '100',
   'transformPx': false,
   'locale': VITE_FALLBACK_LOCALE, // 'zh-Hans'
+  'uniStatistics': {
+    enable: false,
+    version: '2',
+  },
   'h5': {
+    uniStatistics: {
+      enable: false,
+    },
     router: {
       mode: 'history',
       base: VITE_APP_PUBLIC_BASE,
@@ -51,6 +58,9 @@ export default defineManifestConfig({
   /* 微信小程序特有相关 */
   'mp-weixin': {
     appid: VITE_WX_APPID,
+    uniStatistics: {
+      enable: false,
+    },
     lazyCodeLoading: 'requiredComponents',
     setting: {
       urlCheck: isProduction,
@@ -71,9 +81,6 @@ export default defineManifestConfig({
       'scope.userLocation': { desc: '用于标注题目拍摄位置与提交作答坐标' },
     },
     requiredPrivateInfos: ['getLocation', 'chooseLocation'],
-  },
-  'uniStatistics': {
-    enable: false,
   },
   'vueVersion': '3',
 })
