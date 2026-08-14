@@ -77,15 +77,6 @@ function openEditNickname() {
   editNameVisible.value = true
 }
 
-const selectedAvatarPath = ref('')
-
-function openEditAvatar() {
-  if (!isLoggedIn())
-    return loginDirectly()
-  selectedAvatarPath.value = ''
-  editAvatarVisible.value = true
-}
-
 function confirmNickname() {
   if (!newNickname.value.trim())
     return uni.showToast({ title: '昵称不能为空', icon: 'none' })
@@ -101,39 +92,36 @@ function confirmNickname() {
   })
 }
 
-function startChooseAvatar() {
-  const remaining = profileInfo.value?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining
-  if (remaining !== undefined && remaining <= 0) {
-    return uni.showToast({ title: '头像修改次数已用尽', icon: 'none' })
-  }
+const selectedAvatarPath = ref('')
+const avatarRemaining = computed(() => profileInfo.value?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining ?? 0)
 
+function openEditAvatar() {
+  if (!isLoggedIn())
+    return loginDirectly()
+  selectedAvatarPath.value = ''
+  editAvatarVisible.value = true
+}
+
+function startChooseAvatar() {
   uni.chooseImage({
     count: 1,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
-    success: (res) => {
-      if (res.tempFilePaths[0]) {
-        selectedAvatarPath.value = res.tempFilePaths[0]
-      }
-    },
+    success: res => selectedAvatarPath.value = res.tempFilePaths[0] || '',
   })
 }
 
 function handleChooseAvatar(e: any) {
-  if (e.detail?.avatarUrl) {
-    selectedAvatarPath.value = e.detail.avatarUrl
-  }
+  selectedAvatarPath.value = e.detail?.avatarUrl || ''
 }
 
-function confirmUpdateAvatar() {
-  if (!selectedAvatarPath.value) {
+async function confirmUpdateAvatar() {
+  if (avatarRemaining.value <= 0)
+    return uni.showToast({ title: '头像修改次数已用尽', icon: 'none' })
+  if (!selectedAvatarPath.value)
     return uni.showToast({ title: '请先选择新头像', icon: 'none' })
-  }
-  void handleAvatarUpload(selectedAvatarPath.value)
-}
 
-async function handleAvatarUpload(filePath: string) {
-  const compressedPath = await smartCompressImage(filePath)
+  const compressedPath = await smartCompressImage(selectedAvatarPath.value)
   avatarMutation.mutate(compressedPath, {
     onSuccess: (res) => {
       userStore.updateUserInfo({ avatar: res.avatarUrl, avatarEditsRemaining: res.avatarEditsRemaining })
@@ -313,7 +301,7 @@ function navigateTo(url: string) {
             <text class="u-title-lg">修改个人头像</text>
           </view>
           <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#F9DF95]/50 !text-[#854D0E] !border-0">
-            剩余 {{ profileInfo?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining ?? 0 }} 次
+            剩余 {{ avatarRemaining }} 次
           </wd-tag>
         </view>
 
@@ -340,16 +328,18 @@ function navigateTo(url: string) {
               <template #icon>
                 <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
               </template>
-              微信快捷选图
+              选择图片
             </wd-button>
           </button>
           <!-- #endif -->
+          <!-- #ifndef MP-WEIXIN -->
           <wd-button round block size="medium" custom-class="!bg-[#F8F6F2] !text-[#1E1E1E] !border !border-[#D3BA9F]/60 !font-bold" @click="startChooseAvatar">
             <template #icon>
               <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
             </template>
             选择图片
           </wd-button>
+          <!-- #endif -->
 
           <view class="flex gap-3 pt-1">
             <wd-button
