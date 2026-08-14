@@ -28,7 +28,16 @@ function switchTab(item: CustomTabBarItem) {
   if (item.pagePath) {
     store.setCurrentPagePath(item.pagePath)
     const url = `/${item.pagePath.replace(/^\/+/, '')}`
-    uni.switchTab({ url, fail: () => uni.reLaunch({ url }) })
+    uni.switchTab({
+      url,
+      fail: () => uni.reLaunch({
+        url,
+        fail: (err) => {
+          uni.showToast({ title: '页面切换失败', icon: 'none' })
+          console.error('[nav]', err)
+        },
+      }),
+    })
   }
 }
 

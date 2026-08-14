@@ -33,7 +33,7 @@ export async function getPhotos(params?: PhotoQueryParams): Promise<PageResult<P
 
   const authStore = useAuthStore()
   const isLoggedIn = Boolean(authStore.token || authStore.hasSession || authStore.sessionId)
-  const list = raw.list.map((item) => {
+  const list = (raw.list || []).map((item) => {
     const image = toImageVM(item.image)
     return {
       id: item.id,
@@ -51,7 +51,7 @@ export async function getPhotos(params?: PhotoQueryParams): Promise<PageResult<P
     }
   })
 
-  return { list, total: raw.total }
+  return { list, total: raw.total ?? 0 }
 }
 
 /** 题目详情 GET /photos/{id}（无需登录） */

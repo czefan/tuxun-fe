@@ -7,12 +7,14 @@ const props = withDefaults(
   defineProps<{
     list: PhotoCardVM[]
     loading?: boolean
+    error?: boolean
     emptyText?: string
     /** 正在打开的卡片 id；只有它会带上 view-transition-name */
     openingId?: number | null
   }>(),
   {
     loading: false,
+    error: false,
     emptyText: '暂无题目',
     openingId: null,
   },
@@ -20,6 +22,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (event: 'open', item: PhotoCardVM): void
+  (event: 'retry'): void
 }>()
 
 /**
@@ -132,6 +135,14 @@ const splitColumns = computed(() => {
       <view class="photo-waterfall__col space-y-3">
         <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }, { width: '100%', height: '220px' }]" />
       </view>
+    </view>
+
+    <!-- 失败态视图 -->
+    <view v-else-if="error" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12">
+      <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+      <wd-button size="small" plain round @click="emit('retry')">
+        重新加载
+      </wd-button>
     </view>
 
     <!-- 空态视图 -->

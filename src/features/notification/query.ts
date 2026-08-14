@@ -13,12 +13,16 @@ import {
 } from './api'
 import type { AnnouncementQueryParams, AnnouncementVM, InteractionMessageVM, NotificationPageResult } from './types'
 
-export function useInfiniteAnnouncements(params?: MaybeRefOrGetter<AnnouncementQueryParams | undefined>) {
+export function useInfiniteAnnouncements(
+  params?: MaybeRefOrGetter<AnnouncementQueryParams | undefined>,
+  options?: { enabled?: MaybeRefOrGetter<boolean> },
+) {
   return useInfiniteQuery<NotificationPageResult<AnnouncementVM>>({
     queryKey: computed(() => qk.notification.announcements(toValue(params))),
     queryFn: ({ pageParam = 1 }) => getAnnouncements({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
+    enabled: computed(() => (options?.enabled !== undefined ? toValue(options.enabled) : true)),
   })
 }
 

@@ -5,6 +5,8 @@ import { useInfinitePhotoList } from '@/features/photo/query'
 import { useAuth } from '@/features/user/composables/use-auth'
 import PhotoWaterfall from '@/features/photo/components/photo-waterfall.vue'
 import { useViewTransition } from '@/composables/use-view-transition'
+import { usePopupTopPadding, useStickyTop } from '@/composables/use-sticky-top'
+import { AppRoute, withQuery } from '@/router/routes'
 import type { PhotoCardVM } from '@/features/photo/types'
 
 definePage({
@@ -15,6 +17,8 @@ definePage({
   },
 })
 
+const stickyTopStyle = useStickyTop()
+const popupTop = usePopupTopPadding()
 const activityTitle = ref('活动主页')
 const activityId = ref<number>(0)
 const sortCurrent = ref('最热')
@@ -48,7 +52,8 @@ const solvedParam = computed(() => {
 
 const {
   data,
-  isPending,
+  isLoading,
+  isError,
   fetchNextPage,
   hasNextPage,
   isFetchingNextPage,
@@ -93,7 +98,7 @@ const openingPhotoId = ref<number | null>(null)
 async function handlePhotoOpen(item: PhotoCardVM) {
   openingPhotoId.value = item.id
   await nextTick()
-  await navigateWithTransition(`/subPages/question/detail?id=${item.id}`, () => {
+  await navigateWithTransition(withQuery(AppRoute.QuestionDetail, { id: item.id }), () => {
     openingPhotoId.value = null
   })
 }
@@ -104,7 +109,7 @@ const filterVisible = ref(false)
 <template>
   <view class="page-activity safe-bottom-page bg-[#F1DFC5]">
     <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
-    <view class="sticky top-[var(--window-top,0px)] z-20 box-border w-full bg-[#F1DFC5] px-1.5 py-1.5" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+    <view class="sticky z-20 box-border w-full bg-[#F1DFC5] px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
       <view class="flex items-center gap-2">
         <view class="min-w-0 flex-1">
           <wd-search
@@ -130,9 +135,11 @@ const filterVisible = ref(false)
       <PhotoWaterfall
         :opening-id="openingPhotoId"
         :list="photoList"
-        :loading="isPending"
+        :loading="isLoading"
+        :error="isError"
         empty-text="该活动暂无题目"
         @open="handlePhotoOpen"
+        @retry="refetch"
       />
 
       <wd-loadmore
@@ -150,9 +157,16 @@ const filterVisible = ref(false)
       custom-style="background: transparent;"
       @close="filterVisible = false"
     >
-      <view class="relative box-border w-full border-b border-[#D3BA9F] rounded-b-[24px] bg-[#F1DFC5] px-4 pb-5 pt-[calc(var(--status-bar-height,20px)+60px)] shadow-2xl space-y-4">
+      <view
+        class="relative box-border w-full border-b border-[#D3BA9F] rounded-b-[24px] bg-[#F1DFC5] px-4 pb-5 shadow-2xl space-y-4"
+        :style="{ paddingTop: popupTop.paddingTop }"
+      >
         <!-- 右上角绝对定位关闭按钮 -->
-        <view class="absolute right-4 top-[calc(var(--status-bar-height,20px)+52px)] z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-[#B69171]/30 transition-transform active:scale-90" @click="filterVisible = false">
+        <view
+          class="absolute right-4 z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-[#B69171]/30 transition-transform active:scale-90"
+          :style="{ top: popupTop.closeTop }"
+          @click="filterVisible = false"
+        >
           <wd-icon name="close" size="18px" color="#1E1E1E" />
         </view>
 

@@ -590,4 +590,16 @@ describe('契约变更负向守卫', () => {
 
     expect(violations, `发现定义的僵尸环境变量：\n${violations.join('\n')}`).toEqual([])
   })
+
+  it('小程序缺失的 Web 全局必须在 polyfill 里补齐，且在 main.ts 顶部引入', () => {
+    const polyfillPath = path.join(SRC_ROOT, 'utils/polyfill.ts')
+    expect(fs.existsSync(polyfillPath)).toBe(true)
+    const polyfillSrc = fs.readFileSync(polyfillPath, 'utf-8')
+    // query-core 在 Query.fetch() 里 new AbortController()，缺失会让所有查询静默失败
+    expect(polyfillSrc).toMatch(/AbortController/)
+    expect(polyfillSrc).toMatch(/AbortSignal/)
+
+    const mainSrc = fs.readFileSync(path.join(SRC_ROOT, 'main.ts'), 'utf-8')
+    expect(mainSrc).toMatch(/import ['"]\.\/utils\/polyfill['"]/)
+  })
 })

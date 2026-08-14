@@ -20,7 +20,7 @@
   ],
   "project": ["src/**/*.{ts,vue,scss,sass}", "build/**/*.ts"],
   "ignore": ["src/env.d.ts", "src/uni.scss"],
-  "ignoreDependencies": ["@dcloudio/.*", "postcss"],
+  "ignoreDependencies": ["@dcloudio/.*", "postcss", "@tanstack/query-core"],
   "vite": false,
   "ignoreBinaries": ["uv"]
 }

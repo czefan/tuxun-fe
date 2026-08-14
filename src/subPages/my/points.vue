@@ -26,7 +26,8 @@ const { data: rulesData } = useContent('score_rules')
 
 const {
   data: logsPagesData,
-  isPending: logsLoading,
+  isLoading: logsLoading,
+  isError: logsError,
   fetchNextPage,
   hasNextPage,
   isFetchingNextPage,
@@ -123,6 +124,12 @@ function handleLogTap(item: ScoreLogVM) {
           <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
             <view v-if="logsLoading" class="space-y-3">
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '50px' }, { width: '100%', height: '50px' }]" />
+            </view>
+            <view v-else-if="logsError" class="flex flex-col items-center justify-center gap-3 py-20">
+              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-button size="small" plain round @click="refetch">
+                重新加载
+              </wd-button>
             </view>
             <view v-else-if="logsList.length">
               <view class="border-y border-[#B69171]">

@@ -19,10 +19,12 @@ const { isLoggedIn, requireLogin, isMe } = useAuth()
 const newCommentText = ref('')
 const {
   data: commentPagesData,
-  isPending: isLoading,
+  isLoading,
+  isError,
   fetchNextPage,
   hasNextPage,
   isFetchingNextPage,
+  refetch,
 } = useInfiniteCommentList(
   () => props.photoId,
   computed(() => ({ sort_by: props.sortBy })),
@@ -110,6 +112,12 @@ function confirmDelete(id: number) {
     >
       <view v-if="isLoading" class="px-4 pt-2.5 space-y-3">
         <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '50px' }]" />
+      </view>
+      <view v-else-if="isError" class="flex flex-col items-center justify-center gap-3 py-16">
+        <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+        <wd-button size="small" plain round @click="refetch">
+          重新加载
+        </wd-button>
       </view>
       <view v-else-if="commentsList.length" class="px-4 pt-2.5 space-y-3.5">
         <view

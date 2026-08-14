@@ -18,7 +18,8 @@ export async function getGoods(params?: GoodsQueryParams): Promise<PageResult<Go
     },
   })
 
-  const list = raw.list.map((item) => {
+  const rawList = Array.isArray(raw?.list) ? raw.list : []
+  const list = rawList.map((item) => {
     const image = toImageVM(item.image)
     return {
       id: item.id,
@@ -32,7 +33,7 @@ export async function getGoods(params?: GoodsQueryParams): Promise<PageResult<Go
     }
   })
 
-  return { list, total: raw.total }
+  return { list, total: raw?.total ?? 0 }
 }
 
 /** 兑换商品 POST /exchange（权限：L1，必带 Idempotency-Key） */
@@ -63,7 +64,8 @@ export async function getExchanges(params?: PageParams & { status?: string }): P
     },
   })
 
-  const list = raw.list.map((item) => {
+  const rawList = Array.isArray(raw?.list) ? raw.list : []
+  const list = rawList.map((item) => {
     const image = toImageVM(item.good.image)
     return {
       id: item.id,
@@ -81,5 +83,5 @@ export async function getExchanges(params?: PageParams & { status?: string }): P
     }
   })
 
-  return { list, total: raw.total }
+  return { list, total: raw?.total ?? 0 }
 }

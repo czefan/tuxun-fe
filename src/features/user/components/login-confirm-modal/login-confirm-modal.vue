@@ -70,6 +70,7 @@ async function handleTestLogin() {
 }
 
 function handleOAuthLogin() {
+  emit('update:modelValue', false)
   redirectToOAuth()
 }
 

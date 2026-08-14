@@ -43,18 +43,25 @@ watch(activeTab, () => {
 
 const {
   data: announcePagesData,
-  isPending: announceLoading,
+  isLoading: announceLoading,
+  isError: announceError,
   fetchNextPage: fetchNextAnnounce,
   hasNextPage: hasNextAnnounce,
   isFetchingNextPage: isFetchingAnnounce,
   refetch: refetchAnnounce,
-} = useInfiniteAnnouncements(computed(() => ({
-  keyword: debouncedKeyword.value.trim() || undefined,
-})))
+} = useInfiniteAnnouncements(
+  computed(() => ({
+    keyword: debouncedKeyword.value.trim() || undefined,
+  })),
+  {
+    enabled: computed(() => isLoggedIn()),
+  },
+)
 
 const {
   data: interactPagesData,
-  isPending: interactLoading,
+  isLoading: interactLoading,
+  isError: interactError,
   fetchNextPage: fetchNextInteract,
   hasNextPage: hasNextInteract,
   isFetchingNextPage: isFetchingInteract,
@@ -303,6 +310,12 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
             <view v-if="announceLoading" class="space-y-3">
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '80px' }, { width: '100%', height: '80px' }]" />
             </view>
+            <view v-else-if="announceError" class="flex flex-col items-center justify-center gap-3 py-20">
+              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-button size="small" plain round @click="refetchAnnounce">
+                重新加载
+              </wd-button>
+            </view>
             <view v-else-if="announcements.length" class="space-y-4">
               <view
                 v-for="group in groupedAnnouncements"
@@ -372,8 +385,14 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
             </wd-button>
           </view>
           <view v-else class="bottom-space--bar px-3 pt-2.5 space-y-4">
-            <view v-if="interactLoading && isFetchingInteract" class="space-y-3">
+            <view v-if="interactLoading" class="space-y-3">
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
+            </view>
+            <view v-else-if="interactError" class="flex flex-col items-center justify-center gap-3 py-20">
+              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-button size="small" plain round @click="refetchInteract">
+                重新加载
+              </wd-button>
             </view>
             <view v-else-if="interactions.length" class="space-y-4">
               <view

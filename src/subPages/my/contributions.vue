@@ -34,7 +34,8 @@ const queryParams = computed(() => ({
 const selectedId = ref<number | null>(null)
 const {
   data: photosPagesData,
-  isPending: isLoading,
+  isLoading,
+  isError,
   fetchNextPage,
   hasNextPage,
   isFetchingNextPage,
@@ -166,6 +167,12 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
           <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
             <view v-if="isLoading" class="space-y-3">
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
+            </view>
+            <view v-else-if="isError" class="flex flex-col items-center justify-center gap-3 py-20">
+              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-button size="small" plain round @click="refetch">
+                重新加载
+              </wd-button>
             </view>
             <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-[#B69171]">
               <view

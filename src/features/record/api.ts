@@ -31,7 +31,7 @@ export async function getMyPhotos(params?: UserPhotoQueryParams): Promise<PageRe
     },
   })
 
-  const list = raw.list.map((item) => {
+  const list = (raw.list || []).map((item) => {
     const image = toImageVM(item.image)
     return {
       id: item.id,
@@ -42,7 +42,7 @@ export async function getMyPhotos(params?: UserPhotoQueryParams): Promise<PageRe
     }
   })
 
-  return { list, total: raw.total }
+  return { list, total: raw.total ?? 0 }
 }
 
 /** 获取我的投稿详情 GET /photos/user/{id}（权限：L1，包含完整原图、定位、驳回原因） */
@@ -91,7 +91,7 @@ export async function getMyAttemptRecords(params?: UserAttemptQueryParams): Prom
     },
   })
 
-  const list = raw.list.map((item) => {
+  const list = (raw.list || []).map((item) => {
     const image = toImageVM(item.photo.image)
     return {
       id: item.id,
@@ -106,5 +106,5 @@ export async function getMyAttemptRecords(params?: UserAttemptQueryParams): Prom
     }
   })
 
-  return { list, total: raw.total }
+  return { list, total: raw.total ?? 0 }
 }

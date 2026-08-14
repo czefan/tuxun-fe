@@ -16,9 +16,9 @@ import { normalizeRichText } from '@/utils/rich-text'
 export async function getAnnouncements(params?: AnnouncementQueryParams): Promise<NotificationPageResult<AnnouncementVM>> {
   const { page, page_size } = clampPageParams(params)
   const raw = await request<{
-    total: number
-    unread_count: number
-    list: AnnouncementListItem[]
+    total?: number
+    unread_count?: number
+    list?: AnnouncementListItem[]
   }>({
     url: '/announcements',
     method: 'GET',
@@ -29,7 +29,7 @@ export async function getAnnouncements(params?: AnnouncementQueryParams): Promis
     },
   })
 
-  const list = raw.list.map(item => ({
+  const list = (raw.list || []).map(item => ({
     id: item.id,
     title: item.title,
     // 摘要由后端生成（剥标签、去 [image]、按码点截 50 字），列表项契约里没有 content
@@ -41,8 +41,8 @@ export async function getAnnouncements(params?: AnnouncementQueryParams): Promis
 
   return {
     list,
-    total: raw.total,
-    unreadCount: raw.unread_count,
+    total: raw.total ?? 0,
+    unreadCount: raw.unread_count ?? 0,
   }
 }
 
@@ -82,9 +82,9 @@ export async function getAnnouncementDetail(id: number): Promise<AnnouncementDet
 export async function getInteractions(params?: PageParams & { type?: ('like' | 'comment')[] }): Promise<NotificationPageResult<InteractionMessageVM>> {
   const { page, page_size } = clampPageParams(params)
   const raw = await request<{
-    total: number
-    unread_count: number
-    list: InteractionMessage[]
+    total?: number
+    unread_count?: number
+    list?: InteractionMessage[]
   }>({
     url: '/notifications',
     method: 'GET',
@@ -95,7 +95,7 @@ export async function getInteractions(params?: PageParams & { type?: ('like' | '
     },
   })
 
-  const list = raw.list.map(item => ({
+  const list = (raw.list || []).map(item => ({
     id: item.id,
     type: item.type,
     user: {
@@ -114,8 +114,8 @@ export async function getInteractions(params?: PageParams & { type?: ('like' | '
 
   return {
     list,
-    total: raw.total,
-    unreadCount: raw.unread_count,
+    total: raw.total ?? 0,
+    unreadCount: raw.unread_count ?? 0,
   }
 }
 

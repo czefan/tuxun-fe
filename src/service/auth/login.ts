@@ -6,7 +6,7 @@ import { StorageKey } from '@/constants/storage'
 const isDev = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK === 'true'
 
 /** 本端绝对 URL；VITE_APP_PUBLIC_BASE 支持子路径部署。H5 页面与登出中转页复用 */
-export function absoluteUrl(path: string): string {
+function absoluteUrl(path: string): string {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const base = (import.meta.env.VITE_APP_PUBLIC_BASE || '/').replace(/\/+$/, '')
   return `${origin}${base}${path}`
@@ -66,6 +66,16 @@ function getClientId(): string {
   return import.meta.env.VITE_OAUTH_CLIENT_ID || ''
 }
 
+/** 获取当前站点源（H5 取 window.location.origin + base，小程序取 VITE_MP_AUTH_ORIGIN） */
+export function getSiteOrigin(): string {
+  // #ifdef H5
+  return absoluteUrl('')
+  // #endif
+  // #ifndef H5
+  return (import.meta.env.VITE_MP_AUTH_ORIGIN || '').replace(/\/+$/, '')
+  // #endif
+}
+
 /** H5 / 小程序登录回调地址（需与 tz-oauth 管理端与后端白名单注册的 redirect_uri 一致） */
 export function getCallbackUrl(): string {
   // #ifdef H5
@@ -74,8 +84,7 @@ export function getCallbackUrl(): string {
   // #ifndef H5
   // 小程序流程的 redirect_uri 是静态中转页，不是 H5 的 callback 路由：
   // 中转页只把 code 搬进小程序，登录界面与换取逻辑都在原生端做。
-  const raw = import.meta.env.VITE_MP_AUTH_ORIGIN || import.meta.env.VITE_MP_CALLBACK_URL || ''
-  const origin = raw.replace(/\/+$/, '').replace(/\/subPages\/auth\/callback\/?$/, '')
+  const origin = getSiteOrigin()
   return `${origin}/static/mp-auth-relay.html`
   // #endif
 }
@@ -179,7 +188,8 @@ export function getAuthorizeUrl(): string {
   const redirectUri = encodeURIComponent(getCallbackUrl())
   let url = `${base}/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20profile&state=${generateState()}`
   // #ifndef H5
-  // 小程序端 web-view 装载统一认证需走 sso_proxy 代理（SSO 会话与图寻后端会话串联）
+  // 小程序 web-view 对跳转限制严格，认证需经 tz-oauth 的反向代理通道，由该参数开启。
+  // 非 SERVICE_INTEGRATION.md 标准参数，出处：tz-oauth SSO 反向代理规范。删除会导致小程序端认证走不通。
   url += `&sso_proxy=1`
   // #endif
   return url
@@ -187,6 +197,7 @@ export function getAuthorizeUrl(): string {
 
 /** 真正跳转统一身份认证。不含开发模式分支——调用方已经决定要去 OAuth 了。 */
 export function redirectToOAuth() {
+  useAuthStore().closeLoginModal()
   saveReturnPath()
   const url = getAuthorizeUrl()
   // #ifdef H5

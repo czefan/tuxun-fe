@@ -72,7 +72,7 @@ function clearClientSessionState() {
   invalidateRequestCache()
   useQuestionLikeStore().clearQuestionLiked()
   useAnswerRecordLikeStore().clearAnswerRecordLiked()
-  queryClient.clear()
+  queryClient.removeQueries()
 
   const keysToRemove: string[] = [...AuthCleanupStorageKeys]
 

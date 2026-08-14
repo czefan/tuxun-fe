@@ -2,15 +2,91 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>登录中</title>
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
         background: #f1dfc5;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #1e1e1e;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .relay-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 320px;
+      }
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid rgba(182, 145, 113, 0.25);
+        border-top-color: #b69171;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 16px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+      .desc {
+        font-size: 13px;
+        color: #756c5e;
+        line-height: 1.5;
+      }
+      .fallback-box {
+        display: none;
+        margin-top: 20px;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      .retry-btn {
+        background: #f9df95;
+        color: #1e1e1e;
+        border: 1px solid #d3ba9f;
+        padding: 8px 24px;
+        border-radius: 9999px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        outline: none;
+        transition: transform 0.15s ease;
+      }
+      .retry-btn:active {
+        transform: scale(0.96);
       }
     </style>
   </head>
   <body>
+    <div class="relay-container">
+      <div class="spinner" id="loading-spinner"></div>
+      <div class="title" id="status-title">正在完成登录...</div>
+      <div class="desc" id="status-desc">正在安全返回小程序，请稍候</div>
+      <div class="fallback-box" id="fallback-box">
+        <button class="retry-btn" id="retry-btn" onclick="retryGo()">点击重试返回</button>
+      </div>
+    </div>
+
     <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script>
       ;(function () {
@@ -25,17 +101,50 @@
           '&state=' +
           encodeURIComponent(state) +
           (err ? '&error=' + encodeURIComponent(err) : '')
-        function go() {
-          // redirectTo 而非 navigateTo：web-view 宿主页是中转，不该留在页面栈里
-          if (window.wx && wx.miniProgram) {
-            wx.miniProgram.redirectTo({ url: target })
+
+        var hasNavigated = false
+        var retryTimer = null
+        var timeoutTimer = null
+
+        function tryNavigate() {
+          if (hasNavigated) return
+          if (
+            window.wx &&
+            window.wx.miniProgram &&
+            typeof window.wx.miniProgram.redirectTo === 'function'
+          ) {
+            hasNavigated = true
+            if (retryTimer) clearInterval(retryTimer)
+            if (timeoutTimer) clearTimeout(timeoutTimer)
+            window.wx.miniProgram.redirectTo({ url: target })
           }
         }
-        if (window.wx && wx.miniProgram) {
-          go()
-        } else {
-          window.addEventListener('load', go)
+
+        window.retryGo = function () {
+          tryNavigate()
+          if (!hasNavigated) {
+            location.reload()
+          }
         }
+
+        // 立即尝试
+        tryNavigate()
+
+        // 轮询检查（防止 SDK 异步注入有延迟）
+        retryTimer = setInterval(tryNavigate, 100)
+
+        // 窗口 onload 兜底
+        window.addEventListener('load', tryNavigate)
+
+        // 5 秒超时展示重试操作界面
+        timeoutTimer = setTimeout(function () {
+          if (!hasNavigated) {
+            var fb = document.getElementById('fallback-box')
+            var desc = document.getElementById('status-desc')
+            if (fb) fb.style.display = 'flex'
+            if (desc) desc.innerText = '如果长时间未跳转，请点击下方按钮重试'
+          }
+        }, 5000)
       })()
     </script>
   </body>

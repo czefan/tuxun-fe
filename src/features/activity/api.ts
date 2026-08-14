@@ -18,7 +18,8 @@ export async function getActivities(params?: ActivityQueryParams): Promise<PageR
     },
   })
 
-  const list = raw.list.map((item) => {
+  const rawList = Array.isArray(raw?.list) ? raw.list : []
+  const list = rawList.map((item) => {
     const coverImage = toImageVM(item.cover_image)
     return {
       id: item.id,
@@ -34,6 +35,6 @@ export async function getActivities(params?: ActivityQueryParams): Promise<PageR
 
   return {
     list,
-    total: raw.total,
+    total: raw?.total ?? 0,
   }
 }

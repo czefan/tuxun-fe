@@ -22,7 +22,8 @@ export async function getScoreLogs(params?: PageParams): Promise<ScoreLogsResult
     },
   })
 
-  const list = raw.list.map(item => ({
+  const rawList = Array.isArray(raw?.list) ? raw.list : []
+  const list = rawList.map(item => ({
     id: item.id,
     delta: item.delta,
     balance: item.balance,
@@ -35,8 +36,8 @@ export async function getScoreLogs(params?: PageParams): Promise<ScoreLogsResult
 
   return {
     list,
-    total: raw.total,
-    totalIncome: raw.total_income ?? 0,
-    totalExpense: raw.total_expense ?? 0,
+    total: raw?.total ?? 0,
+    totalIncome: raw?.total_income ?? 0,
+    totalExpense: raw?.total_expense ?? 0,
   }
 }

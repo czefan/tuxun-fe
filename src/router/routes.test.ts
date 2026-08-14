@@ -58,7 +58,7 @@ describe('routes', () => {
       if (file.endsWith('routes.ts') || file.endsWith('.test.ts'))
         continue
       const content = fs.readFileSync(file, 'utf-8')
-      const hits = content.match(/uni\.(?:navigateTo|redirectTo|reLaunch|switchTab)\s*\(\s*\{[^}]*url:\s*[`'"]\/(?:pages|subPages)\//g)
+      const hits = content.match(/(?:uni\.(?:navigateTo|redirectTo|reLaunch|switchTab)\s*\(\s*\{[^}]*url:|navigateWithTransition\s*\()\s*[`'"]\/(?:pages|subPages)\//g)
       if (hits)
         violations.push(`${path.relative(PROJECT_ROOT, file)}（${hits.length} 处）`)
     }

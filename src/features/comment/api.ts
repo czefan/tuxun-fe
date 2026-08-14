@@ -28,7 +28,8 @@ export async function getComments(photoId: number, params?: CommentQueryParams):
   const authStore = useAuthStore()
   const isLoggedIn = Boolean(authStore.token || authStore.hasSession || authStore.sessionId)
 
-  const list = raw.list.map(item => ({
+  const rawList = Array.isArray(raw?.list) ? raw.list : []
+  const list = rawList.map(item => ({
     id: item.id,
     author: {
       id: item.author.id,
@@ -41,7 +42,7 @@ export async function getComments(photoId: number, params?: CommentQueryParams):
     createdAt: formatDate(item.created_at),
   }))
 
-  return { list, total: raw.total }
+  return { list, total: raw?.total ?? 0 }
 }
 
 /** 发表评论 POST /photos/{id}/comments（权限：L1） */

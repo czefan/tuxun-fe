@@ -37,10 +37,10 @@ watch(activeTab, () => {
   debouncedKeyword.value = ''
 })
 
-const { data: goodsData, isPending: goodsLoading, fetchNextPage: fetchNextGoods, hasNextPage: hasNextGoods, isFetchingNextPage: isFetchingGoods, refetch: refetchGoods } = useInfiniteGoodsList(computed(() => ({
+const { data: goodsData, isLoading: goodsLoading, isError: goodsError, fetchNextPage: fetchNextGoods, hasNextPage: hasNextGoods, isFetchingNextPage: isFetchingGoods, refetch: refetchGoods } = useInfiniteGoodsList(computed(() => ({
   keyword: debouncedKeyword.value.trim() || undefined,
 })))
-const { data: exchangeData, isPending: exchangeLoading, fetchNextPage: fetchNextExchanges, hasNextPage: hasNextExchanges, isFetchingNextPage: isFetchingExchanges, refetch: refetchExchanges } = useInfiniteExchangeList()
+const { data: exchangeData, isLoading: exchangeLoading, isError: exchangeError, fetchNextPage: fetchNextExchanges, hasNextPage: hasNextExchanges, isFetchingNextPage: isFetchingExchanges, refetch: refetchExchanges } = useInfiniteExchangeList()
 const exchangeMutation = useExchangeGood()
 
 const goodsList = computed<GoodsVM[]>(() => goodsData.value?.pages.flatMap(p => p.list) ?? [])
@@ -233,6 +233,12 @@ function handleExchange(goodId: number) {
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }]" />
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }]" />
             </view>
+            <view v-else-if="goodsError" class="flex flex-col items-center justify-center gap-3 py-20">
+              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-button size="small" plain round @click="refetchGoods">
+                重新加载
+              </wd-button>
+            </view>
             <view v-else-if="goodsList.length" class="grid grid-cols-2 gap-2.5">
               <!-- 干净相纸卡片 (包含大图、商品名称、所需积分与库存数量) -->
               <view
@@ -276,6 +282,12 @@ function handleExchange(goodId: number) {
           <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
             <view v-if="exchangeLoading" class="space-y-3">
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
+            </view>
+            <view v-else-if="exchangeError" class="flex flex-col items-center justify-center gap-3 py-20">
+              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-button size="small" plain round @click="refetchExchanges">
+                重新加载
+              </wd-button>
             </view>
             <view v-else-if="exchangeList.length" class="space-y-3">
               <view

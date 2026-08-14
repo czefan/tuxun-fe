@@ -84,7 +84,9 @@ export default defineConfig(({ mode }) => {
         : undefined,
     },
     esbuild: {
-      drop: VITE_DELETE_CONSOLE === 'true' ? ['console', 'debugger'] : [],
+      // 保留 console：线上排障时 uni 运行时与应用自身的报错是关键线索，
+      // 全量 drop 会让「导航失效」这类问题完全无迹可寻。
+      drop: VITE_DELETE_CONSOLE === 'true' ? ['debugger'] : [],
     },
     optimizeDeps: {
       // uni 自己把 vue / vue-router / pinia / @dcloudio/* 排除在预打包之外，

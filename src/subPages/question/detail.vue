@@ -12,6 +12,7 @@ import type { MyAttemptVM, SolveRecordVM } from '@/features/attempt/types'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
 import { qk } from '@/service/query/keys'
+import { useStickyTop } from '@/composables/use-sticky-top'
 
 import { closeActivePreviewImage, previewImage } from '@/utils/image-preview'
 import { serverNow } from '@/utils/server-time'
@@ -23,6 +24,7 @@ definePage({
   },
 })
 
+const undoBannerStyle = useStickyTop(12)
 const queryClient = useQueryClient()
 const questionId = ref(0)
 const activeTab = ref<'comments' | 'solves' | 'myAttempts'>('comments')
@@ -324,7 +326,7 @@ function goSubmit() {
     <view
       v-if="showUndoBanner"
       class="fixed left-4 right-4 z-50 flex animate-fade-in-down items-center justify-between border border-[#D3BA9F] rounded-xl bg-white/95 px-4 py-2.5 text-xs text-[#332A22] shadow-2xl backdrop-blur-md"
-      :style="{ top: 'calc(var(--window-top, 0px) + 12px)' }"
+      :style="undoBannerStyle"
     >
       <view class="flex items-center gap-1.5 font-medium">
         <text class="i-carbon:information text-sm text-[#B69171]" />

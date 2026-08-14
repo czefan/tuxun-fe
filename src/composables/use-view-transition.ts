@@ -54,7 +54,11 @@ export function useViewTransition() {
           url,
           ...(supported ? { animationType: 'none' as const } : {}),
           success: () => resolve(),
-          fail: () => resolve(),
+          fail: (err) => {
+            console.error('[nav] navigateTo failed:', url, err)
+            uni.showToast({ title: '页面打开失败，请稍后重试', icon: 'none' })
+            resolve()
+          },
         })
       })
     })

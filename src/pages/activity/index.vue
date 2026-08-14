@@ -5,7 +5,7 @@ import { formatDate } from '@/utils/date'
 import { AppRoute, withQuery } from '@/router/routes'
 import { useInfiniteActivityList } from '@/features/activity/query'
 import type { ActivityQueryParams, ActivityVM } from '@/features/activity/types'
-import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
+import { usePopupTopPadding, useStickyTop } from '@/composables/use-sticky-top'
 
 definePage({
   style: {
@@ -14,6 +14,8 @@ definePage({
   },
 })
 
+const stickyTopStyle = useStickyTop()
+const popupTop = usePopupTopPadding()
 const searchKeyword = ref('')
 
 const emptyTip = computed(() => (searchKeyword.value.trim() ? '没有找到相关活动' : '暂无相关活动'))
@@ -29,7 +31,8 @@ const activeFilter = ref<FilterValue>(undefined)
 
 const {
   data,
-  isPending,
+  isLoading,
+  isError,
   fetchNextPage,
   hasNextPage,
   isFetchingNextPage,
@@ -90,7 +93,7 @@ function handleModalGoActivity() {
 <template>
   <view class="page-activity safe-bottom-page--fixed-bar bg-[#F1DFC5]">
     <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
-    <view class="sticky top-[var(--window-top,0px)] z-20 box-border w-full bg-[#F1DFC5] px-1.5 py-1.5" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+    <view class="sticky z-20 box-border w-full bg-[#F1DFC5] px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
       <view class="flex items-center gap-2">
         <view class="min-w-0 flex-1">
           <wd-search
@@ -121,9 +124,16 @@ function handleModalGoActivity() {
         custom-style="background: transparent;"
         @close="filterVisible = false"
       >
-        <view class="relative box-border w-full border-b border-[#D3BA9F] rounded-b-[24px] bg-[#F1DFC5] px-4 pb-5 pt-[calc(var(--status-bar-height,20px)+60px)] shadow-2xl space-y-4">
+        <view
+          class="relative box-border w-full border-b border-[#D3BA9F] rounded-b-[24px] bg-[#F1DFC5] px-4 pb-5 shadow-2xl space-y-4"
+          :style="{ paddingTop: popupTop.paddingTop }"
+        >
           <!-- 右上角绝对定位关闭按钮 -->
-          <view class="absolute right-4 top-[calc(var(--status-bar-height,20px)+52px)] z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-[#B69171]/30 transition-transform active:scale-90" @tap="filterVisible = false">
+          <view
+            class="absolute right-4 z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-[#B69171]/30 transition-transform active:scale-95"
+            :style="{ top: popupTop.closeTop }"
+            @tap="filterVisible = false"
+          >
             <wd-icon name="close" size="18px" color="#1E1E1E" />
           </view>
 
@@ -206,8 +216,15 @@ function handleModalGoActivity() {
         />
       </view>
 
-      <view v-else-if="isPending" class="flex justify-center py-[96rpx_0_128rpx]">
-        <wd-loading type="circular" :color="BRAND_PRIMARY_COLOR" size="42rpx" />
+      <view v-else-if="isLoading" class="space-y-3">
+        <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '96px' }, { width: '100%', height: '96px' }]" />
+      </view>
+
+      <view v-else-if="isError" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12">
+        <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+        <wd-button size="small" plain round @click="refetch">
+          重新加载
+        </wd-button>
       </view>
 
       <view v-else class="min-h-[50vh] flex flex-col items-center justify-center py-12">

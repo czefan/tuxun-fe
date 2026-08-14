@@ -1,3 +1,4 @@
+import './utils/polyfill'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createSSRApp } from 'vue'
 import App from './App.vue'

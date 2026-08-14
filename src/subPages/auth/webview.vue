@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getAuthorizeUrl, getCallbackUrl } from '@/service/auth/login'
+import { getAuthorizeUrl, getCallbackUrl, getLogoutUrl, getSiteOrigin } from '@/service/auth/login'
 import { AppRoute } from '@/router/routes'
 
 definePage({
@@ -12,11 +12,10 @@ definePage({
 })
 
 /**
- * 小程序侧的登录宿主页。
+ * 小程序侧的登录与登出宿主页。
  *
- * 用 `<web-view>` 装载 tz-oauth 授权页。
- * 认证完成后，授权页 302 重定向到 static/mp-auth-relay.html 静态中转页，
- * 中转页通过 wx.miniProgram.redirectTo 跳转到原生 subPages/auth/callback 页面完成登录与换会话。
+ * 登录：用 `<web-view>` 装载 tz-oauth 授权页，完成后跳 static/mp-auth-relay.html。
+ * 登出：用 `<web-view>` 装载 static/mp-logout-relay.html，IdP 清会话后跳 static/mp-logout-done.html 回到「我的」页。
  */
 const webviewUrl = ref('')
 
@@ -25,11 +24,14 @@ onLoad((query) => {
   let url = ''
 
   if (isLogout) {
-    const callbackUrl = getCallbackUrl()
-    const siteOrigin = callbackUrl
-      ? callbackUrl.replace(/\/static\/mp-auth-relay\.html\/?$/, '').replace(/\/subPages\/auth\/callback\/?$/, '')
-      : (typeof window !== 'undefined' ? window.location.origin : '')
-    url = `${siteOrigin}${AppRoute.AuthLogout}?from=mp`
+    const origin = getSiteOrigin()
+    const target = getLogoutUrl(`${origin}/static/mp-logout-done.html`)
+    if (!target) {
+      // OAuth 未配置（mock / 本地开发）：本地与后端会话已清干净，IdP 无可登出，直接回「我的」页
+      uni.switchTab({ url: AppRoute.My })
+      return
+    }
+    url = `${origin}/static/mp-logout-relay.html?target=${encodeURIComponent(target)}`
   }
   else {
     url = getAuthorizeUrl()

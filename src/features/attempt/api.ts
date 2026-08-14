@@ -52,7 +52,8 @@ export async function getSolves(photoId: number, params?: PageParams): Promise<P
   const authStore = useAuthStore()
   const isLoggedIn = Boolean(authStore.token || authStore.hasSession || authStore.sessionId)
 
-  const list = raw.list.map((item) => {
+  const rawList = Array.isArray(raw?.list) ? raw.list : []
+  const list = rawList.map((item) => {
     const image = toImageVM(item.image)
     return {
       id: item.id,
@@ -68,7 +69,7 @@ export async function getSolves(photoId: number, params?: PageParams): Promise<P
     }
   })
 
-  return { list, total: raw.total }
+  return { list, total: raw?.total ?? 0 }
 }
 
 /** 获取当前用户对特定题目的作答记录列表 GET /photos/{id}/attempts/user（权限：L1） */
@@ -90,7 +91,8 @@ export async function getMyAttempts(photoId: number, params?: PageParams): Promi
     },
   })
 
-  const list = raw.list.map((item) => {
+  const rawList = Array.isArray(raw?.list) ? raw.list : []
+  const list = rawList.map((item) => {
     const image = toImageVM(item.image)
     return {
       id: item.id,
@@ -102,7 +104,7 @@ export async function getMyAttempts(photoId: number, params?: PageParams): Promi
     }
   })
 
-  return { list, total: raw.total }
+  return { list, total: raw?.total ?? 0 }
 }
 
 /** 对公开答案点赞 PUT /solves/{id}/like（权限：L1） */

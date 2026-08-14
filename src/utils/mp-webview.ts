@@ -1,10 +1,8 @@
 /**
  * 小程序 `<web-view>` 宿主通信工具（仅 H5 侧使用）。
  *
- * 背景：登录流程已改造为静态中转页（`/static/mp-auth-relay.html`）+ 原生小程序 `callback.vue` 换取会话；
- * 登录过程不再依赖 JS-SDK `postMessage` 通信。
- *
- * 本文件保留 `relaunchMiniProgram` 辅助函数，供 H5 登出完成页（`logout-done.vue`）通知宿主小程序 `reLaunch` 使用。
+ * 背景：登录与登出流程均已改造为静态中转页（`/static/mp-auth-relay.html` 与 `/static/mp-logout-relay.html`）
+ * 通过静态落地页与微信 JS-SDK 通知宿主小程序返回原生页面。
  */
 
 const JSSDK_URL = 'https://res.wx.qq.com/open/js/jweixin-1.6.0.js'
@@ -21,7 +19,7 @@ function getBridge(): MiniProgramBridge | null {
 }
 
 /** 当前 H5 是否跑在微信小程序的 `<web-view>` 里 */
-export function isInMiniProgramWebview(): boolean {
+function isInMiniProgramWebview(): boolean {
   const ua = (globalThis as any).navigator?.userAgent
   if (typeof ua !== 'string') {
     return false

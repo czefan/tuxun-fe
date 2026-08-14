@@ -7,8 +7,6 @@ export const AppRoute = {
   Activity: '/subPages/activity/index',
   AuthCallback: '/subPages/auth/callback',
   AuthWebview: '/subPages/auth/webview',
-  AuthLogout: '/subPages/auth/logout',
-  AuthLogoutDone: '/subPages/auth/logout-done',
   Contribute: '/subPages/contribute/index',
   Mall: '/subPages/mall/index',
   NoticeDetail: '/subPages/notice/detail',
