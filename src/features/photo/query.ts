@@ -80,7 +80,6 @@ export function useSetPhotoLike() {
     },
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: qk.photo.detail(variables.id) })
-      queryClient.invalidateQueries({ queryKey: qk.photo.all() })
     },
   })
 }
