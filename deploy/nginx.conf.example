@@ -39,4 +39,14 @@ server {
     #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     #     proxy_set_header X-Forwarded-Proto $scheme;
     # }
+    # 高德地图安全服务代理（配合前端 VITE_AMAP_SERVICE_HOST=/_AMapService）
+    # ⚠️ 注意事项：
+    # 1. 前端请求时已经自带了 key 参数，Nginx 转发里【千万不要】再加 key，否则会导致参数重复或鉴权失败！
+    # 2. 这里只需要在后端自动附加安全密钥 jscode（若使用代理方式隐藏密钥）：
+    # location /_AMapService/ {
+    #     set $args "$args&jscode=你的高德安全密钥_SECURITY_JSCODE";
+    #     proxy_pass https://restapi.amap.com/;
+    #     proxy_set_header Host restapi.amap.com;
+    #     proxy_ssl_server_name on;
+    # }
 }
