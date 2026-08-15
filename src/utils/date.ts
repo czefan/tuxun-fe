@@ -6,13 +6,23 @@ export interface FormatRelativeTimeOptions {
 }
 
 /**
- * 主流人性化时间转换方案：
+ * 主流人性化时间转换方案（过去与未来对称）：
+ *
+ * 过去时间：
  * 1. 1 分钟内：显示 “刚刚”
  * 2. 1 小时内：显示 “X分钟前”（如：5分钟前）
  * 3. 今天（超过1小时）：显示 “今天 HH:mm”（如：今天 14:30）
  * 4. 昨天：显示 “昨天 HH:mm”（如：昨天 09:15）
- * 5. 今年（非今天/昨天）：不显示年份，显示 “MM-DD HH:mm” 或 “MM-DD”
+ * 5. 今年（非今天/昨天）：显示 “MM-DD HH:mm” 或 “MM-DD”
  * 6. 往年（跨年）：显示年份 “YYYY-MM-DD HH:mm” 或 “YYYY-MM-DD”
+ *
+ * 未来时间：
+ * 1. 1 分钟内：显示 “即将开始”
+ * 2. 1 小时内：显示 “X分钟后”（如：5分钟后）
+ * 3. 今天（超过1小时）：显示 “今天 HH:mm”（如：今天 20:30）
+ * 4. 明天：显示 “明天 HH:mm”（如：明天 09:15）
+ * 5. 今年（非今天/明天）：显示 “MM-DD HH:mm” 或 “MM-DD”
+ * 6. 跨年未来：显示年份 “YYYY-MM-DD HH:mm” 或 “YYYY-MM-DD”
  */
 export function formatRelativeTime(
   dateInput?: string | Date | number | null,
@@ -37,11 +47,42 @@ export function formatRelativeTime(
   const now = dayjs()
   const diffSeconds = now.diff(d, 'second')
 
-  // 时间发生在未来或毫秒误差
+  // 未来时间 (diffSeconds < 0)
   if (diffSeconds < 0) {
-    return showTime ? `今天 ${d.format('HH:mm')}` : d.format('MM-DD')
+    const futureSeconds = -diffSeconds
+
+    // 1 分钟以内
+    if (futureSeconds < 60) {
+      return '即将开始'
+    }
+
+    // 1 小时以内
+    if (futureSeconds < 3600) {
+      const minutes = Math.floor(futureSeconds / 60)
+      return `${minutes}分钟后`
+    }
+
+    // 今天稍晚
+    if (d.isSame(now, 'day')) {
+      return `今天 ${d.format('HH:mm')}`
+    }
+
+    // 明天
+    const tomorrow = now.add(1, 'day')
+    if (d.isSame(tomorrow, 'day')) {
+      return `明天 ${d.format('HH:mm')}`
+    }
+
+    // 今年未来
+    if (d.isSame(now, 'year')) {
+      return showTime ? d.format('MM-DD HH:mm') : d.format('MM-DD')
+    }
+
+    // 跨年未来
+    return showTime ? d.format('YYYY-MM-DD HH:mm') : d.format('YYYY-MM-DD')
   }
 
+  // 过去时间 (diffSeconds >= 0)
   // 1 分钟以内
   if (diffSeconds < 60) {
     return '刚刚'
@@ -53,7 +94,7 @@ export function formatRelativeTime(
     return `${minutes}分钟前`
   }
 
-  // 今天 (超过 1 小时)
+  // 今天更早
   if (d.isSame(now, 'day')) {
     return `今天 ${d.format('HH:mm')}`
   }
