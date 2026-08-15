@@ -42,7 +42,7 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
   })
 }
 
-export function useSetCommentLike(photoId: MaybeRefOrGetter<number>) {
+export function useSetCommentLike(_photoId?: MaybeRefOrGetter<number>) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ commentId, liked }: { commentId: number, liked: boolean }) => setCommentLike(commentId, liked),
@@ -86,9 +86,6 @@ export function useSetCommentLike(photoId: MaybeRefOrGetter<number>) {
           queryClient.setQueryData(key, data)
         }
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: qk.comment.list(toValue(photoId)) })
     },
   })
 }

@@ -94,7 +94,7 @@ export function useSubmitAttempt(photoId: MaybeRefOrGetter<number>) {
   })
 }
 
-export function useSetSolveLike(photoId: MaybeRefOrGetter<number>) {
+export function useSetSolveLike(_photoId?: MaybeRefOrGetter<number>) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ solveId, liked }: { solveId: number, liked: boolean }) => setSolveLike(solveId, liked),
@@ -138,9 +138,6 @@ export function useSetSolveLike(photoId: MaybeRefOrGetter<number>) {
           queryClient.setQueryData(key, data)
         }
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: qk.attempt.solves(toValue(photoId)) })
     },
   })
 }

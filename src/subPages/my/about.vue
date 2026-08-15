@@ -32,14 +32,14 @@ definePage({
 
     <!-- 校园解密与创建者中间的副文本区域（无卡片包裹） -->
     <view class="px-2 text-center space-y-3">
-      <text class="block text-sm text-[#5C4D3E] font-medium leading-relaxed">
+      <text class="block text-base text-[#5C4D3E] font-medium leading-relaxed">
         “图寻”是专门围绕校园地点解密与实景机位探索设计的高交互平台。通过探索同伴发布的实景地标、提交定位作答破解机位，参与校园探索活动并积累积分，兑换精美校园周边好礼！
       </text>
     </view>
 
     <!-- 底部创建者与版权纯文本（无卡片包裹） -->
     <view class="border-t border-[#D3BA9F]/40 pt-6 text-center space-y-3">
-      <view class="flex items-center justify-center gap-1.5 text-sm text-[#756C5E] font-medium">
+      <view class="flex items-center justify-center gap-1.5 text-base text-[#756C5E] font-medium">
         <text class="text-[#1E1E1E] font-bold">创建者：</text>
         <text class="text-[#5C4D3E] font-bold">挑战网</text>
       </view>

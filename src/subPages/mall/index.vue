@@ -310,7 +310,7 @@ function handleExchange(goodId: number) {
                       <text class="i-my-icons-points text-xs text-[#B69171]" />
                       <text class="text-xs text-[#B69171] font-bold font-numeric">-{{ item.scoreCost }}</text>
                     </view>
-                    <text class="truncate u-meta-time">{{ item.exchangeAt || '尚未核销' }}</text>
+                    <text v-if="item.exchangeAt" class="truncate u-meta-time">{{ item.exchangeAt }}</text>
                   </view>
                 </view>
 
