@@ -21,6 +21,11 @@ const editAvatarVisible = ref(false)
 const newNickname = ref('')
 
 const { data: profileInfo } = useUserInfo({ silentAuth: true, enabled: () => isLoggedIn() })
+const canSaveNickname = computed(() => {
+  const trimmed = newNickname.value.trim()
+  const current = profileInfo.value?.nickname || userStore.userInfo?.nickname || ''
+  return !!trimmed && trimmed !== current && trimmed.length <= 10
+})
 const nicknameMutation = useUpdateNickname()
 const avatarMutation = useUpdateAvatar()
 
@@ -83,10 +88,8 @@ function openEditNickname() {
 }
 
 function confirmNickname() {
-  if (!newNickname.value.trim())
-    return uni.showToast({ title: '昵称不能为空', icon: 'none' })
-  if (newNickname.value.length > 10)
-    return uni.showToast({ title: '昵称最多10个字符', icon: 'none' })
+  if (!canSaveNickname.value)
+    return
 
   nicknameMutation.mutate(newNickname.value.trim(), {
     onSuccess: (res) => {
@@ -294,7 +297,7 @@ function navigateTo(url: string) {
             round
             size="medium"
             custom-class="!bg-[#F9DF95] !text-[#1E1E1E] !font-black shadow-xs active:scale-95 transition-transform"
-            :disabled="nicknameMutation.isPending.value"
+            :disabled="!canSaveNickname || nicknameMutation.isPending.value"
             :loading="nicknameMutation.isPending.value"
             @click="confirmNickname"
           >
