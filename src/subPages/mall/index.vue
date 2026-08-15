@@ -67,6 +67,12 @@ onPullDownRefresh(async () => {
   uni.stopPullDownRefresh()
 })
 
+const RECORD_STATUS_MAP: Record<string, { text: string, type: 'warning' | 'success' | 'default' }> = {
+  pending: { text: '待核销', type: 'warning' },
+  verified: { text: '已核销', type: 'success' },
+  cancelled: { text: '已取消', type: 'default' },
+}
+
 const activeRecord = ref<ExchangeRecordVM | null>(null)
 const qrModalVisible = ref(false)
 const activeGood = ref<GoodsVM | null>(null)
@@ -74,6 +80,9 @@ const goodDetailVisible = ref(false)
 
 const exchangeCount = ref(1)
 const exchangeInputStr = ref('1')
+
+const totalExchangeScore = computed(() => (activeGood.value?.scorePrice ?? 0) * exchangeCount.value)
+const isPointsInsufficient = computed(() => isLoggedIn() && (userStore.userInfo?.points ?? 0) < totalExchangeScore.value)
 
 function openQrModal(record: ExchangeRecordVM) {
   if (record.status !== 'pending')
@@ -84,64 +93,30 @@ function openQrModal(record: ExchangeRecordVM) {
 
 function openGoodDetail(good: GoodsVM) {
   activeGood.value = good
-  exchangeCount.value = 1
-  exchangeInputStr.value = '1'
+  setExchangeCount(1)
   goodDetailVisible.value = true
 }
 
-function handleCountInput(e: any) {
-  const valStr = e.detail?.value ?? e.target?.value ?? ''
-  let num = parseInt(valStr, 10)
-  if (isNaN(num)) {
-    exchangeInputStr.value = ''
-    return
+function setExchangeCount(val: number) {
+  const max = activeGood.value?.stock ?? 1
+  if (val > max) {
+    uni.showToast({ title: `最多可兑换 ${max} 件`, icon: 'none' })
   }
-  if (activeGood.value && num > activeGood.value.stock) {
-    num = activeGood.value.stock
-    uni.showToast({ title: `最多可兑换 ${activeGood.value.stock} 件`, icon: 'none' })
-  }
-  if (num < 1)
-    num = 1
-  exchangeCount.value = num
-  exchangeInputStr.value = String(num)
-}
-
-function handleCountBlur() {
-  if (!exchangeCount.value || exchangeCount.value < 1) {
-    exchangeCount.value = 1
-    exchangeInputStr.value = '1'
-  }
-  else if (activeGood.value && exchangeCount.value > activeGood.value.stock) {
-    exchangeCount.value = activeGood.value.stock
-    exchangeInputStr.value = String(activeGood.value.stock)
-  }
-}
-
-function decreaseCount() {
-  if (exchangeCount.value > 1) {
-    exchangeCount.value--
-    exchangeInputStr.value = String(exchangeCount.value)
-  }
-}
-
-function increaseCount() {
-  if (activeGood.value && exchangeCount.value < activeGood.value.stock) {
-    exchangeCount.value++
-    exchangeInputStr.value = String(exchangeCount.value)
-  }
-  else if (activeGood.value) {
-    uni.showToast({ title: `最多可兑换 ${activeGood.value.stock} 件`, icon: 'none' })
-  }
+  const count = Math.max(1, Math.min(val, max))
+  exchangeCount.value = count
+  exchangeInputStr.value = String(count)
 }
 
 function handleExchange(goodId: number) {
-  if (!requireLogin())
+  if (!requireLogin() || !activeGood.value)
     return
 
-  if (!activeGood.value)
+  if (isPointsInsufficient.value) {
+    uni.showToast({ title: '积分不足，无法兑换', icon: 'none' })
     return
+  }
 
-  const totalScore = activeGood.value.scorePrice * exchangeCount.value
+  const totalScore = totalExchangeScore.value
   const goodName = activeGood.value.name
   const count = exchangeCount.value
 
@@ -323,12 +298,12 @@ function handleExchange(goodId: number) {
                     <text class="i-carbon:qr-code text-2xl" />
                   </view>
                   <wd-tag
-                    :type="item.status === 'pending' ? 'warning' : (item.status === 'verified' ? 'success' : 'default')"
+                    :type="RECORD_STATUS_MAP[item.status]?.type || 'default'"
                     round
                     size="medium"
                     custom-class="!font-bold !text-xs !px-2.5 !py-0.5"
                   >
-                    {{ item.status === 'pending' ? '待核销' : (item.status === 'verified' ? '已核销' : '已取消') }}
+                    {{ RECORD_STATUS_MAP[item.status]?.text || '已取消' }}
                   </wd-tag>
                 </view>
               </view>
@@ -386,7 +361,7 @@ function handleExchange(goodId: number) {
               <view
                 class="h-7 w-7 flex cursor-pointer items-center justify-center border border-[#D3BA9F] rounded-lg bg-stone-100 text-[#1E1E1E] active:scale-90"
                 :class="exchangeCount <= 1 ? 'opacity-40 cursor-not-allowed' : ''"
-                @tap="decreaseCount"
+                @tap="setExchangeCount(exchangeCount - 1)"
               >
                 <text class="text-base font-bold">-</text>
               </view>
@@ -394,13 +369,13 @@ function handleExchange(goodId: number) {
                 v-model="exchangeInputStr"
                 type="number"
                 class="h-7 w-12 border border-[#D3BA9F]/60 rounded-md bg-stone-50 py-0.5 text-center text-sm text-[#1E1E1E] font-bold font-numeric"
-                @input="handleCountInput"
-                @blur="handleCountBlur"
+                @input="(e: any) => { const v = parseInt(e.detail?.value, 10); if (isNaN(v)) exchangeInputStr = ''; else setExchangeCount(v) }"
+                @blur="setExchangeCount(parseInt(exchangeInputStr, 10) || 1)"
               >
               <view
                 class="h-7 w-7 flex cursor-pointer items-center justify-center border border-[#D3BA9F] rounded-lg bg-stone-100 text-[#1E1E1E] active:scale-90"
                 :class="exchangeCount >= activeGood.stock ? 'opacity-40 cursor-not-allowed' : ''"
-                @tap="increaseCount"
+                @tap="setExchangeCount(exchangeCount + 1)"
               >
                 <text class="text-base font-bold">+</text>
               </view>
@@ -412,11 +387,18 @@ function handleExchange(goodId: number) {
               <text class="text-xs text-[#756C5E]">合计积分</text>
               <view class="flex items-center gap-0.5">
                 <text class="i-my-icons-points text-sm text-[#B69171]" />
-                <text class="text-base text-[#B69171] font-bold font-numeric">{{ activeGood.scorePrice * exchangeCount }}</text>
+                <text class="text-base text-[#B69171] font-bold font-numeric">{{ totalExchangeScore }}</text>
               </view>
             </view>
-            <wd-button type="warning" round size="medium" custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] shadow-xs" :disabled="activeGood.stock <= 0 || exchangeMutation.isPending.value" @click="handleExchange(activeGood.id)">
-              {{ activeGood.stock > 0 ? '确认兑换' : '暂时缺货' }}
+            <wd-button
+              type="warning"
+              round
+              size="medium"
+              custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] shadow-xs"
+              :disabled="activeGood.stock <= 0 || isPointsInsufficient || exchangeMutation.isPending.value"
+              @click="handleExchange(activeGood.id)"
+            >
+              {{ activeGood.stock <= 0 ? '暂时缺货' : isPointsInsufficient ? '积分不足' : '确认兑换' }}
             </wd-button>
           </view>
         </view>

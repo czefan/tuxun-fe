@@ -154,8 +154,11 @@ function handleLogTap(item: ScoreLogVM) {
                     </view>
                     <text class="block u-meta-time">{{ item.createdAt }}</text>
                   </view>
-                  <text class="u-num-stat font-bold" :class="item.delta >= 0 ? 'text-[#B69171]' : 'text-[#1E1E1E]'">
-                    {{ item.delta >= 0 ? `+${item.delta}` : item.delta }}
+                  <text
+                    class="u-num-stat font-bold"
+                    :class="item.delta > 0 ? 'text-[#B69171]' : item.delta < 0 ? 'text-[#1E1E1E]' : 'text-[#8A7E70]'"
+                  >
+                    {{ item.delta > 0 ? `+${item.delta}` : item.delta }}
                   </text>
                 </view>
               </view>
