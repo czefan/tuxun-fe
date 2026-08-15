@@ -37,12 +37,27 @@ onLoad((query) => {
   }
 })
 
+function isSubmitDraftMeaningful(data: any): boolean {
+  if (!data || typeof data !== 'object')
+    return false
+  return Boolean(data.filePath || data.address?.trim() || (data.latitude && data.longitude))
+}
+
 function checkDraft() {
   if (!photoId.value)
     return
   const key = `${DRAFT_KEY_PREFIX}${photoId.value}`
   const saved = uni.getStorageSync(key)
-  if (saved) {
+  if (!saved)
+    return
+
+  try {
+    const parsed = JSON.parse(saved)
+    if (!isSubmitDraftMeaningful(parsed)) {
+      uni.removeStorageSync(key)
+      return
+    }
+
     uni.showModal({
       title: '恢复草稿',
       content: '检测到您上次有未提交的作答草稿，是否恢复？',
@@ -50,17 +65,17 @@ function checkDraft() {
       cancelText: '放弃',
       success: (res) => {
         if (res.confirm) {
-          try {
-            const parsed = JSON.parse(saved)
-            Object.assign(formData, parsed)
-          }
-          catch {}
+          Object.assign(formData, parsed)
+          uni.showToast({ title: '已恢复草稿', icon: 'success' })
         }
-        else if (res.cancel) {
+        else {
           uni.removeStorageSync(key)
         }
       },
     })
+  }
+  catch {
+    uni.removeStorageSync(key)
   }
 }
 
@@ -69,8 +84,12 @@ watch(
   (newVal) => {
     if (!photoId.value)
       return
-    if (newVal.filePath || newVal.address || newVal.latitude) {
-      uni.setStorageSync(`${DRAFT_KEY_PREFIX}${photoId.value}`, JSON.stringify(newVal))
+    const key = `${DRAFT_KEY_PREFIX}${photoId.value}`
+    if (isSubmitDraftMeaningful(newVal)) {
+      uni.setStorageSync(key, JSON.stringify(newVal))
+    }
+    else {
+      uni.removeStorageSync(key)
     }
   },
   { deep: true },

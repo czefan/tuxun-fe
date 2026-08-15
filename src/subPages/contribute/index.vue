@@ -51,9 +51,30 @@ onLoad((options) => {
   checkDraft()
 })
 
+function isDraftMeaningful(data: any): boolean {
+  if (!data || typeof data !== 'object')
+    return false
+  return Boolean(
+    data.title?.trim()
+    || data.description?.trim()
+    || data.filePath
+    || data.address?.trim()
+    || (data.latitude && data.longitude),
+  )
+}
+
 function checkDraft() {
   const saved = uni.getStorageSync(DRAFT_KEY)
-  if (saved) {
+  if (!saved)
+    return
+
+  try {
+    const parsed = JSON.parse(saved)
+    if (!isDraftMeaningful(parsed)) {
+      uni.removeStorageSync(DRAFT_KEY)
+      return
+    }
+
     uni.showModal({
       title: '恢复草稿',
       content: '检测到您上次有未完成的投稿草稿，是否恢复？',
@@ -61,25 +82,28 @@ function checkDraft() {
       cancelText: '放弃',
       success: (res) => {
         if (res.confirm) {
-          try {
-            const parsed = JSON.parse(saved)
-            Object.assign(form, parsed)
-          }
-          catch {}
+          Object.assign(form, parsed)
+          uni.showToast({ title: '已恢复草稿', icon: 'success' })
         }
-        else if (res.cancel) {
+        else {
           uni.removeStorageSync(DRAFT_KEY)
         }
       },
     })
+  }
+  catch {
+    uni.removeStorageSync(DRAFT_KEY)
   }
 }
 
 watch(
   form,
   (newVal) => {
-    if (newVal.title || newVal.filePath || newVal.address) {
+    if (isDraftMeaningful(newVal)) {
       uni.setStorageSync(DRAFT_KEY, JSON.stringify(newVal))
+    }
+    else {
+      uni.removeStorageSync(DRAFT_KEY)
     }
   },
   { deep: true },
