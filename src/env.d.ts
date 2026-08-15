@@ -45,6 +45,8 @@ interface ImportMetaEnv {
   readonly VITE_OAUTH_CLIENT_ID?: string
   /** 小程序专用：H5 站点源（用于拼接静态中转页 URL） */
   readonly VITE_MP_AUTH_ORIGIN?: string
+  /** 微信小程序提审时是否开启测试登录通道 ('true' | 'false') */
+  readonly VITE_SHOW_AUDIT_LOGIN?: string
 
   // 更多环境变量...
 }

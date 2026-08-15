@@ -15,7 +15,8 @@ const emit = defineEmits<{
 }>()
 
 const isMock = ref(import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.VITE_ENABLE_MOCK === 'Y')
-const isDev = ref(import.meta.env.DEV || isMock.value)
+const isAudit = ref(import.meta.env.VITE_SHOW_AUDIT_LOGIN === 'true')
+const showTestLogin = ref(import.meta.env.DEV || isMock.value || isAudit.value)
 
 const currentScenario = ref<'data' | 'empty'>('data')
 const testUserId = ref<number | string>(1)
@@ -90,11 +91,11 @@ function handleClose() {
   >
     <view class="box-border w-full border border-[#D3BA9F] rounded-[24px] bg-[#F1DFC5] p-6 shadow-2xl space-y-4" @touchmove.stop.prevent>
       <view class="flex items-center justify-between border-b border-[#D3BA9F]/40 pb-3">
-        <text class="u-title-lg">{{ isDev ? '开发调试与登录确认' : '统一身份认证登录' }}</text>
+        <text class="u-title-lg">{{ showTestLogin ? '开发调试与登录确认' : '统一身份认证登录' }}</text>
         <wd-icon name="close" size="20px" custom-class="cursor-pointer text-[#756C5E]" @click="handleClose" />
       </view>
 
-      <view v-if="isMock || !isDev" class="text-sm text-[#756C5E] font-medium leading-relaxed">
+      <view v-if="isMock || !showTestLogin" class="text-sm text-[#756C5E] font-medium leading-relaxed">
         <template v-if="isMock">
           当前处于 Mock 测试模式，您可进行快捷一键登录或选择 Mock 切档。
         </template>
@@ -124,8 +125,8 @@ function handleClose() {
         </view>
       </view>
 
-      <!-- 非 Mock 开发模式输入账号表单 -->
-      <view v-else-if="isDev" class="rounded-xl bg-[#E6D4BB]/60 p-3 space-y-2">
+      <!-- 非 Mock 开发/提审模式输入账号表单 -->
+      <view v-else-if="showTestLogin" class="rounded-xl bg-[#E6D4BB]/60 p-3 space-y-2">
         <text class="block text-xs text-[#8A7E70] font-bold">🔑 测试账号接口登录：</text>
         <view class="space-y-2">
           <wd-input
@@ -148,7 +149,7 @@ function handleClose() {
       <!-- 按钮操作区 -->
       <view class="pt-1 space-y-2">
         <wd-button
-          v-if="isDev"
+          v-if="showTestLogin"
           round
           block
           type="warning"
@@ -163,12 +164,12 @@ function handleClose() {
         <wd-button
           round
           block
-          :type="isDev ? 'info' : 'warning'"
+          :type="showTestLogin ? 'info' : 'warning'"
           size="medium"
           custom-class="!font-bold !text-sm"
           @click="handleOAuthLogin"
         >
-          {{ isDev ? '前往统一身份认证' : '前往统一身份认证登录' }}
+          {{ showTestLogin ? '前往统一身份认证' : '前往统一身份认证登录' }}
         </wd-button>
       </view>
     </view>
