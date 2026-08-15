@@ -159,3 +159,59 @@ export async function smartCompressImage(filePath: string): Promise<string> {
     uni.hideLoading()
   }
 }
+
+/**
+ * 校验图片宽高比是否在合理范围内（防极端畸形长截图/长条横幅）
+ * @param filePath 本地图片路径
+ * @param minRatio 最小宽高比（默认 1 / 3.5 ≈ 0.285，即高度最多为宽度的 3.5 倍）
+ * @param maxRatio 最大宽高比（默认 3.5，即宽度最多为高度的 3.5 倍）
+ */
+export async function validateImageAspectRatio(
+  filePath: string,
+  minRatio = 0.285,
+  maxRatio = 3.5,
+): Promise<{ valid: boolean, width?: number, height?: number, message?: string }> {
+  if (!filePath) {
+    return { valid: true }
+  }
+
+  return new Promise((resolve) => {
+    uni.getImageInfo({
+      src: filePath,
+      success: (info: any) => {
+        const width = Number(info?.width)
+        const height = Number(info?.height)
+        if (!width || !height) {
+          resolve({ valid: true })
+          return
+        }
+
+        const ratio = width / height
+        if (ratio < minRatio) {
+          resolve({
+            valid: false,
+            width,
+            height,
+            message: '图片比例过于细长，请选择标准比例照片',
+          })
+          return
+        }
+        if (ratio > maxRatio) {
+          resolve({
+            valid: false,
+            width,
+            height,
+            message: '图片比例过于扁平，请选择标准比例照片',
+          })
+          return
+        }
+
+        resolve({ valid: true, width, height })
+      },
+      fail: () => {
+        // 无法解析时安全放行，由后续流程处理
+        resolve({ valid: true })
+      },
+    })
+  })
+}

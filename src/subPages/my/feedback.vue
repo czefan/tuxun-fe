@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { useSubmitFeedback } from '@/features/feedback/query'
 import { useAuth } from '@/features/user/composables/use-auth'
-import { smartCompressImage } from '@/utils/image-compress'
+import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
 
 definePage({
   style: {
@@ -54,7 +54,13 @@ function chooseMedia() {
         uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
         return
       }
-      mediaPath.value = await smartCompressImage(URL.createObjectURL(file))
+      const rawUrl = URL.createObjectURL(file)
+      const check = await validateImageAspectRatio(rawUrl)
+      if (!check.valid) {
+        uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+        return
+      }
+      mediaPath.value = await smartCompressImage(rawUrl)
       mediaType.value = 'image'
     }
     else {
@@ -77,6 +83,11 @@ function chooseMedia() {
       if (type === 'image') {
         if (sizeMB > 20) {
           uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
+          return
+        }
+        const check = await validateImageAspectRatio(file.tempFilePath)
+        if (!check.valid) {
+          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
           return
         }
         mediaPath.value = await smartCompressImage(file.tempFilePath)

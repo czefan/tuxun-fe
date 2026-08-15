@@ -4,7 +4,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useSubmitAttempt } from '@/features/attempt/query'
 import { useAuth } from '@/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
-import { smartCompressImage } from '@/utils/image-compress'
+import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
 
 import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
 
@@ -82,7 +82,13 @@ function choosePhoto() {
     sourceType: ['camera', 'album'],
     success: async (res) => {
       if (res.tempFilePaths && res.tempFilePaths.length > 0) {
-        formData.filePath = await smartCompressImage(res.tempFilePaths[0])
+        const rawPath = res.tempFilePaths[0]
+        const check = await validateImageAspectRatio(rawPath)
+        if (!check.valid) {
+          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+          return
+        }
+        formData.filePath = await smartCompressImage(rawPath)
       }
     },
   })

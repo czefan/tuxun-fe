@@ -3,7 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { createPhoto } from '@/features/photo/api'
 import { useActiveActivities } from '@/features/activity/query'
-import { smartCompressImage } from '@/utils/image-compress'
+import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
 import { AppRoute } from '@/router/routes'
 
 import { useAuth } from '@/composables/use-auth'
@@ -92,7 +92,13 @@ function choosePhoto() {
     sourceType: ['album', 'camera'],
     success: async (res) => {
       if (res.tempFilePaths && res.tempFilePaths.length > 0) {
-        form.filePath = await smartCompressImage(res.tempFilePaths[0])
+        const rawPath = res.tempFilePaths[0]
+        const check = await validateImageAspectRatio(rawPath)
+        if (!check.valid) {
+          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+          return
+        }
+        form.filePath = await smartCompressImage(rawPath)
       }
     },
   })
@@ -106,8 +112,12 @@ function handleFileDrop(e: any) {
     const file = files[0]
     if (file.type.startsWith('image/')) {
       const url = URL.createObjectURL(file)
-      void smartCompressImage(url).then((path) => {
-        form.filePath = path
+      void validateImageAspectRatio(url).then(async (check) => {
+        if (!check.valid) {
+          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+          return
+        }
+        form.filePath = await smartCompressImage(url)
       })
     }
     else {

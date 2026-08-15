@@ -343,16 +343,15 @@ function handleExchange(goodId: number) {
     </swiper>
 
     <!-- 商品详情与兑换弹窗 (展示完整描述、支持手动输入及按钮限制的计数器与兑换计算) -->
-    <wd-popup v-model="goodDetailVisible" position="center" custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;" @close="goodDetailVisible = false">
-      <view v-if="activeGood" class="relative mx-auto w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-white shadow-2xl">
-        <!-- 右上角关闭按钮 -->
-        <view
-          class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-transform active:scale-90"
-          @tap="goodDetailVisible = false"
-        >
-          <wd-icon name="close" size="16px" />
-        </view>
-        <!-- 详情大图用高清原图：契约把 originUrl 放进列表就是为了免详情请求 -->
+    <wd-popup
+      v-model="goodDetailVisible"
+      position="center"
+      :z-index="999"
+      custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;"
+      @close="goodDetailVisible = false"
+    >
+      <view v-if="activeGood" class="relative mx-auto box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-white shadow-2xl">
+        <!-- 详情大图用高清原图 -->
         <view class="relative w-full overflow-hidden bg-[#B69171]/10">
           <wd-img
             custom-class="w-full block"
@@ -364,8 +363,17 @@ function handleExchange(goodId: number) {
               aspectRatio: `${activeGood.image.width} / ${activeGood.image.height}`,
             }"
           />
+          <!-- 右上角关闭按钮 -->
+          <view
+            class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-transform active:scale-90"
+            @tap="goodDetailVisible = false"
+          >
+            <wd-icon name="close" size="16px" />
+          </view>
         </view>
-        <view class="p-5 space-y-4">
+
+        <!-- 弹窗可滚动内容区 -->
+        <view class="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
           <view class="flex items-baseline justify-between gap-3">
             <text class="min-w-0 flex-1 text-base text-[#1E1E1E] font-bold leading-snug">{{ activeGood.name }}</text>
             <text class="flex-shrink-0 whitespace-nowrap text-xs text-[#756C5E] font-mono">库存: {{ activeGood.stock }}</text>
@@ -400,7 +408,6 @@ function handleExchange(goodId: number) {
               </view>
             </view>
           </view>
-
           <!-- 底部确认与积分统计 -->
           <view class="flex items-center justify-between border-t border-[#D3BA9F]/30 pt-3">
             <view class="flex flex-col">

@@ -235,9 +235,10 @@ function handleModalGoActivity() {
       <wd-popup
         v-model="modalVisible"
         position="center"
+        :z-index="999"
         custom-style="background: transparent; width: 90%; max-width: 400px;"
       >
-        <view v-if="selectedActivity" class="box-border w-full overflow-hidden border border-[#D3BA9F] rounded-2xl bg-[#F1DFC5] shadow-2xl">
+        <view v-if="selectedActivity" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-[#F1DFC5] shadow-2xl">
           <!-- 弹窗活动大图/封面 -->
           <view class="relative w-full overflow-hidden bg-[#B69171]/10">
             <wd-img
@@ -255,39 +256,39 @@ function handleModalGoActivity() {
             </view>
           </view>
 
-          <!-- 弹窗完整内容区 -->
-          <view class="p-5 space-y-3.5">
+          <!-- 弹窗可滚动内容区 -->
+          <view class="min-h-0 flex-1 overflow-y-auto p-5 space-y-3.5">
             <text class="block text-lg text-[#1E1E1E] font-black leading-snug tracking-tight">
               {{ selectedActivity.title }}
             </text>
 
-            <!-- 完整描述内容（多字支持内部纵向滚动） -->
-            <view class="max-h-52 overflow-y-auto border-t border-[#D3BA9F]/40 pt-2.5">
+            <!-- 完整描述内容 -->
+            <view class="border-t border-[#D3BA9F]/40 pt-2.5">
               <text class="block whitespace-pre-wrap text-sm text-[#555555] leading-relaxed">
                 {{ selectedActivity.description || '暂无详细描述。' }}
               </text>
             </view>
 
-            <!-- 时间区间 (去除前缀文案，字号加大并使用顶级 DIN/SF Pro 无衬线数字 Stack) -->
+            <!-- 时间区间 -->
             <view v-if="selectedActivity.startTime || selectedActivity.endTime" class="border-t border-[#D3BA9F]/30 pt-2.5">
               <text class="block text-sm text-[#756C5E] font-bold font-numeric">
                 {{ formatDate(selectedActivity.startTime) }} ~ {{ formatDate(selectedActivity.endTime) }}
               </text>
             </view>
+          </view>
 
-            <!-- 底部主操作按钮 -->
-            <view class="pt-1">
-              <wd-button
-                type="warning"
-                round
-                block
-                size="large"
-                custom-class="!font-black !bg-[#F9DF95] !text-[#1E1E1E] !border-0 shadow-xs active:scale-[0.99] transition-transform"
-                @click="handleModalGoActivity"
-              >
-                进入
-              </wd-button>
-            </view>
+          <!-- 底部固定主操作按钮 -->
+          <view class="flex-shrink-0 border-t border-[#D3BA9F]/30 p-4 pt-3">
+            <wd-button
+              type="warning"
+              round
+              block
+              size="large"
+              custom-class="!font-black !bg-[#F9DF95] !text-[#1E1E1E] !border-0 shadow-xs active:scale-[0.99] transition-transform"
+              @click="handleModalGoActivity"
+            >
+              进入
+            </wd-button>
           </view>
         </view>
       </wd-popup>

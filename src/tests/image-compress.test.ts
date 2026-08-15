@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { smartCompressImage } from '@/utils/image-compress'
+import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
 
 const MB = 1024 * 1024
 
@@ -30,6 +30,7 @@ describe('按需图片压缩', () => {
     ;(uni as any).getFileInfo = vi.fn()
     ;(uni as any).showLoading = vi.fn()
     ;(uni as any).hideLoading = vi.fn()
+    ;(uni as any).getImageInfo = vi.fn()
   })
 
   it('≤ 20MB 原图直接返回，不做任何降质', async () => {
@@ -90,5 +91,47 @@ describe('按需图片压缩', () => {
     finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('图片宽高比合法性校验 (validateImageAspectRatio)', () => {
+  it('正常比例照片（4:3, 16:9, 1:1, 9:16, 9:20）通过校验', async () => {
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => {
+      opts.success?.({ width: 1080, height: 1920 })
+    })
+    const res1 = await validateImageAspectRatio('/tmp/normal-vertical.jpg')
+    expect(res1.valid).toBe(true)
+
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => {
+      opts.success?.({ width: 1920, height: 1080 })
+    })
+    const res2 = await validateImageAspectRatio('/tmp/normal-horizontal.jpg')
+    expect(res2.valid).toBe(true)
+  })
+
+  it('极端细长竖图（高度超过宽度 3.5 倍）被拦截', async () => {
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => {
+      opts.success?.({ width: 500, height: 2500 }) // 比例 1:5
+    })
+    const res = await validateImageAspectRatio('/tmp/long-screenshot.jpg')
+    expect(res.valid).toBe(false)
+    expect(res.message).toContain('细长')
+  })
+
+  it('极端扁平横图（宽度超过高度 3.5 倍）被拦截', async () => {
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => {
+      opts.success?.({ width: 3600, height: 800 }) // 比例 4.5:1
+    })
+    const res = await validateImageAspectRatio('/tmp/wide-banner.jpg')
+    expect(res.valid).toBe(false)
+    expect(res.message).toContain('扁平')
+  })
+
+  it('无法获取图片尺寸时安全放行', async () => {
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => {
+      opts.fail?.({ errMsg: 'fail' })
+    })
+    const res = await validateImageAspectRatio('/tmp/corrupted.jpg')
+    expect(res.valid).toBe(true)
   })
 })
