@@ -27,5 +27,6 @@ export interface ExchangeRecordVM {
   quantity: number
   scoreCost: number
   status: 'pending' | 'verified' | 'cancelled'
-  exchangeAt: string
+  exchangeAt: string | null
+  createdAt: string
 }

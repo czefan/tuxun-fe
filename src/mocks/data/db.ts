@@ -555,7 +555,7 @@ class MockDatabase {
         score_cost: 100,
         status: 'pending' as const,
         verify_code: 'VX78A9B2',
-        exchange_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+        exchange_at: null,
         created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
       },
       ...Array.from({ length: 14 }, (_, i) => ({
@@ -570,7 +570,7 @@ class MockDatabase {
         score_cost: 100,
         status: i % 2 === 0 ? ('pending' as const) : ('verified' as const),
         verify_code: `TX${String(i + 2).padStart(6, '0')}`,
-        exchange_at: new Date(Date.now() - i * 86400000).toISOString(),
+        exchange_at: i % 2 === 0 ? null : new Date(Date.now() - i * 86400000).toISOString(),
         created_at: new Date(Date.now() - i * 86400000).toISOString(),
       })),
     ]
@@ -702,7 +702,7 @@ class MockDatabase {
       score_cost: good?.score_price || 100,
       status: 'pending' as const,
       verify_code: verifyCode,
-      exchange_at: new Date().toISOString(),
+      exchange_at: null,
       created_at: new Date().toISOString(),
     }
     this.exchanges.unshift(record)

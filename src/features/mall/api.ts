@@ -79,7 +79,8 @@ export async function getExchanges(params?: PageParams & { status?: string }): P
       quantity: item.quantity,
       scoreCost: item.score_cost,
       status: item.status,
-      exchangeAt: item.exchange_at ? formatDate(item.exchange_at) : '',
+      exchangeAt: item.exchange_at ? formatDate(item.exchange_at) : null,
+      createdAt: item.created_at ? formatDate(item.created_at) : '',
     }
   })
 
