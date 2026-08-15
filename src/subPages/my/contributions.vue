@@ -232,16 +232,14 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
         <!-- 内容滚动区：图片 + 状态/描述/驳回原因 -->
         <view class="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2.5 space-y-3">
           <!-- 投稿图片区（点击放大预览，右下角悬浮【查看位置】胶囊按钮） -->
-          <view class="relative w-full overflow-hidden border border-[#D3BA9F]/50 rounded-xl bg-[#B69171]/10">
+          <view class="relative w-full flex overflow-hidden border border-[#D3BA9F]/50 rounded-xl bg-[#B69171]/10">
             <wd-img
-              custom-class="shadow-2xs block w-full cursor-pointer transition-opacity active:opacity-90"
+              custom-class="shadow-2xs !block w-full cursor-pointer transition-opacity active:opacity-90"
+              custom-style="display: block; vertical-align: top;"
               lazy-load
               :src="detailData.image.originUrl || detailData.image.url"
               mode="widthFix"
               width="100%"
-              :style="{
-                aspectRatio: `${detailData.image.width} / ${detailData.image.height}`,
-              }"
               @click="handlePreviewDetailImage"
             />
 

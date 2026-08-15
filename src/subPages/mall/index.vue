@@ -352,16 +352,14 @@ function handleExchange(goodId: number) {
     >
       <view v-if="activeGood" class="relative mx-auto box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-white shadow-2xl">
         <!-- 详情大图用高清原图 -->
-        <view class="relative w-full overflow-hidden bg-[#B69171]/10">
+        <view class="relative w-full flex overflow-hidden bg-[#B69171]/10">
           <wd-img
-            custom-class="w-full block"
+            custom-class="w-full !block"
+            custom-style="display: block; vertical-align: top;"
             lazy-load
             :src="activeGood.image.originUrl"
             mode="widthFix"
             width="100%"
-            :style="{
-              aspectRatio: `${activeGood.image.width} / ${activeGood.image.height}`,
-            }"
           />
           <!-- 右上角关闭按钮 -->
           <view

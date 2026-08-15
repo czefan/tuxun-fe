@@ -240,16 +240,14 @@ function handleModalGoActivity() {
       >
         <view v-if="selectedActivity" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-[#F1DFC5] shadow-2xl">
           <!-- 弹窗活动大图/封面 -->
-          <view class="relative w-full overflow-hidden bg-[#B69171]/10">
+          <view class="relative w-full flex overflow-hidden bg-[#B69171]/10">
             <wd-img
-              custom-class="w-full block"
+              custom-class="w-full !block"
+              custom-style="display: block; vertical-align: top;"
               :src="selectedActivity.coverImage.url"
               lazy-load
               mode="widthFix"
               width="100%"
-              :style="{
-                aspectRatio: `${selectedActivity.coverImage.width} / ${selectedActivity.coverImage.height}`,
-              }"
             />
             <view class="absolute right-3 top-3 z-1 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/60 backdrop-blur-md transition-transform active:scale-90" @click="modalVisible = false">
               <wd-icon name="close" size="16px" color="#FFFFFF" />
