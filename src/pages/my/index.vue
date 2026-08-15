@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserStore } from '@/features/user'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUpdateAvatar, useUpdateNickname, useUserInfo } from '@/features/user/query'
@@ -23,6 +23,11 @@ const newNickname = ref('')
 const { data: profileInfo } = useUserInfo({ silentAuth: true, enabled: () => isLoggedIn() })
 const nicknameMutation = useUpdateNickname()
 const avatarMutation = useUpdateAvatar()
+
+const heroAvatarUrl = computed(() => {
+  const url = profileInfo.value?.avatar || userStore.userInfo?.avatar
+  return url && url.trim() ? url : '/static/images/default-avatar.png'
+})
 
 const menuGroups = [
   {
@@ -95,6 +100,13 @@ function confirmNickname() {
 const selectedAvatarPath = ref('')
 const avatarRemaining = computed(() => profileInfo.value?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining ?? 0)
 
+const modalAvatarUrl = computed(() => {
+  if (selectedAvatarPath.value)
+    return selectedAvatarPath.value
+  const url = profileInfo.value?.avatar || userStore.userInfo?.avatar
+  return url && url.trim() ? url : '/static/images/default-avatar.png'
+})
+
 function openEditAvatar() {
   if (!isLoggedIn())
     return loginDirectly()
@@ -149,8 +161,9 @@ function navigateTo(url: string) {
           <view class="flex items-center gap-3.5">
             <view class="relative cursor-pointer transition-transform active:scale-95" @click="openEditAvatar">
               <wd-img
+                :key="heroAvatarUrl"
                 custom-class="h-16 w-16 rounded-full bg-[#D9D9D9] object-cover ring-2 ring-[#B69171] shadow-xs"
-                :src="profileInfo?.avatar || userStore.userAvatar"
+                :src="heroAvatarUrl"
                 lazy-load
                 mode="aspectFill"
                 round
@@ -309,9 +322,10 @@ function navigateTo(url: string) {
         <view class="flex justify-center py-2">
           <view class="relative rounded-full p-1 ring-4 ring-[#F9DF95]/40">
             <wd-img
+              :key="modalAvatarUrl"
               lazy-load
               custom-class="h-22 w-22 rounded-full bg-[#F8F6F2] object-cover ring-2 ring-[#F9DF95] shadow-sm"
-              :src="selectedAvatarPath || profileInfo?.avatar || userStore.userAvatar"
+              :src="modalAvatarUrl"
               mode="aspectFill"
               round
               width="176rpx"
