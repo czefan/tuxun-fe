@@ -1,6 +1,6 @@
 import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import FormLocationPicker from './form-location-picker.vue'
 
 /**
@@ -44,6 +44,10 @@ beforeEach(() => {
   vi.mocked(uni.getLocation).mockReset()
 })
 
+afterEach(() => {
+  vi.useRealTimers()
+})
+
 function mountPicker(initial = { latitude: 0, longitude: 0 }) {
   return mount(FormLocationPicker, {
     props: { ...initial, address: '' },
@@ -68,7 +72,7 @@ describe('form-location-picker 选点同步', () => {
 
     expect(wrapper.emitted('update:latitude')?.at(-1), '全屏选点必须 emit 坐标').toEqual([34.250001])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.990001])
-    expect(wrapper.emitted('update:address')?.at(-1), '地址文案同步为已选择状态').toEqual(['已选择地点'])
+    expect(wrapper.emitted('update:address')?.at(-1), '优先使用全屏选点的真实地点名称').toEqual(['目标点'])
   })
 
   it('全屏初始中心等于卡片当前草稿坐标（先卡片选点再跳全屏）', async () => {
@@ -106,21 +110,27 @@ describe('form-location-picker 选点同步', () => {
   })
 
   it('拖动结束（H5 高德 regionchange 自带 centerLocation）同步父组件', async () => {
+    vi.useFakeTimers()
     const wrapper = mountPicker()
     await wrapper.find('#locationPickerMap').trigger('regionchange', {
       detail: { type: 'end', causedBy: 'drag', centerLocation: { latitude: 34.28, longitude: 108.96 } },
     })
+    vi.advanceTimersByTime(150)
+    await nextTick()
 
     expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.28])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.96])
   })
 
   it('拖动结束（小程序 regionchange 无 centerLocation → getCenterLocation 兜底）同步父组件', async () => {
+    vi.useFakeTimers()
     mapCtx.getCenterLocation.mockImplementation((opts: any) => {
       opts.success?.({ latitude: 34.29, longitude: 108.95 })
     })
     const wrapper = mountPicker()
     await wrapper.find('#locationPickerMap').trigger('regionchange', { detail: { type: 'end', causedBy: 'drag' } })
+    vi.advanceTimersByTime(150)
+    await nextTick()
 
     expect(mapCtx.getCenterLocation).toHaveBeenCalled()
     expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.29])
