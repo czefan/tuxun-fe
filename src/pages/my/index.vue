@@ -9,7 +9,7 @@ import { clearReturnPath, redirectToLogout } from '@/service/auth/login'
 
 definePage({
   style: {
-    navigationBarTitleText: '%page.my%',
+    navigationBarTitleText: '%page.profile%',
   },
 })
 
