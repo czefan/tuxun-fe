@@ -1,19 +1,12 @@
 /**
- * 富文本内容规范化：给后端下发的 HTML 注入防溢出行内样式。
- *
- * 覆盖对象：所有经 rich-text 渲染的后端富文本（三个内容位、公告弹窗、
- * 通知详情），保证长 URL / 连续英文串 / 表格 / 代码块 / 大图不横向溢出容器。
- *
- * 为什么用行内 style 而不是 class：小程序端 rich-text 是原生组件，
- * 内部节点不继承外部 CSS（class 也被丢弃），只有继承属性与行内样式能传下去；
- * H5 端内容为真实 DOM，行内样式同样生效——两端表现一致。
- *
- * 负向前瞻避免重复注入：后端内容若已给标签写了 style，重复属性只保留第一个，
- * 注入反而失效。
+ * 富文本内容规范化：给后端 HTML 注入移动端中文排版（1.75倍行高、10px段间距）与防溢出样式。
+ * 覆盖所有经 rich-text 渲染的内容（通知详情、公告弹窗、帮助、积分规则）。
  */
 export function normalizeRichText(html: string): string {
   return (html || '')
-    .replace(/<img(?![^>]*\sstyle=)/gi, '<img style="max-width:100%;height:auto;display:block"')
+    .replace(/<p(?![^>]*\sstyle=)/gi, '<p style="line-height:1.75;margin:0 0 10px;text-align:justify"')
+    .replace(/<li(?![^>]*\sstyle=)/gi, '<li style="line-height:1.65;margin-bottom:4px"')
+    .replace(/<img(?![^>]*\sstyle=)/gi, '<img style="max-width:100%;height:auto;display:block;margin:8px 0"')
     .replace(/<table(?![^>]*\sstyle=)/gi, '<table style="max-width:100%;table-layout:fixed;word-break:break-word"')
     .replace(/<pre(?![^>]*\sstyle=)/gi, '<pre style="max-width:100%;white-space:pre-wrap;word-break:break-word"')
 }
