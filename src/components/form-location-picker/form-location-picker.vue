@@ -26,6 +26,8 @@ const DEFAULT_LNG = 108.98374
 
 const draftLat = ref<number>(props.latitude || DEFAULT_LAT)
 const draftLng = ref<number>(props.longitude || DEFAULT_LNG)
+const lastSavedLat = ref<number>(props.latitude || 0)
+const lastSavedLng = ref<number>(props.longitude || 0)
 const isSubmittable = computed(() => isSubmittableLocation(props.latitude, props.longitude))
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -44,16 +46,15 @@ function moveTo(lat: number, lng: number) {
 }
 
 /**
- * 统一更新并同步坐标数据
+ * 统一更新本地选点草稿坐标（不向父组件 emit，仅在点击保存或全屏选点确认时才保存）
  * @param lat 纬度
  * @param lng 经度
  * @param options.shouldMove 是否需要驱动地图平移（手势拖动时为 false，程序驱动定位/全屏选点时为 true）
- * @param options.address 可选的自定义地址文案（如全屏选点返回的 POI 名称）
  */
 function updateDraft(
   lat: number,
   lng: number,
-  options: { shouldMove?: boolean, address?: string } = {},
+  options: { shouldMove?: boolean } = {},
 ) {
   const nLat = Number(lat.toFixed(6))
   const nLng = Number(lng.toFixed(6))
@@ -61,31 +62,23 @@ function updateDraft(
     return
 
   const isSameCoord = Math.abs(draftLat.value - nLat) < 1e-6 && Math.abs(draftLng.value - nLng) < 1e-6
-  const targetAddress = options.address ?? props.selectedText
-
-  // 相同坐标时跳过重复 emit 与移动，避免与父组件回写形成循环
-  if (isSameCoord) {
-    return
-  }
-
   draftLat.value = nLat
   draftLng.value = nLng
 
-  if (options.shouldMove) {
+  if (options.shouldMove && !isSameCoord) {
     moveTo(nLat, nLng)
   }
-
-  emit('update:latitude', nLat)
-  emit('update:longitude', nLng)
-  emit('update:address', targetAddress)
 }
 
 /** 监听父组件传入坐标变更（如初次回填、外部重置等） */
 watch(
   () => [props.latitude, props.longitude],
   ([lat, lng]) => {
-    const nLat = Number(lat)
-    const nLng = Number(lng)
+    const nLat = Number(lat) || 0
+    const nLng = Number(lng) || 0
+    lastSavedLat.value = nLat
+    lastSavedLng.value = nLng
+
     if (!nLat || !nLng)
       return
 
@@ -165,9 +158,14 @@ function handleRegionChange(e: any) {
 
 /** 右下角对勾：保存确认 */
 function handleConfirm() {
-  emit('update:latitude', draftLat.value)
-  emit('update:longitude', draftLng.value)
-  emit('update:address', props.address || props.selectedText)
+  const isSame = Math.abs(lastSavedLat.value - draftLat.value) < 1e-6 && Math.abs(lastSavedLng.value - draftLng.value) < 1e-6
+  if (!isSame) {
+    lastSavedLat.value = draftLat.value
+    lastSavedLng.value = draftLng.value
+    emit('update:latitude', draftLat.value)
+    emit('update:longitude', draftLng.value)
+    emit('update:address', props.address || props.selectedText)
+  }
   uni.showToast({ title: '已保存坐标', icon: 'success' })
 }
 
@@ -176,6 +174,8 @@ function handleReset() {
   draftLat.value = DEFAULT_LAT
   draftLng.value = DEFAULT_LNG
   moveTo(DEFAULT_LAT, DEFAULT_LNG)
+  lastSavedLat.value = 0
+  lastSavedLng.value = 0
   emit('update:latitude', 0)
   emit('update:longitude', 0)
   emit('update:address', '')
@@ -202,8 +202,19 @@ function chooseLocation_() {
       const lat = Number(res?.latitude ?? res?.lat)
       const lng = Number(res?.longitude ?? res?.lng)
       if (lat && lng) {
+        const nLat = Number(lat.toFixed(6))
+        const nLng = Number(lng.toFixed(6))
         const addressName = res?.name || res?.address || props.selectedText
-        updateDraft(lat, lng, { shouldMove: true, address: addressName })
+        updateDraft(nLat, nLng, { shouldMove: true })
+        const isSame = Math.abs(lastSavedLat.value - nLat) < 1e-6 && Math.abs(lastSavedLng.value - nLng) < 1e-6
+        if (!isSame) {
+          lastSavedLat.value = nLat
+          lastSavedLng.value = nLng
+          emit('update:latitude', nLat)
+          emit('update:longitude', nLng)
+          emit('update:address', addressName)
+        }
+        uni.showToast({ title: '已保存坐标', icon: 'success' })
       }
     },
   })

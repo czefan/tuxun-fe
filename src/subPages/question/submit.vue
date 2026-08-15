@@ -40,7 +40,7 @@ onLoad((query) => {
 function isSubmitDraftMeaningful(data: any): boolean {
   if (!data || typeof data !== 'object')
     return false
-  return Boolean(data.filePath || data.address?.trim() || (data.latitude && data.longitude))
+  return Boolean(data.filePath || isSubmittableLocation(data.latitude, data.longitude))
 }
 
 function checkDraft() {

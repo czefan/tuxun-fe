@@ -58,8 +58,7 @@ function isDraftMeaningful(data: any): boolean {
     data.title?.trim()
     || data.description?.trim()
     || data.filePath
-    || data.address?.trim()
-    || (data.latitude && data.longitude),
+    || isSubmittableLocation(data.latitude, data.longitude),
   )
 }
 

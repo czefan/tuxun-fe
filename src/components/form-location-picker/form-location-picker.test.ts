@@ -89,27 +89,38 @@ describe('form-location-picker 选点同步', () => {
     await nextTick()
   })
 
-  it('h5 点选（tap detail 带经纬度）同步父组件', async () => {
+  it('h5 点选与拖动地图仅更新内部预览草稿，未点击保存时不 emit 给父组件', async () => {
     const wrapper = mountPicker()
+    // 点选
     await wrapper.find('#locationPickerMap').trigger('tap', { detail: { latitude: 34.26, longitude: 108.98 } })
+    await nextTick()
+    expect(wrapper.emitted('update:latitude'), '未点击保存时不向父组件 emit 坐标').toBeUndefined()
 
+    // 点击右下角保存按钮后才 emit
+    await wrapper.find('.absolute.bottom-3.right-3').trigger('click')
+    await nextTick()
     expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.26])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.98])
   })
 
-  it('小程序点选（tap detail 带 x/y → pixelToCoordinate）同步父组件', async () => {
+  it('小程序点选（tap detail 带 x/y → pixelToCoordinate）更新内部草稿，点击保存后同步父组件', async () => {
     mapCtx.pixelToCoordinate.mockImplementation((opts: any) => {
       opts.success?.({ latitude: 34.27, longitude: 108.97 })
     })
     const wrapper = mountPicker()
     await wrapper.find('#locationPickerMap').trigger('tap', { detail: { x: 100, y: 200 } })
+    await nextTick()
 
     expect(mapCtx.pixelToCoordinate, '小程序点选必须走 pixelToCoordinate').toHaveBeenCalledWith(expect.objectContaining({ x: 100, y: 200 }))
+    expect(wrapper.emitted('update:latitude'), '未保存前不向父组件 emit').toBeUndefined()
+
+    await wrapper.find('.absolute.bottom-3.right-3').trigger('click')
+    await nextTick()
     expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.27])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.97])
   })
 
-  it('拖动结束（H5 高德 regionchange 自带 centerLocation）同步父组件', async () => {
+  it('拖动结束（regionchange）仅更新内部草稿，保存确认后才同步父组件', async () => {
     vi.useFakeTimers()
     const wrapper = mountPicker()
     await wrapper.find('#locationPickerMap').trigger('regionchange', {
@@ -118,26 +129,15 @@ describe('form-location-picker 选点同步', () => {
     vi.advanceTimersByTime(150)
     await nextTick()
 
+    expect(wrapper.emitted('update:latitude'), '仅移动地图未保存时不 emit').toBeUndefined()
+
+    await wrapper.find('.absolute.bottom-3.right-3').trigger('click')
+    await nextTick()
     expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.28])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.96])
   })
 
-  it('拖动结束（小程序 regionchange 无 centerLocation → getCenterLocation 兜底）同步父组件', async () => {
-    vi.useFakeTimers()
-    mapCtx.getCenterLocation.mockImplementation((opts: any) => {
-      opts.success?.({ latitude: 34.29, longitude: 108.95 })
-    })
-    const wrapper = mountPicker()
-    await wrapper.find('#locationPickerMap').trigger('regionchange', { detail: { type: 'end', causedBy: 'drag' } })
-    vi.advanceTimersByTime(150)
-    await nextTick()
-
-    expect(mapCtx.getCenterLocation).toHaveBeenCalled()
-    expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.29])
-    expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.95])
-  })
-
-  it('定位成功更新坐标并 emit', async () => {
+  it('定位成功更新草稿坐标，保存确认后 emit', async () => {
     vi.mocked(uni.getLocation).mockImplementation((opts: any) => {
       opts.success?.({ latitude: 34.3, longitude: 108.92 })
     })
@@ -145,6 +145,10 @@ describe('form-location-picker 选点同步', () => {
     await (wrapper.vm as any).locate()
     await nextTick()
 
+    expect(wrapper.emitted('update:latitude'), '定位后未保存不自动 emit').toBeUndefined()
+
+    await wrapper.find('.absolute.bottom-3.right-3').trigger('click')
+    await nextTick()
     expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.3])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.92])
   })
