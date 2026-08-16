@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
 import { useExchangeGood, useInfiniteExchangeList, useInfiniteGoodsList } from '@/features/mall/query'
 import type { ExchangeRecordVM, GoodsVM } from '@/features/mall/types'
 import VerifyCodeQr from '@/features/mall/components/verify-code-qr.vue'
@@ -46,6 +46,15 @@ const exchangeMutation = useExchangeGood()
 const goodsList = computed<GoodsVM[]>(() => goodsData.value?.pages.flatMap(p => p.list) ?? [])
 const exchangeList = computed<ExchangeRecordVM[]>(() => exchangeData.value?.pages.flatMap(p => p.list) ?? [])
 
+onShow(() => {
+  if (activeTab.value === '积分商城') {
+    refetchGoods()
+  }
+  else if (isLoggedIn()) {
+    refetchExchanges()
+  }
+})
+
 onReachBottom(() => {
   if (activeTab.value === '积分商城') {
     if (hasNextGoods?.value && !isFetchingGoods.value)
@@ -80,6 +89,20 @@ const goodDetailVisible = ref(false)
 
 const exchangeCount = ref(1)
 const exchangeInputStr = ref('1')
+
+// 列表热更新时同步已打开弹层的商品最新库存
+watch(goodsList, (list) => {
+  if (activeGood.value) {
+    const fresh = list.find(g => g.id === activeGood.value?.id)
+    if (fresh) {
+      activeGood.value = fresh
+      if (exchangeCount.value > fresh.stock) {
+        exchangeCount.value = Math.max(1, fresh.stock)
+        exchangeInputStr.value = String(exchangeCount.value)
+      }
+    }
+  }
+})
 
 const totalExchangeScore = computed(() => (activeGood.value?.scorePrice ?? 0) * exchangeCount.value)
 const isPointsInsufficient = computed(() => isLoggedIn() && (userStore.userInfo?.points ?? 0) < totalExchangeScore.value)

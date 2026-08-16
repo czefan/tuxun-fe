@@ -93,32 +93,29 @@ function handleClose() {
 </script>
 
 <template>
-  <view v-if="visible" class="fixed inset-0 z-[9999] select-none" @touchmove.stop.prevent>
-    <!-- 全屏高暗度遮罩 -->
-    <view class="absolute inset-0 bg-black/65 transition-opacity" @tap.stop="handleClose" />
-
-    <!-- 底部输入弹层 -->
-    <view
-      class="absolute left-0 right-0 z-10 box-border w-full bg-white px-3 pt-2.5 shadow-2xl"
-      :style="{
-        bottom: `${keyboardHeight}px`,
-        paddingBottom: keyboardHeight > 0 ? '10px' : 'max(10px, env(safe-area-inset-bottom))',
-      }"
-      @tap.stop
-    >
+  <wd-popup
+    :model-value="visible"
+    position="bottom"
+    :z-index="1000"
+    :lock-scroll="true"
+    :safe-area-inset-bottom="keyboardHeight <= 0"
+    :custom-style="`background: #FFFFFF; width: 100%; border-radius: 20rpx 20rpx 0 0; padding-bottom: ${keyboardHeight > 0 ? keyboardHeight + 10 : 10}px;`"
+    @close="handleClose"
+  >
+    <view class="box-border w-full select-none px-3 pt-2.5">
       <!-- 多行输入区域 -->
       <view class="box-border w-full border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-2.5 transition-colors focus-within:border-[#B69171]">
         <textarea
           :value="modelValue"
           :placeholder="placeholder"
-          placeholder-class="text-[#8A7E70] text-sm"
+          placeholder-class="text-[#8A7E70] text-base"
           :maxlength="maxLength"
           :focus="isFocus"
           auto-height
           :adjust-position="false"
           :hold-keyboard="true"
           :show-confirm-bar="false"
-          class="box-border max-h-[140px] min-h-[44px] w-full text-sm text-[#1E1E1E] leading-relaxed"
+          class="box-border max-h-[140px] min-h-[46px] w-full text-base text-[#1E1E1E] leading-relaxed"
           @input="(e: any) => emit('update:modelValue', e.detail?.value ?? '')"
           @keyboardheightchange="(e: any) => keyboardHeight = e.detail?.height ?? 0"
         />
@@ -149,5 +146,5 @@ function handleClose() {
         </view>
       </view>
     </view>
-  </view>
+  </wd-popup>
 </template>

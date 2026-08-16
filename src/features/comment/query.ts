@@ -24,8 +24,68 @@ export function useInfiniteCommentList(
 
 export function usePostComment(photoId: MaybeRefOrGetter<number>) {
   const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (content: string) => postComment(toValue(photoId), content),
+    onMutate: async (content: string) => {
+      const pid = toValue(photoId)
+      const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
+        Array.isArray(query.queryKey) && query.queryKey[0] === 'comment' && query.queryKey[2] === pid
+
+      await queryClient.cancelQueries({ predicate: matchCommentQuery })
+      const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
+
+      const currentUser = queryClient.getQueryData<any>(qk.user.info())
+      const optimisticComment: CommentVM = {
+        id: -Date.now(),
+        content,
+        author: {
+          id: currentUser?.id ?? 0,
+          nickname: currentUser?.nickname ?? '我',
+          avatar: currentUser?.avatar ?? '',
+        },
+        liked: false,
+        likesCount: 0,
+        createdAt: '刚刚',
+      }
+
+      queryClient.setQueriesData<any>(
+        { predicate: matchCommentQuery },
+        (old: any) => {
+          if (!old)
+            return old
+          if (typeof old === 'object' && 'pages' in old && Array.isArray(old.pages)) {
+            if (old.pages.length === 0) {
+              return {
+                ...old,
+                pages: [{ list: [optimisticComment], total: 1 }],
+              }
+            }
+            return {
+              ...old,
+              pages: old.pages.map((page: any, index: number) =>
+                index === 0
+                  ? {
+                      ...page,
+                      list: [optimisticComment, ...(Array.isArray(page.list) ? page.list : [])],
+                      total: (page.total ?? 0) + 1,
+                    }
+                  : page,
+              ),
+            }
+          }
+          return old
+        },
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        for (const [key, data] of ctx.prev) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.comment.list(toValue(photoId)) })
     },
@@ -36,6 +96,42 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (commentId: number) => deleteComment(commentId),
+    onMutate: async (commentId: number) => {
+      const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
+        Array.isArray(query.queryKey) && query.queryKey[0] === 'comment'
+
+      await queryClient.cancelQueries({ predicate: matchCommentQuery })
+      const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
+
+      queryClient.setQueriesData<any>(
+        { predicate: matchCommentQuery },
+        (old: any) => {
+          if (!old)
+            return old
+          if (typeof old === 'object' && 'pages' in old && Array.isArray(old.pages)) {
+            return {
+              ...old,
+              pages: old.pages.map((page: any) => ({
+                ...page,
+                list: Array.isArray(page.list)
+                  ? page.list.filter((item: any) => item.id !== commentId)
+                  : page.list,
+                total: Math.max(0, (page.total ?? 0) - 1),
+              })),
+            }
+          }
+          return old
+        },
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        for (const [key, data] of ctx.prev) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.comment.list(toValue(photoId)) })
     },

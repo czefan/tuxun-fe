@@ -7,8 +7,12 @@ export function initLocale() {
   if (typeof navigator !== 'undefined') {
     const lang = navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'zh-Hans'
     try {
-      if (typeof localStorage !== 'undefined' && localStorage.getItem('uni-app-locale') !== lang)
-        localStorage.setItem('uni-app-locale', lang)
+      if (typeof localStorage !== 'undefined') {
+        if (localStorage.getItem('UNI_LOCALE') !== lang)
+          localStorage.setItem('UNI_LOCALE', lang)
+        if (localStorage.getItem('uni-app-locale') !== lang)
+          localStorage.setItem('uni-app-locale', lang)
+      }
       if (typeof uni !== 'undefined' && uni.setLocale && uni.getLocale?.() !== lang)
         uni.setLocale(lang)
     }

@@ -20,6 +20,20 @@ export function useUpdateNickname() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (nickname: string) => updateNickname(nickname),
+    onMutate: async (nickname: string) => {
+      await queryClient.cancelQueries({ queryKey: qk.user.info() })
+      const prev = queryClient.getQueryData(qk.user.info())
+      queryClient.setQueryData(qk.user.info(), (old: any) => {
+        if (!old)
+          return old
+        return { ...old, nickname }
+      })
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev)
+        queryClient.setQueryData(qk.user.info(), ctx.prev)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.user.info() })
     },
@@ -30,6 +44,20 @@ export function useUpdateAvatar() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (filePath: string) => updateAvatar(filePath),
+    onMutate: async (filePath: string) => {
+      await queryClient.cancelQueries({ queryKey: qk.user.info() })
+      const prev = queryClient.getQueryData(qk.user.info())
+      queryClient.setQueryData(qk.user.info(), (old: any) => {
+        if (!old)
+          return old
+        return { ...old, avatar: filePath }
+      })
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev)
+        queryClient.setQueryData(qk.user.info(), ctx.prev)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.user.info() })
     },

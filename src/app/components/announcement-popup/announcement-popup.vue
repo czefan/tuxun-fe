@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useAuth } from '@/features/user/composables/use-auth'
 import { useContent } from '@/features/content/query'
 import { AppRoute, withQuery } from '@/router/routes'
 import { StorageKey } from '@/constants/storage'
@@ -10,17 +11,18 @@ import { StorageKey } from '@/constants/storage'
  * 显示逻辑：
  *  - 请求 /contents/popup 拿到当前弹窗内容与版本号
  *  - 与 localStorage 中上次已读版本对比，版本更新且在当前会话未弹过时弹出
- *  - 有 relatedId：显示"查看通知"按钮，导航至通知详情页
- *  - 无 relatedId：仅显示"关闭"按钮
+ *  - 已登录且有 relatedId：显示"查看通知"按钮，导航至通知详情页
+ *  - 未登录或无 relatedId：仅显示"关闭"按钮
  */
 
 // 模块级（非组件实例级）：同一会话内多个页面实例共享，避免跨页面导航重复弹出
 let shownInThisSession = false
 
+const { isLoggedIn } = useAuth()
 const visible = ref(false)
 const { data: popup } = useContent('popup')
 
-const hasRelated = computed(() => Boolean(popup.value?.relatedId))
+const hasRelated = computed(() => Boolean(popup.value?.relatedId) && isLoggedIn())
 
 watch(
   popup,

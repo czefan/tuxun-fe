@@ -186,11 +186,12 @@ function confirmDelete(id: number) {
 
     <!-- 发表评论框（常驻底部：固定在评论区最底端，不随列表滚动，点击唤起抖音风格多行输入弹层） -->
     <view
-      class="box-border flex flex-shrink-0 items-center gap-2.5 border-t border-[#D3BA9F]/30 px-4 pt-3"
+      class="comment-bottom-bar box-border flex flex-shrink-0 select-none items-center gap-2.5 border-t border-[#D3BA9F]/30 px-4 pt-3"
+      hover-class="none"
       @tap="handleOpenInput"
     >
-      <view class="flex-1 cursor-pointer">
-        <view class="box-border flex items-center border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-2.5 text-sm transition-colors active:bg-[#EFECE6]">
+      <view class="flex-1 cursor-pointer" hover-class="none">
+        <view class="box-border flex items-center border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-2.5 text-base transition-colors active:bg-[#EFECE6]">
           <text v-if="commentText" class="truncate text-[#1E1E1E]">{{ commentText }}</text>
           <text v-else class="text-[#8A7E70]">写下你的想法...</text>
         </view>
@@ -207,3 +208,10 @@ function confirmDelete(id: number) {
     </view>
   </view>
 </template>
+
+<style lang="scss" scoped>
+.comment-bottom-bar {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+</style>
