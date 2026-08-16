@@ -2,6 +2,7 @@ import './utils/polyfill'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createSSRApp } from 'vue'
 import App from './App.vue'
+import { initLocale } from './locale'
 import { routeInterceptor } from './router/guard'
 import { queryClient } from './service/query/client'
 import { requestInterceptor } from './service/request/interceptor'
@@ -10,6 +11,7 @@ import store from './store'
 import 'virtual:uno.css'
 
 export function createApp() {
+  initLocale()
   const app = createSSRApp(App)
   app.use(store)
   app.use(routeInterceptor)
