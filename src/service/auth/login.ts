@@ -3,7 +3,9 @@ import { currRoute } from '@/router/page'
 import { useAuthStore } from '@/store/auth'
 import { StorageKey } from '@/constants/storage'
 
-const isDev = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK === 'true'
+const isDev = import.meta.env.DEV
+  || import.meta.env.VITE_ENABLE_MOCK === 'true'
+  || import.meta.env.VITE_SHOW_AUDIT_LOGIN === 'true'
 
 /** 本端绝对 URL；VITE_APP_PUBLIC_BASE 支持子路径部署。H5 页面与登出中转页复用 */
 function absoluteUrl(path: string): string {
