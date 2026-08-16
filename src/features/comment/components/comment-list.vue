@@ -208,10 +208,3 @@ function confirmDelete(id: number) {
     </view>
   </view>
 </template>
-
-<style lang="scss" scoped>
-.comment-bottom-bar {
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-</style>

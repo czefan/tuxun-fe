@@ -17,6 +17,21 @@
    全局基础重置与全局变量
    ========================================================================== */
 
+page,
+view,
+text,
+image {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea {
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+
 button {
   box-sizing: border-box;
 
