@@ -2,6 +2,17 @@
 import { computed } from 'vue'
 import { DEFAULT_COORD_TYPE, normalizeToGcj02 } from '@/composables/use-map'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
+const props = withDefaults(defineProps<Props>(), {
+  coordType: DEFAULT_COORD_TYPE,
+  title: '答案正确坐标',
+})
+
 interface Props {
   latitude: number
   longitude: number
@@ -9,11 +20,6 @@ interface Props {
   coordType?: 'wgs84' | 'gcj02' | 'bd09'
   title?: string
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  coordType: DEFAULT_COORD_TYPE,
-  title: '答案正确坐标',
-})
 
 /**
  * H5 端 `<map>` 必须配高德 key 才能渲染。

@@ -266,7 +266,7 @@ function goSubmit() {
         <text>撤销 / 上一题</text>
       </view>
     </view>
-    <view v-if="question" class="px-4 pb-0 pt-4 space-y-4">
+    <view v-if="question" class="flex flex-col gap-4 px-4 pb-0 pt-4">
       <!-- 题目核心卡片 (Single-Layer Card) -->
       <view class="shadow-2xs overflow-hidden border border-[#D3BA9F] rounded-[18px] bg-white">
         <view class="relative w-full overflow-hidden">
