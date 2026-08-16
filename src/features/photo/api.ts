@@ -23,6 +23,7 @@ export async function getPhotos(params?: PhotoQueryParams): Promise<PageResult<P
     method: 'GET',
     query: {
       activity_id: params?.activity_id,
+      activity_status: params?.activity_status,
       keyword: params?.keyword,
       sort_by: params?.sort_by,
       solved: params?.solved,

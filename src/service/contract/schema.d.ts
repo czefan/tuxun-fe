@@ -133,7 +133,7 @@ export interface paths {
         };
         /**
          * 题目列表
-         * @description 全站题目列表与搜索接口。不传 activity_id 时，涵盖所有进行中与已结束活动的题目，支持全站题目检索；指定 activity_id 时按特定活动筛选；尚未开始的活动题目不对客户端暴露。Query 参数 solved 与列表项字段 solved 语义一致，均指当前登录用户本人是否已破解该题。
+         * @description 全站题目列表与搜索接口。不传 activity_id 时，涵盖所有进行中与已结束活动的题目，支持全站题目检索；指定 activity_id 时按特定活动筛选；尚未开始的活动题目不对客户端暴露。Query 参数 solved 与列表项字段 solved 语义一致，均指当前登录用户本人是否已破解该题。activity_status 按所属活动状态筛选（首页「进行中」传 active，往期传 ended），不传返回进行中与已结束的全部题目；与 activity_id 按 AND 组合。
          */
         get: operations["listPhotos"];
         put?: never;
@@ -2402,6 +2402,8 @@ export interface operations {
             query?: {
                 /** @description 按单个活动筛选；不传时涵盖所有进行中与已结束活动的题目 */
                 activity_id?: number;
+                /** @description 按所属活动状态筛选：active 进行中 / ended 已结束；不传返回两者全部。与 activity_id 按 AND 组合，若该活动不满足所选状态则返回空列表。活动状态由后端按服务器当前时间计算，口径与 GET /activity 一致。 */
+                activity_status?: "active" | "ended";
                 /** @description 按当前登录用户本人是否已破解筛选：true=我已破解、false=我未破解；不传返回全部。与列表项字段 solved 语义一致。未登录时 solved 恒为 false，因此 solved=true 返回空列表、solved=false 等价于返回全部。 */
                 solved?: boolean;
                 /** @description 页码，从 1 开始 */

@@ -67,6 +67,7 @@ const {
   isFetchingNextPage,
   refetch,
 } = useInfinitePhotoList(computed(() => ({
+  activity_status: 'active',
   keyword: searchKeyword.value || undefined,
   sort_by: sortType.value,
   solved: solvedParam.value,

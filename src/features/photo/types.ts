@@ -2,6 +2,7 @@ import type { ImageVM, Location, PageParams } from '@/service/contract/types'
 
 export interface PhotoQueryParams extends PageParams {
   activity_id?: number
+  activity_status?: 'active' | 'ended'
   keyword?: string
   sort_by?: 'created_at' | 'hot'
   /** 本人是否已破解（契约 2026-08-02 起改为本人口径，未登录时后端恒按 false 处理） */
