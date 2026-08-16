@@ -5,6 +5,7 @@ import { computed, toValue } from 'vue'
 import type { PageParams, PageResult } from '@/service/contract/types'
 import { nextPageByLoadedCount } from '@/service/query/pagination'
 import { qk } from '@/service/query/keys'
+import { useAuthStore } from '@/store/auth'
 import { exchangeGood, getExchanges, getGoods } from './api'
 import type { ExchangeRecordVM, GoodsQueryParams, GoodsVM } from './types'
 
@@ -22,12 +23,17 @@ export function useInfiniteGoodsList(
   })
 }
 
-export function useInfiniteExchangeList(params?: MaybeRefOrGetter<PageParams & { status?: string } | undefined>) {
+export function useInfiniteExchangeList(
+  params?: MaybeRefOrGetter<PageParams & { status?: string } | undefined>,
+  options?: { enabled?: MaybeRefOrGetter<boolean> },
+) {
+  const authStore = useAuthStore()
   return useInfiniteQuery<PageResult<ExchangeRecordVM>>({
     queryKey: computed(() => qk.mall.exchanges(toValue(params))),
     queryFn: ({ pageParam = 1 }) => getExchanges({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
+    enabled: computed(() => authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled))),
   })
 }
 
