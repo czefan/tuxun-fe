@@ -5,7 +5,8 @@ import { useQueryClient } from '@tanstack/vue-query'
 import SolveList from '@/features/attempt/components/solve-list.vue'
 import MyAttemptList from '@/features/attempt/components/my-attempt-list.vue'
 import CommentList from '@/features/comment/components/comment-list.vue'
-import { useInfiniteCommentList } from '@/features/comment/query'
+import CommentInputPopup from '@/features/comment/components/comment-input-popup.vue'
+import { useInfiniteCommentList, usePostComment } from '@/features/comment/query'
 import { usePhotoDetail, useSetPhotoLike } from '@/features/photo/query'
 import { useInfiniteMyAttemptsList, useInfiniteSolvesList } from '@/features/attempt/query'
 import type { MyAttemptVM, SolveRecordVM } from '@/features/attempt/types'
@@ -107,6 +108,37 @@ const { mutate: setLike } = useSetPhotoLike()
 const { data: question } = usePhotoDetail(computed(() => questionId.value))
 const { data: commentPagesData } = useInfiniteCommentList(computed(() => questionId.value), computed(() => ({ sort_by: commentSortBy.value })))
 const commentTotal = computed(() => commentPagesData.value?.pages[0]?.total ?? 0)
+
+const commentInputVisible = ref(false)
+const commentText = ref('')
+const postCommentMutation = usePostComment(() => questionId.value)
+
+function handleOpenCommentInput() {
+  if (!requireLogin()) {
+    return
+  }
+  commentInputVisible.value = true
+}
+
+function handlePostComment() {
+  if (!requireLogin()) {
+    return
+  }
+  if (!commentText.value.trim()) {
+    uni.showToast({ title: '请输入评论内容', icon: 'none' })
+    return
+  }
+  postCommentMutation.mutate(
+    commentText.value.trim(),
+    {
+      onSuccess: () => {
+        commentText.value = ''
+        commentInputVisible.value = false
+        uni.showToast({ title: '评论成功，等待审核', icon: 'none' })
+      },
+    },
+  )
+}
 
 function handlePreviewImage() {
   if (question.value?.image?.originUrl) {
@@ -364,7 +396,13 @@ function goSubmit() {
           @change="(e: any) => { activeTab = detailTabsList[e.detail.current] as any; showCommentSortPopover = false }"
         >
           <swiper-item class="box-border">
-            <CommentList v-if="questionId > 0" :photo-id="questionId" :sort-by="commentSortBy" />
+            <CommentList
+              v-if="questionId > 0"
+              :photo-id="questionId"
+              :sort-by="commentSortBy"
+              :comment-text="commentText"
+              @open-input="handleOpenCommentInput"
+            />
           </swiper-item>
           <swiper-item class="box-border">
             <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full">
@@ -409,6 +447,14 @@ function goSubmit() {
         <text class="text-xs font-bold">向上滑动或点击查看下一个题目</text>
       </view>
     </view>
+
+    <!-- 抖音风格多行评论输入弹层（挂载在页面顶层，彻底脱离 swiper transform，实现全屏变暗遮罩） -->
+    <CommentInputPopup
+      v-model="commentText"
+      v-model:visible="commentInputVisible"
+      :loading="postCommentMutation.isPending.value"
+      @submit="handlePostComment"
+    />
   </view>
 </template>
 

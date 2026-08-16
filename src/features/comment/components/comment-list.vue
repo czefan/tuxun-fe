@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useDeleteComment, useInfiniteCommentList, usePostComment, useSetCommentLike } from '../query'
+import { useDeleteComment, useInfiniteCommentList, useSetCommentLike } from '../query'
 import type { CommentVM } from '../types'
 import { useAuth } from '@/composables/use-auth'
 
@@ -8,15 +8,27 @@ const props = withDefaults(
   defineProps<{
     photoId: number
     sortBy?: 'created_at' | 'likes_count'
+    commentText?: string
   }>(),
   {
     sortBy: 'created_at',
+    commentText: '',
   },
 )
 
+const emit = defineEmits<{
+  (e: 'openInput'): void
+}>()
+
 const { isLoggedIn, requireLogin, isMe } = useAuth()
 
-const newCommentText = ref('')
+function handleOpenInput() {
+  if (!requireLogin()) {
+    return
+  }
+  emit('openInput')
+}
+
 const {
   data: commentPagesData,
   isLoading,
@@ -32,7 +44,6 @@ const {
 
 const commentsList = computed<CommentVM[]>(() => commentPagesData.value?.pages.flatMap(page => page.list) ?? [])
 
-const postMutation = usePostComment(() => props.photoId)
 const deleteMutation = useDeleteComment(() => props.photoId)
 const likeMutation = useSetCommentLike(() => props.photoId)
 
@@ -41,25 +52,6 @@ function canDelete(item: CommentVM) {
   if (!isLoggedIn())
     return false
   return isMe(item.author?.id)
-}
-
-function handlePost() {
-  if (!requireLogin()) {
-    return
-  }
-  if (!newCommentText.value.trim()) {
-    uni.showToast({ title: '请输入评论内容', icon: 'none' })
-    return
-  }
-  postMutation.mutate(
-    newCommentText.value.trim(),
-    {
-      onSuccess: () => {
-        newCommentText.value = ''
-        uni.showToast({ title: '评论成功，等待审核', icon: 'none' })
-      },
-    },
-  )
 }
 
 function handleToggleLike(item: CommentVM) {
@@ -192,24 +184,23 @@ function confirmDelete(id: number) {
       </view>
     </scroll-view>
 
-    <!-- 发表评论框（常驻底部：固定在评论区最底端，不随列表滚动，杜绝底部留白） -->
-    <view class="box-border flex flex-shrink-0 items-center gap-2.5 border-t border-[#D3BA9F]/30 px-4 pt-3">
-      <view class="flex-1">
-        <wd-input
-          v-model="newCommentText"
-          placeholder="写下你的想法..."
-          :maxlength="200"
-          clearable
-          custom-class="!bg-[#F8F6F2] !rounded-xl !p-2.5 !border !border-[#D3BA9F]/60 text-sm text-[#1E1E1E]"
-        />
+    <!-- 发表评论框（常驻底部：固定在评论区最底端，不随列表滚动，点击唤起抖音风格多行输入弹层） -->
+    <view
+      class="box-border flex flex-shrink-0 items-center gap-2.5 border-t border-[#D3BA9F]/30 px-4 pt-3"
+      @tap="handleOpenInput"
+    >
+      <view class="flex-1 cursor-pointer">
+        <view class="box-border flex items-center border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-2.5 text-sm transition-colors active:bg-[#EFECE6]">
+          <text v-if="commentText" class="truncate text-[#1E1E1E]">{{ commentText }}</text>
+          <text v-else class="text-[#8A7E70]">写下你的想法...</text>
+        </view>
       </view>
       <wd-button
         type="warning"
         round
         size="small"
         custom-class="!font-black !bg-[#B69171] !text-white !border-0 shadow-2xs !text-xs"
-        :disabled="postMutation.isPending.value"
-        @click="handlePost"
+        @tap.stop="handleOpenInput"
       >
         发送
       </wd-button>
