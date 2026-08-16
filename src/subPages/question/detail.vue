@@ -33,8 +33,41 @@ const isSlideDowning = ref(false)
 const showUndoBanner = ref(false)
 const touchStartY = ref(0)
 
+const listContext = ref<{
+  activity_id?: number
+  activity_status?: 'active' | 'ended'
+  sort_by?: 'created_at' | 'hot'
+  solved?: boolean
+  keyword?: string
+} | null>(null)
+
 /** 从缓存列表中推算前一个或后一个题目 ID */
 function getAdjacentPhotoId(offset: 1 | -1): number | null {
+  // 1. 若携带来源列表参数，通过匹配列表查询缓存（兼容 page_size 等默认字段差异）精准定位
+  if (listContext.value) {
+    const listQueries = queryClient.getQueriesData<any>({ queryKey: qk.photo.all() })
+    for (const [key, data] of listQueries) {
+      if (Array.isArray(key) && key[1] === 'list' && typeof key[2] === 'object' && key[2]) {
+        const p = key[2] as Record<string, any>
+        const match
+          = (listContext.value.activity_id === undefined || p.activity_id === listContext.value.activity_id)
+            && (listContext.value.activity_status === undefined || p.activity_status === listContext.value.activity_status)
+            && (listContext.value.sort_by === undefined || p.sort_by === listContext.value.sort_by)
+            && (listContext.value.solved === undefined || p.solved === listContext.value.solved)
+            && (listContext.value.keyword === undefined || p.keyword === listContext.value.keyword)
+
+        if (match && data?.pages) {
+          const list: any[] = data.pages.flatMap((pg: any) => pg.list ?? [])
+          const idx = list.findIndex(item => item.id === questionId.value)
+          if (idx !== -1 && list[idx + offset]) {
+            return list[idx + offset].id
+          }
+        }
+      }
+    }
+  }
+
+  // 2. 回退兜底：从所有包含当前题目的 photo 列表缓存中查找
   const queries = queryClient.getQueriesData<any>({ queryKey: qk.photo.all() })
   for (const [_, data] of queries) {
     const list: any[] = data?.pages?.flatMap((p: any) => p.list ?? []) ?? []
@@ -61,7 +94,11 @@ function switchQuestion(offset: 1 | -1) {
   isUp ? (isSlideUping.value = true) : (isSlideDowning.value = true)
   setTimeout(() => {
     uni.redirectTo({
-      url: withQuery(AppRoute.QuestionDetail, { id: targetId, ...(isUp ? { fromCut: 1 } : {}) }),
+      url: withQuery(AppRoute.QuestionDetail, {
+        id: targetId,
+        ...(isUp ? { fromCut: 1 } : {}),
+        ...listContext.value,
+      }),
       complete: () => {
         isSlideUping.value = false
         isSlideDowning.value = false
@@ -178,6 +215,26 @@ const myAttempts = computed<MyAttemptVM[]>(() => myAttemptsPagesData.value?.page
 onLoad((query) => {
   if (typeof query?.id === 'string')
     questionId.value = Number(query.id)
+
+  if (query?.activity_id || query?.activity_status || query?.sort_by || query?.solved !== undefined || query?.keyword) {
+    let keyword: string | undefined
+    if (query.keyword) {
+      try {
+        keyword = decodeURIComponent(query.keyword)
+      }
+      catch {
+        keyword = query.keyword
+      }
+    }
+    listContext.value = {
+      activity_id: query.activity_id ? Number(query.activity_id) : undefined,
+      activity_status: query.activity_status as any,
+      sort_by: query.sort_by as any,
+      solved: query.solved !== undefined ? query.solved === 'true' : undefined,
+      keyword,
+    }
+  }
+
   // 互动消息跳转带 tab：评论消息/评论点赞 → 评论区、破解点赞 → 已破解
   if (query?.tab === 'solves' || query?.tab === 'myAttempts' || query?.tab === 'comments')
     activeTab.value = query.tab

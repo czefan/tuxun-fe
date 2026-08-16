@@ -93,9 +93,18 @@ const openingPhotoId = ref<number | null>(null)
 async function handlePhotoOpen(item: PhotoCardVM) {
   openingPhotoId.value = item.id
   await nextTick()
-  await navigateWithTransition(withQuery(AppRoute.QuestionDetail, { id: item.id }), () => {
-    openingPhotoId.value = null
-  })
+  await navigateWithTransition(
+    withQuery(AppRoute.QuestionDetail, {
+      id: item.id,
+      activity_status: 'active',
+      sort_by: sortType.value,
+      solved: solvedParam.value,
+      keyword: searchKeyword.value.trim() || undefined,
+    }),
+    () => {
+      openingPhotoId.value = null
+    },
+  )
 }
 
 const filterVisible = ref(false)
