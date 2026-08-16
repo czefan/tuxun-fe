@@ -36,7 +36,6 @@ export default defineManifestConfig({
   'fallbackLocale': VITE_FALLBACK_LOCALE || 'zh-Hans',
   'uniStatistics': {
     enable: false,
-    version: '2',
   },
   'h5': {
     uniStatistics: {
