@@ -36,7 +36,7 @@ const pageStyle = computed(() => ({
 const stickyTopStyle = useStickyTop()
 const popupTop = usePopupTopPadding()
 
-const { isLoggedIn, isLoggedInRef } = useAuth()
+const { isLoggedIn, isLoggedInRef, requireLogin } = useAuth()
 
 // 退出登录后把筛选复位
 watch(isLoggedInRef, (loggedIn) => {
@@ -98,6 +98,17 @@ async function handlePhotoOpen(item: PhotoCardVM) {
 }
 
 const filterVisible = ref(false)
+
+function handleSortSelect(opt: string) {
+  sortCurrent.value = opt
+}
+
+function handleStatusSelect(st: string) {
+  if (st !== '全部' && !requireLogin()) {
+    return
+  }
+  statusCurrent.value = st
+}
 </script>
 
 <template>
@@ -173,7 +184,7 @@ const filterVisible = ref(false)
               :key="opt"
               class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
               :class="sortCurrent === opt ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
-              @click="sortCurrent = opt"
+              @click="handleSortSelect(opt)"
             >
               {{ opt }}
             </view>
@@ -182,14 +193,14 @@ const filterVisible = ref(false)
 
         <!-- 破解状态 (包含本人是否已破解) -->
         <view class="space-y-1.5">
-          <text class="text-xs text-[#756C5E] font-bold">破解状态</text>
+          <text class="text-xs text-[#756C5E] font-bold">破解状态（本人）</text>
           <view class="grid grid-cols-3 gap-2">
             <view
               v-for="st in statusOptions"
               :key="st"
               class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
               :class="statusCurrent === st ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
-              @click="statusCurrent = st"
+              @click="handleStatusSelect(st)"
             >
               {{ st }}
             </view>
