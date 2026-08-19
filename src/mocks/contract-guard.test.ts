@@ -112,7 +112,7 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
       }
     }
 
-    await call('user.testLogin', () => testLogin())
+    await call('user.testLogin', () => testLogin('test'))
     await call('user.getUserInfo', () => getUserInfo())
     await call('user.updateNickname', () => updateNickname('新昵称'))
     // updateAvatar 不在此处校验：契约用 PUT multipart，而 uni.uploadFile 只能发 POST，

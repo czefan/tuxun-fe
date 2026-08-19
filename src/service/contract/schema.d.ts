@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * 测试登录
-         * @description 仅在开发和测试环境开启，生产环境必须关闭。允许通过学号模拟测试账号一键登录。
+         * @description 仅在开发和测试环境开启，生产环境必须关闭。允许通过 NetID 模拟测试账号一键登录。
          */
         get: operations["testLogin"];
         put?: never;
@@ -2019,8 +2019,8 @@ export interface operations {
     testLogin: {
         parameters: {
             query: {
-                /** @description 要登录的用户 ID */
-                user_id: number;
+                /** @description 要登录用户的 NetID */
+                netid: string;
                 /** @description 测试登录密码 */
                 password: string;
             };

@@ -19,7 +19,7 @@ const isAudit = ref(import.meta.env.VITE_SHOW_AUDIT_LOGIN === 'true')
 const showTestLogin = ref(import.meta.env.DEV || isMock.value || isAudit.value)
 
 const currentScenario = ref<'data' | 'empty'>('data')
-const testUserId = ref<number | string>(1)
+const testNetid = ref('')
 const testPassword = ref('')
 const loading = ref(false)
 
@@ -42,16 +42,18 @@ async function handleSwitchScenario(val: 'data' | 'empty') {
 }
 
 async function handleTestLogin() {
-  const userIdNum = isMock.value ? 1 : Number(testUserId.value)
-  if (!isMock.value && (!userIdNum || Number.isNaN(userIdNum))) {
-    uni.showToast({ title: '请输入要登录的用户 ID', icon: 'none' })
+  const netid = isMock.value
+    ? (String(testNetid.value || '').trim() || '20260001')
+    : String(testNetid.value || '').trim()
+  if (!isMock.value && !netid) {
+    uni.showToast({ title: '请输入要登录用户的 NetID', icon: 'none' })
     return
   }
 
   loading.value = true
   try {
     const userStore = useUserStore()
-    const result = await testLogin(userIdNum, isMock.value ? '' : String(testPassword.value || ''))
+    const result = await testLogin(netid, isMock.value ? '' : String(testPassword.value || ''))
     if (result?.sessionId) {
       useAuthStore().setSessionId(result.sessionId)
     }
@@ -130,9 +132,9 @@ function handleClose() {
         <text class="block text-xs text-[#8A7E70] font-bold">🔑 测试账号接口登录：</text>
         <view class="space-y-2">
           <wd-input
-            v-model="testUserId"
-            type="number"
-            placeholder="请输入测试用户 ID (如: 1)"
+            v-model="testNetid"
+            type="text"
+            placeholder="请输入测试 NetID"
             no-border
             custom-class="!bg-white/80 !rounded-lg !px-2.5 !py-1 text-xs"
           />

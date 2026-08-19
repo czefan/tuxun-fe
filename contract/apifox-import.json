@@ -32,20 +32,19 @@
       "get": {
         "tags": ["测试"],
         "summary": "测试登录",
-        "description": "仅在开发和测试环境开启，生产环境必须关闭。允许通过学号模拟测试账号一键登录。",
+        "description": "仅在开发和测试环境开启，生产环境必须关闭。允许通过 NetID 模拟测试账号一键登录。",
         "operationId": "testLogin",
         "security": [],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "netid",
             "in": "query",
             "required": true,
             "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "example": 1
+              "type": "string",
+              "example": "20230001"
             },
-            "description": "要登录的用户 ID"
+            "description": "要登录用户的 NetID"
           },
           {
             "name": "password",

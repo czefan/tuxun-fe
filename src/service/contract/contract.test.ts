@@ -17,7 +17,7 @@ afterAll(() => server.close())
 
 describe('全域 API 契约真实结构与逻辑集成断言', () => {
   it('user 域: testLogin & getUserInfo & updateNickname 契约结构测试', async () => {
-    const user = await testLogin()
+    const user = await testLogin('20230001')
     expect(user.id).toBeTypeOf('number')
     expect(user.netid).toBeTypeOf('string')
     // /test/login 返回 UserSummary，契约里没有 score_count，不得断言积分字段

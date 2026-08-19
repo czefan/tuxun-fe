@@ -27,11 +27,11 @@ function toLoginResultVM(raw: LoginResult): LoginResultVM {
 }
 
 /** 开发/测试登录 GET /test/login（仅开发与测试环境开启） */
-export async function testLogin(userId = 1, password = ''): Promise<LoginResultVM> {
+export async function testLogin(netid: string, password = ''): Promise<LoginResultVM> {
   const raw = await request<LoginResult>({
     url: '/test/login',
     method: 'GET',
-    query: { user_id: userId, password },
+    query: { netid, password },
   })
 
   return toLoginResultVM(raw)
