@@ -42,7 +42,9 @@ function syncEmojis(next?: string[]) {
       }
     }
   }
-  catch {}
+  catch {
+    // 读取本地缓存失败时使用默认表情
+  }
 }
 
 syncEmojis()
@@ -104,18 +106,18 @@ function handleClose() {
   >
     <view class="box-border w-full select-none px-3 pt-2.5">
       <!-- 多行输入区域 -->
-      <view class="box-border w-full border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-2.5 transition-colors focus-within:border-[#B69171]">
+      <view class="box-border w-full border border-tx-border/60 rounded-xl bg-tx-surface p-2.5 transition-colors focus-within:border-tx-brown">
         <textarea
           :value="modelValue"
           :placeholder="placeholder"
-          placeholder-class="text-[#8A7E70] text-base"
+          placeholder-class="text-tx-ink-3 text-base"
           :maxlength="maxLength"
           :focus="isFocus"
           auto-height
           :adjust-position="false"
           :hold-keyboard="true"
           :show-confirm-bar="false"
-          class="box-border max-h-[140px] min-h-[46px] w-full text-base text-[#1E1E1E] leading-relaxed"
+          class="box-border max-h-[140px] min-h-[46px] w-full text-base text-tx-ink leading-relaxed"
           @input="(e: any) => emit('update:modelValue', e.detail?.value ?? '')"
           @keyboardheightchange="(e: any) => keyboardHeight = e.detail?.height ?? 0"
         />
@@ -138,7 +140,7 @@ function handleClose() {
 
         <view
           class="flex flex-shrink-0 cursor-pointer items-center justify-center rounded-full px-4 py-1.5 text-xs font-bold transition-all"
-          :class="modelValue.trim() && !loading ? 'bg-[#B69171] text-white shadow-xs active:scale-95' : 'bg-[#F2F2F4] text-[#A0A0A0] cursor-not-allowed'"
+          :class="modelValue.trim() && !loading ? 'bg-tx-brown text-white shadow-xs active:scale-95' : 'bg-[#F2F2F4] text-[#A0A0A0] cursor-not-allowed'"
           @tap="!loading && modelValue.trim() && emit('submit')"
         >
           <text v-if="loading" class="i-carbon:circle-dash mr-1 animate-spin text-xs" />

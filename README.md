@@ -6,7 +6,6 @@
 
 ## 🛠️ 技术栈
 
-- **模板**：[unibest](https://unibest.tech/)
 - **框架**：[Uni-app](https://uniapp.dcloud.net.cn/) (Vue 3 / TypeScript / Vite 5)
 - **UI 组件库**：[Wot Design Uni](https://wot-ui.cn/) (`wot-ui-v2`)
 - **CSS 框架**：[UnoCSS](https://unocss.dev/)

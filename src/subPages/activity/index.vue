@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { onLoad } from '@dcloudio/uni-app'
 import { useInfinitePhotoList } from '@/features/photo/query'
 import { useAuth } from '@/features/user/composables/use-auth'
 import PhotoWaterfall from '@/features/photo/components/photo-waterfall.vue'
 import { useViewTransition } from '@/composables/use-view-transition'
 import { usePopupTopPadding, useStickyTop } from '@/composables/use-sticky-top'
+import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
+import { TX_INK } from '@/styles/constants'
 import { AppRoute, withQuery } from '@/router/routes'
 import type { PhotoCardVM } from '@/features/photo/types'
 
@@ -75,17 +77,11 @@ const {
 
 const photoList = computed<PhotoCardVM[]>(() => data.value?.pages.flatMap(page => page.list) ?? [])
 
-onReachBottom(() => {
-  if (hasNextPage?.value && !isFetchingNextPage.value) {
-    fetchNextPage()
-  }
-})
-
-onPullDownRefresh(async () => {
-  // 只重拉本页自己的列表。无参 invalidateQueries() 会失效全站查询——
-  // 下拉刷新首页不该把商城、通知、用户资料一起作废重拉。
-  await refetch()
-  uni.stopPullDownRefresh()
+useInfiniteListPage({
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+  refetch,
 })
 
 onLoad((options) => {
@@ -134,9 +130,9 @@ function handleStatusSelect(st: string) {
 </script>
 
 <template>
-  <view class="page-activity safe-bottom-page bg-[#F1DFC5]">
+  <view class="page-activity safe-bottom-page bg-tx-main">
     <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
-    <view class="sticky z-20 box-border w-full bg-[#F1DFC5] px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
+    <view class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
       <view class="flex items-center gap-2">
         <view class="min-w-0 flex-1">
           <wd-search
@@ -149,11 +145,11 @@ function handleStatusSelect(st: string) {
           />
         </view>
         <view
-          class="shadow-2xs h-9 w-9 flex flex-shrink-0 cursor-pointer items-center justify-center border border-[#D3BA9F] rounded-full transition-transform active:scale-95"
-          :class="filterVisible ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+          class="shadow-2xs h-9 w-9 flex flex-shrink-0 cursor-pointer items-center justify-center border border-tx-border rounded-full transition-transform active:scale-95"
+          :class="filterVisible ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
           @click="filterVisible = !filterVisible"
         >
-          <text class="i-carbon:filter text-base" :class="filterVisible ? 'text-white' : 'text-[#B69171]'" />
+          <text class="i-carbon:filter text-base" :class="filterVisible ? 'text-white' : 'text-tx-brown'" />
         </view>
       </view>
     </view>
@@ -185,27 +181,27 @@ function handleStatusSelect(st: string) {
       @close="filterVisible = false"
     >
       <view
-        class="relative box-border w-full border-b border-[#D3BA9F] rounded-b-[24px] bg-[#F1DFC5] px-4 pb-5 shadow-2xl space-y-4"
+        class="relative box-border w-full border-b border-tx-border rounded-b-[24px] bg-tx-main px-4 pb-5 shadow-2xl space-y-4"
         :style="{ paddingTop: popupTop.paddingTop }"
       >
         <!-- 右上角绝对定位关闭按钮 -->
         <view
-          class="absolute right-4 z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-[#B69171]/30 transition-transform active:scale-90"
+          class="absolute right-4 z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-tx-brown/30 transition-transform active:scale-90"
           :style="{ top: popupTop.closeTop }"
           @click="filterVisible = false"
         >
-          <wd-icon name="close" size="18px" color="#1E1E1E" />
+          <wd-icon name="close" size="18px" :color="TX_INK" />
         </view>
 
         <!-- 排序方式 -->
         <view class="space-y-1.5">
-          <text class="text-xs text-[#756C5E] font-bold">排序方式</text>
+          <text class="text-xs text-tx-ink-2 font-bold">排序方式</text>
           <view class="grid grid-cols-2 gap-2">
             <view
               v-for="opt in sortOptions"
               :key="opt"
               class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
-              :class="sortCurrent === opt ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+              :class="sortCurrent === opt ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
               @click="handleSortSelect(opt)"
             >
               {{ opt }}
@@ -215,13 +211,13 @@ function handleStatusSelect(st: string) {
 
         <!-- 破解状态 (包含本人是否已破解) -->
         <view class="space-y-1.5">
-          <text class="text-xs text-[#756C5E] font-bold">破解状态（本人）</text>
+          <text class="text-xs text-tx-ink-2 font-bold">破解状态（本人）</text>
           <view class="grid grid-cols-3 gap-2">
             <view
               v-for="st in statusOptions"
               :key="st"
               class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
-              :class="statusCurrent === st ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+              :class="statusCurrent === st ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
               @click="handleStatusSelect(st)"
             >
               {{ st }}

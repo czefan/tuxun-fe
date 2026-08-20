@@ -55,7 +55,7 @@ function handleLikeTap(e?: Event) {
     @tap="$emit('open', item)"
   >
     <!-- 相纸展示结构（图片与卡片边界直接重合，零四周留白，Subtle 8px 圆角） -->
-    <view class="shadow-2xs overflow-hidden border border-[#D3BA9F]/60 rounded-lg bg-white">
+    <view class="shadow-2xs overflow-hidden border border-tx-border/60 rounded-lg bg-white">
       <view class="relative w-full overflow-hidden">
         <wd-img
           custom-class="w-full block transition-transform duration-500 hover:scale-105"
@@ -87,7 +87,7 @@ function handleLikeTap(e?: Event) {
         <view class="flex items-center justify-between">
           <view class="mr-1 min-w-0 flex flex-1 items-center gap-1">
             <wd-img
-              custom-class="w-5 h-5 rounded-full flex-shrink-0 ring-1 ring-[#D3BA9F]/40"
+              custom-class="w-5 h-5 rounded-full flex-shrink-0 ring-1 ring-tx-border/40"
               lazy-load
               :src="item.author.avatar || '/static/images/default-avatar.png'"
               mode="aspectFill"
@@ -96,10 +96,10 @@ function handleLikeTap(e?: Event) {
               height="40rpx"
             />
             <view class="min-w-0 flex items-center">
-              <text class="truncate text-xs text-[#756C5E] font-medium">
+              <text class="truncate text-xs text-tx-ink-2 font-medium">
                 {{ item.author.nickname }}
               </text>
-              <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-[#B69171]/15 px-1 py-0.2 text-[10px] text-[#B69171] font-bold leading-none">我</text>
+              <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
             </view>
           </view>
           <like-button :liked="item.liked" :count="item.likesCount" @click="handleLikeTap" />

@@ -602,4 +602,60 @@ describe('契约变更负向守卫', () => {
     const mainSrc = fs.readFileSync(path.join(SRC_ROOT, 'main.ts'), 'utf-8')
     expect(mainSrc).toMatch(/import ['"]\.\/utils\/polyfill['"]/)
   })
+
+  it('页面只能通过 features/*/query 访问业务域，不得直连 api.ts', () => {
+    // 直连 api 会绕过 TanStack 的缓存失效声明：写操作成功后相关列表不会刷新。
+    // 投稿页曾因此导致「投稿成功后我的投稿列表看不到新数据」。
+    const offenders = collectSourceFiles(SRC_ROOT)
+      .filter(f => /\/(?:pages|subPages)\//.test(f))
+      .filter(f => /from ['"]@\/features\/[a-z]+\/api['"]/.test(fs.readFileSync(f, 'utf-8')))
+      .map(f => path.relative(PROJECT_ROOT, f))
+    expect(offenders, `发现页面直连 features/*/api：\n${offenders.join('\n')}`).toEqual([])
+  })
+
+  it('环境变量模式守卫：严禁使用 Vite 默认的 production/development 字面量比对 MODE', () => {
+    // 本项目的 mode 取值只有 dev / test / prod / mock。
+    // 使用 MODE === 'production' 或 !== 'production' 会导致恒真/恒假 bug。
+    // 判断开发环境应使用 import.meta.env.DEV 或 MODE === 'dev'。
+    const forbiddenPatterns = [
+      /MODE\s*[!=]==?\s*['"]production['"]/,
+      /MODE\s*[!=]==?\s*['"]development['"]/,
+    ]
+    const violations: string[] = []
+
+    for (const file of collectSourceFiles(SRC_ROOT)) {
+      if (file.endsWith('negative-guards.test.ts')) {
+        continue
+      }
+      const content = fs.readFileSync(file, 'utf-8')
+      for (const pattern of forbiddenPatterns) {
+        if (pattern.test(content)) {
+          violations.push(`${path.relative(PROJECT_ROOT, file)} 误将 MODE 与 production/development 比对`)
+        }
+      }
+    }
+
+    expect(violations, `发现错误的 MODE 比对字面量：\n${violations.join('\n')}`).toEqual([])
+  })
+
+  it('vue 模板与样式中不得使用硬编码主题色类名，应统一使用 UnoCSS 设计令牌', () => {
+    const forbiddenPatterns = [
+      /\[#(?:B69171|D3BA9F|F9DF95|F1DFC5|1E1E1E|756C5E|8A7E70|F8F6F2)\]/i,
+    ]
+    const violations: string[] = []
+
+    for (const file of collectSourceFiles(SRC_ROOT)) {
+      if (!file.endsWith('.vue')) {
+        continue
+      }
+      const content = fs.readFileSync(file, 'utf-8')
+      for (const pattern of forbiddenPatterns) {
+        if (pattern.test(content)) {
+          violations.push(`${path.relative(PROJECT_ROOT, file)} 存在硬编码主题色类名，请改用 tx-* 令牌`)
+        }
+      }
+    }
+
+    expect(violations, `发现未收敛的主题色硬编码：\n${violations.join('\n')}`).toEqual([])
+  })
 })

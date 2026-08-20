@@ -11,10 +11,10 @@ const { data, isLoading } = useContent('help')
 </script>
 
 <template>
-  <view class="page-help safe-bottom-page bg-[#F1DFC5] px-4 pb-6 pt-2">
+  <view class="page-help safe-bottom-page bg-tx-main px-4 pb-6 pt-2">
     <!-- 动态帮助文档（纯靠后端 contents/help 内容位配置，不含前端硬编码写死文案） -->
     <view v-if="data?.content">
-      <view class="border-y border-[#B69171] px-1 pb-3 pt-2">
+      <view class="border-y border-tx-brown px-1 pb-3 pt-2">
         <rich-text :nodes="data.content" class="block break-words" />
       </view>
     </view>

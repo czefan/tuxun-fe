@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
-import { useQueryClient } from '@tanstack/vue-query'
 import SolveList from '@/features/attempt/components/solve-list.vue'
 import MyAttemptList from '@/features/attempt/components/my-attempt-list.vue'
 import CommentList from '@/features/comment/components/comment-list.vue'
@@ -12,11 +11,11 @@ import { useInfiniteMyAttemptsList, useInfiniteSolvesList } from '@/features/att
 import type { MyAttemptVM, SolveRecordVM } from '@/features/attempt/types'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
-import { qk } from '@/service/query/keys'
 import { useStickyTop } from '@/composables/use-sticky-top'
 import { closeActivePreviewImage, previewImage } from '@/utils/image-preview'
 import { serverNow } from '@/utils/server-time'
 import { formatCompactCount } from '@/utils/format-count'
+import { useQuestionSwitcher } from './use-question-switcher'
 
 definePage({
   style: {
@@ -25,99 +24,18 @@ definePage({
 })
 
 const undoBannerStyle = useStickyTop(12)
-const queryClient = useQueryClient()
 const questionId = ref(0)
 const activeTab = ref<'comments' | 'solves' | 'myAttempts'>('comments')
-const isSlideUping = ref(false)
-const isSlideDowning = ref(false)
-const showUndoBanner = ref(false)
-const touchStartY = ref(0)
 
-const listContext = ref<{
-  activity_id?: number
-  activity_status?: 'active' | 'ended'
-  sort_by?: 'created_at' | 'hot'
-  solved?: boolean
-  keyword?: string
-} | null>(null)
-
-/** 从缓存列表中推算前一个或后一个题目 ID */
-function getAdjacentPhotoId(offset: 1 | -1): number | null {
-  // 1. 若携带来源列表参数，通过匹配列表查询缓存（兼容 page_size 等默认字段差异）精准定位
-  if (listContext.value) {
-    const listQueries = queryClient.getQueriesData<any>({ queryKey: qk.photo.all() })
-    for (const [key, data] of listQueries) {
-      if (Array.isArray(key) && key[1] === 'list' && typeof key[2] === 'object' && key[2]) {
-        const p = key[2] as Record<string, any>
-        const match
-          = (listContext.value.activity_id === undefined || p.activity_id === listContext.value.activity_id)
-            && (listContext.value.activity_status === undefined || p.activity_status === listContext.value.activity_status)
-            && (listContext.value.sort_by === undefined || p.sort_by === listContext.value.sort_by)
-            && (listContext.value.solved === undefined || p.solved === listContext.value.solved)
-            && (listContext.value.keyword === undefined || p.keyword === listContext.value.keyword)
-
-        if (match && data?.pages) {
-          const list: any[] = data.pages.flatMap((pg: any) => pg.list ?? [])
-          const idx = list.findIndex(item => item.id === questionId.value)
-          if (idx !== -1 && list[idx + offset]) {
-            return list[idx + offset].id
-          }
-        }
-      }
-    }
-  }
-
-  // 2. 回退兜底：从所有包含当前题目的 photo 列表缓存中查找
-  const queries = queryClient.getQueriesData<any>({ queryKey: qk.photo.all() })
-  for (const [_, data] of queries) {
-    const list: any[] = data?.pages?.flatMap((p: any) => p.list ?? []) ?? []
-    const idx = list.findIndex(p => p.id === questionId.value)
-    if (idx !== -1 && list[idx + offset]) {
-      return list[idx + offset].id
-    }
-  }
-  return null
-}
-
-/** 统一切题处理（offset: 1 为下一题，-1 为上一题） */
-function switchQuestion(offset: 1 | -1) {
-  if (isSlideUping.value || isSlideDowning.value)
-    return
-  const targetId = getAdjacentPhotoId(offset)
-  if (!targetId) {
-    uni.showToast({ title: offset === 1 ? '已是最后一题了' : '已是第一题了', icon: 'none' })
-    return
-  }
-  if (offset === -1)
-    showUndoBanner.value = false
-  const isUp = offset === 1
-  isUp ? (isSlideUping.value = true) : (isSlideDowning.value = true)
-  setTimeout(() => {
-    uni.redirectTo({
-      url: withQuery(AppRoute.QuestionDetail, {
-        id: targetId,
-        ...(isUp ? { fromCut: 1 } : {}),
-        ...listContext.value,
-      }),
-      complete: () => {
-        isSlideUping.value = false
-        isSlideDowning.value = false
-      },
-    })
-  }, 220)
-}
-
-function handleTouchStart(e: TouchEvent) {
-  if (e.touches?.[0])
-    touchStartY.value = e.touches[0].clientY
-}
-
-function handleTouchEnd(e: TouchEvent) {
-  // 仅在专属长方形 Bar 内向上滑动超过 60px 触发
-  if (e.changedTouches?.[0] && e.changedTouches[0].clientY - touchStartY.value < -60) {
-    switchQuestion(1)
-  }
-}
+const {
+  handleTouchStart,
+  handleTouchEnd,
+  switchQuestion,
+  isSlideUping,
+  isSlideDowning,
+  showUndoBanner,
+  initSwitcherFromQuery,
+} = useQuestionSwitcher(questionId)
 
 type CommentSortType = 'hottest' | 'latest'
 const commentSortType = ref<CommentSortType>('hottest') // 默认即最多点赞
@@ -216,34 +134,11 @@ onLoad((query) => {
   if (typeof query?.id === 'string')
     questionId.value = Number(query.id)
 
-  if (query?.activity_id || query?.activity_status || query?.sort_by || query?.solved !== undefined || query?.keyword) {
-    let keyword: string | undefined
-    if (query.keyword) {
-      try {
-        keyword = decodeURIComponent(query.keyword)
-      }
-      catch {
-        keyword = query.keyword
-      }
-    }
-    listContext.value = {
-      activity_id: query.activity_id ? Number(query.activity_id) : undefined,
-      activity_status: query.activity_status as any,
-      sort_by: query.sort_by as any,
-      solved: query.solved !== undefined ? query.solved === 'true' : undefined,
-      keyword,
-    }
-  }
+  initSwitcherFromQuery(query)
 
   // 互动消息跳转带 tab：评论消息/评论点赞 → 评论区、破解点赞 → 已破解
   if (query?.tab === 'solves' || query?.tab === 'myAttempts' || query?.tab === 'comments')
     activeTab.value = query.tab
-  if (query?.fromCut === '1') {
-    showUndoBanner.value = true
-    setTimeout(() => {
-      showUndoBanner.value = false
-    }, 2000)
-  }
 })
 
 const isEnded = computed(() => {
@@ -298,7 +193,7 @@ function goSubmit() {
 <template>
   <!-- 页面根点击兜底关闭排序气泡 -->
   <view
-    class="page-question-detail min-h-screen bg-[#F1DFC5] transition-all"
+    class="page-question-detail min-h-screen bg-tx-main transition-all"
     :class="{
       'animate-slide-up-out': isSlideUping,
       'animate-slide-down-out': isSlideDowning,
@@ -308,15 +203,15 @@ function goSubmit() {
     <!-- 误触切题 4 秒内顶部弹出极简浅色撤销提示条 -->
     <view
       v-if="showUndoBanner"
-      class="fixed left-4 right-4 z-50 flex animate-fade-in-down items-center justify-between border border-[#D3BA9F] rounded-xl bg-white/95 px-4 py-2.5 text-sm text-[#332A22] shadow-2xl backdrop-blur-md"
+      class="fixed left-4 right-4 z-50 flex animate-fade-in-down items-center justify-between border border-tx-border rounded-xl bg-white/95 px-4 py-2.5 text-sm text-[#332A22] shadow-2xl backdrop-blur-md"
       :style="undoBannerStyle"
     >
       <view class="flex items-center gap-2 font-medium">
-        <text class="i-carbon:information text-base text-[#B69171]" />
+        <text class="i-carbon:information text-base text-tx-brown" />
         <text>已为您切至下一题</text>
       </view>
       <view
-        class="shadow-2xs flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#F9DF95] px-3 py-2 text-xs text-[#1E1E1E] font-bold transition-transform active:scale-95"
+        class="shadow-2xs flex cursor-pointer items-center gap-1.5 rounded-lg bg-tx-accent px-3 py-2 text-xs text-tx-ink font-bold transition-transform active:scale-95"
         @tap.stop="switchQuestion(-1)"
       >
         <text class="i-carbon:undo text-sm" />
@@ -325,7 +220,7 @@ function goSubmit() {
     </view>
     <view v-if="question" class="flex flex-col gap-4 px-4 pb-0 pt-4">
       <!-- 题目核心卡片 (Single-Layer Card) -->
-      <view class="shadow-2xs overflow-hidden border border-[#D3BA9F] rounded-[18px] bg-white">
+      <view class="shadow-2xs overflow-hidden border border-tx-border rounded-[18px] bg-white">
         <view class="relative w-full overflow-hidden">
           <wd-img
             custom-class="w-full cursor-pointer block"
@@ -349,10 +244,10 @@ function goSubmit() {
             <text class="u-action-link text-base">#{{ question.activity.title }}</text>
           </view>
 
-          <view class="flex items-center justify-between border-t border-[#D3BA9F]/30 pt-3">
+          <view class="flex items-center justify-between border-t border-tx-border/30 pt-3">
             <view class="flex items-center gap-2.5">
               <wd-img
-                custom-class="h-9 w-9 rounded-full ring-2 ring-[#D3BA9F]"
+                custom-class="h-9 w-9 rounded-full ring-2 ring-tx-border"
                 :src="question.author.avatar || '/static/images/default-avatar.png'"
                 lazy-load
                 mode="aspectFill"
@@ -363,7 +258,7 @@ function goSubmit() {
               <view class="flex flex-col">
                 <view class="min-w-0 flex items-center">
                   <text class="truncate u-user-name font-bold">{{ question.author.nickname }}</text>
-                  <text v-if="isMe(question.author.id)" class="ml-1 flex-shrink-0 rounded bg-[#B69171]/15 px-1 py-0.2 text-[10px] text-[#B69171] font-bold leading-none">我</text>
+                  <text v-if="isMe(question.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
                 </view>
                 <text v-if="question.createdAt" class="mt-0.5 u-meta-time">{{ question.createdAt }}</text>
               </view>
@@ -378,7 +273,7 @@ function goSubmit() {
               round
               block
               size="large"
-              custom-class="!font-black !bg-[#F9DF95] !text-[#1E1E1E] !border-0 shadow-2xs active:scale-[0.99] transition-transform"
+              custom-class="!font-black !bg-tx-accent !text-tx-ink !border-0 shadow-2xs active:scale-[0.99] transition-transform"
               :disabled="buttonState.disabled"
               @click="handleBottomAction"
             >
@@ -397,7 +292,7 @@ function goSubmit() {
       />
 
       <!-- 评论区、已破解与我的作答 3 合 1 可左右滑动相连卡片 -->
-      <view class="shadow-2xs relative overflow-visible border border-[#D3BA9F] rounded-[18px] bg-white pb-2 pt-3">
+      <view class="shadow-2xs relative overflow-visible border border-tx-border rounded-[18px] bg-white pb-2 pt-3">
         <!-- 融入卡片顶部的无缝 Tab 标头：指示线无留白紧贴浅分割线 -->
         <view class="relative z-30 flex items-center justify-around px-4 pb-0 pt-1" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
           <view
@@ -414,15 +309,15 @@ function goSubmit() {
             <text>{{ tab.label }}</text>
             <!-- 评论右侧：上宽下窄 3 条横线图标 -->
             <view v-if="tab.value === 'comments'" class="ml-0.5 w-3.5 flex flex-col items-start justify-center gap-0.75">
-              <view class="h-[2px] w-full rounded-full bg-[#756C5E]" />
-              <view class="h-[2px] w-[70%] rounded-full bg-[#756C5E]" />
-              <view class="h-[2px] w-[40%] rounded-full bg-[#756C5E]" />
+              <view class="h-[2px] w-full rounded-full bg-tx-ink-2" />
+              <view class="h-[2px] w-[70%] rounded-full bg-tx-ink-2" />
+              <view class="h-[2px] w-[40%] rounded-full bg-tx-ink-2" />
             </view>
 
             <!-- 切换指示线：紧贴压在标头底部的浅分割线上 (-bottom-[1px])，无任何留白 -->
             <view
               v-if="activeTab === tab.value"
-              class="absolute left-0 right-0 h-[2.5px] rounded-full bg-[#B69171] -bottom-[1px]"
+              class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
             />
           </view>
         </view>
@@ -430,18 +325,18 @@ function goSubmit() {
         <!-- 评论排序下拉气泡 -->
         <view
           v-if="activeTab === 'comments' && showCommentSortPopover"
-          class="absolute left-4 top-[52px] z-50 min-w-[132px] border border-[#D3BA9F]/40 rounded-2xl bg-white p-2 text-left font-normal shadow-2xl space-y-1"
+          class="absolute left-4 top-[52px] z-50 min-w-[132px] border border-tx-border/40 rounded-2xl bg-white p-2 text-left font-normal shadow-2xl space-y-1"
           @click.stop
         >
           <view
             v-for="opt in [{ key: 'hottest', label: '最多点赞' }, { key: 'latest', label: '最新' }] as const"
             :key="opt.key"
-            class="flex cursor-pointer items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-colors active:bg-[#F8F6F2]"
-            :class="commentSortType === opt.key ? 'font-bold text-[#1E1E1E]' : 'text-[#555555]'"
+            class="flex cursor-pointer items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-colors active:bg-tx-surface"
+            :class="commentSortType === opt.key ? 'font-bold text-tx-ink' : 'text-[#555555]'"
             @click="() => { commentSortType = opt.key; showCommentSortPopover = false }"
           >
             <text>{{ opt.label }}</text>
-            <text v-if="commentSortType === opt.key" class="i-carbon:checkmark text-base text-[#B69171] font-bold" />
+            <text v-if="commentSortType === opt.key" class="i-carbon:checkmark text-base text-tx-brown font-bold" />
           </view>
         </view>
 
@@ -493,12 +388,12 @@ function goSubmit() {
 
       <!-- 融入背景的全宽下部切题热区 -->
       <view
-        class="mt-8 flex flex-col cursor-pointer items-center justify-center gap-1.5 pb-8 pt-6 text-[#756C5E] transition-opacity -mx-4 active:opacity-75"
+        class="mt-8 flex flex-col cursor-pointer items-center justify-center gap-1.5 pb-8 pt-6 text-tx-ink-2 transition-opacity -mx-4 active:opacity-75"
         @tap="switchQuestion(1)"
         @touchstart="handleTouchStart"
         @touchend="handleTouchEnd"
       >
-        <view class="h-6 w-6 flex items-center justify-center rounded-full bg-[#B69171]/20 text-[#B69171]">
+        <view class="h-6 w-6 flex items-center justify-center rounded-full bg-tx-brown/20 text-tx-brown">
           <text class="i-carbon:arrow-up animate-bounce text-xs font-bold" />
         </view>
         <text class="text-xs font-bold">向上滑动或点击查看下一个题目</text>

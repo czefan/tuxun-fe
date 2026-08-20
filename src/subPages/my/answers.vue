@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { useInfiniteMyAttemptRecords } from '@/features/record/query'
 import type { UserAttemptRecordVM } from '@/features/record/types'
 import { useAuth } from '@/features/user/composables/use-auth'
+import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
 import { AppRoute, withQuery } from '@/router/routes'
 
 definePage({
@@ -56,17 +56,11 @@ function getFilteredList(opt: string) {
   return list.value
 }
 
-onReachBottom(() => {
-  if (hasNextPage?.value && !isFetchingNextPage.value) {
-    fetchNextPage()
-  }
-})
-
-onPullDownRefresh(async () => {
-  // 只重拉本页自己的列表。无参 invalidateQueries() 会失效全站查询——
-  // 下拉刷新首页不该把商城、通知、用户资料一起作废重拉。
-  await refetch()
-  uni.stopPullDownRefresh()
+useInfiniteListPage({
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+  refetch,
 })
 
 function goPhotoDetail(photoId: number) {
@@ -78,20 +72,20 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
 </script>
 
 <template>
-  <view class="page-my-answers swiper-page bg-[#F1DFC5] px-3 pt-3">
+  <view class="page-my-answers swiper-page bg-tx-main px-3 pt-3">
     <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
     <view class="flex flex-shrink-0 items-center gap-6 px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
       <view
         v-for="opt in statusOptions"
         :key="opt"
         class="relative cursor-pointer pb-2.5 text-base transition-all active:scale-95"
-        :class="activeStatusIndex === opt ? 'text-[#1E1E1E] font-black' : 'text-[#8A7E70] font-bold'"
+        :class="activeStatusIndex === opt ? 'text-tx-ink font-black' : 'text-tx-ink-3 font-bold'"
         @tap="activeStatusIndex = opt"
       >
         <text>{{ opt }}</text>
         <view
           v-if="activeStatusIndex === opt"
-          class="absolute left-0 right-0 h-[2.5px] rounded-full bg-[#B69171] -bottom-[1px]"
+          class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
         />
       </view>
     </view>
@@ -121,17 +115,17 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
                 重新加载
               </wd-button>
             </view>
-            <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-[#B69171]">
+            <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-tx-brown">
               <view
                 v-for="(item, index) in getFilteredList(opt)"
                 :key="item.id"
                 class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-75"
-                :class="index > 0 ? 'border-t border-[#B69171]' : ''"
+                :class="index > 0 ? 'border-t border-tx-brown' : ''"
                 @tap="goPhotoDetail(item.photo.id)"
               >
                 <view class="mr-2 h-16 min-w-0 flex flex-1 items-center gap-3">
                   <wd-img
-                    custom-class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#B69171]/10 object-cover ring-1 ring-[#D3BA9F]"
+                    custom-class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-tx-brown/10 object-cover ring-1 ring-tx-border"
                     lazy-load
                     :src="item.photo.image.url"
                     mode="aspectFill"

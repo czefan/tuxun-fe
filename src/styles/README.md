@@ -6,9 +6,9 @@
 
 ## 📂 目录结构
 
-- **`constants.ts`**：设计 Token 常量（品牌色等）。
+- **`constants.ts`**：设计系统主题色常量（如 `TX_BG_MAIN`, `TX_BG_BROWN` 等）。
 - **`index.scss`**：全局基础样式。
-- **`uno/`**：UnoCSS 配置 —— `theme.ts`（主题）、`shortcuts.ts`（简写）、`rules.ts`（自定义规则，如 `font-numeric`）、`transitions.ts`。
+- **`uno/`**：UnoCSS 配置 —— `theme.ts`（主题色 Token 与字号）、`shortcuts.ts`（简写）、`rules.ts`（自定义规则，如 `font-numeric`）、`transitions.ts`。
 
 ---
 

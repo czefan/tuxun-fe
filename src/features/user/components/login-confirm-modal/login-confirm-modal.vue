@@ -30,7 +30,9 @@ onMounted(async () => {
       const sc = await getCurrentMockScenario()
       currentScenario.value = sc === 'empty' ? 'empty' : 'data'
     }
-    catch {}
+    catch {
+      // 场景状态读取异常时默认使用 data 档
+    }
   }
 })
 
@@ -91,13 +93,13 @@ function handleClose() {
     custom-style="background: transparent; width: 84vw; max-width: 600rpx;"
     @close="handleClose"
   >
-    <view class="box-border w-full border border-[#D3BA9F] rounded-[24px] bg-[#F1DFC5] p-6 shadow-2xl space-y-4" @touchmove.stop.prevent>
-      <view class="flex items-center justify-between border-b border-[#D3BA9F]/40 pb-3">
+    <view class="box-border w-full border border-tx-border rounded-[24px] bg-tx-main p-6 shadow-2xl space-y-4" @touchmove.stop.prevent>
+      <view class="flex items-center justify-between border-b border-tx-border/40 pb-3">
         <text class="u-title-lg">{{ showTestLogin ? '开发调试与登录确认' : '统一身份认证登录' }}</text>
-        <wd-icon name="close" size="20px" custom-class="cursor-pointer text-[#756C5E]" @click="handleClose" />
+        <wd-icon name="close" size="20px" custom-class="cursor-pointer text-tx-ink-2" @click="handleClose" />
       </view>
 
-      <view v-if="isMock || !showTestLogin" class="text-sm text-[#756C5E] font-medium leading-relaxed">
+      <view v-if="isMock || !showTestLogin" class="text-sm text-tx-ink-2 font-medium leading-relaxed">
         <template v-if="isMock">
           当前处于 Mock 测试模式，您可进行快捷一键登录或选择 Mock 切档。
         </template>
@@ -108,18 +110,18 @@ function handleClose() {
 
       <!-- Mock 模式专属切档选项卡组 -->
       <view v-if="isMock" class="rounded-xl bg-[#E6D4BB]/60 p-3 space-y-2.5">
-        <text class="block text-xs text-[#8A7E70] font-bold">🎛️ Mock 数据场景模式切档：</text>
+        <text class="block text-xs text-tx-ink-3 font-bold">🎛️ Mock 数据场景模式切档：</text>
         <view class="flex items-center justify-center gap-2">
           <view
             class="flex-1 cursor-pointer border rounded-lg py-1.5 text-center text-xs transition-all active:scale-95"
-            :class="currentScenario === 'data' ? 'bg-[#B69171] text-white font-bold border-[#B69171] shadow-xs' : 'bg-white/60 text-[#756C5E] border-[#D3BA9F]'"
+            :class="currentScenario === 'data' ? 'bg-tx-brown text-white font-bold border-tx-brown shadow-xs' : 'bg-white/60 text-tx-ink-2 border-tx-border'"
             @click="handleSwitchScenario('data')"
           >
             有数据 (35+条)
           </view>
           <view
             class="flex-1 cursor-pointer border rounded-lg py-1.5 text-center text-xs transition-all active:scale-95"
-            :class="currentScenario === 'empty' ? 'bg-[#B69171] text-white font-bold border-[#B69171] shadow-xs' : 'bg-white/60 text-[#756C5E] border-[#D3BA9F]'"
+            :class="currentScenario === 'empty' ? 'bg-tx-brown text-white font-bold border-tx-brown shadow-xs' : 'bg-white/60 text-tx-ink-2 border-tx-border'"
             @click="handleSwitchScenario('empty')"
           >
             无数据 (0条)
@@ -129,7 +131,7 @@ function handleClose() {
 
       <!-- 非 Mock 开发/提审模式输入账号表单 -->
       <view v-else-if="showTestLogin" class="rounded-xl bg-[#E6D4BB]/60 p-3 space-y-2">
-        <text class="block text-xs text-[#8A7E70] font-bold">🔑 测试账号接口登录：</text>
+        <text class="block text-xs text-tx-ink-3 font-bold">🔑 测试账号接口登录：</text>
         <view class="space-y-2">
           <wd-input
             v-model="testNetid"
@@ -156,7 +158,7 @@ function handleClose() {
           block
           type="warning"
           size="medium"
-          custom-class="!font-bold !bg-[#B69171] !text-white shadow-xs"
+          custom-class="!font-bold !bg-tx-brown !text-white shadow-xs"
           :loading="loading"
           @click="handleTestLogin"
         >

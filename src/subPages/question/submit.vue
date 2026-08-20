@@ -5,6 +5,7 @@ import { useSubmitAttempt } from '@/features/attempt/query'
 import { useAuth } from '@/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
 import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
 
@@ -154,7 +155,7 @@ async function handleSubmit() {
           content: '您的作答已成功提交，等待审核。',
           showCancel: false,
           confirmText: '我知道了',
-          confirmColor: '#B69171',
+          confirmColor: TX_BG_BROWN,
         })
       },
     })
@@ -171,18 +172,18 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
 </script>
 
 <template>
-  <view class="page-submit-attempt safe-bottom-page bg-[#F1DFC5] px-3 pt-3 space-y-4">
+  <view class="page-submit-attempt safe-bottom-page bg-tx-main px-3 pt-3 space-y-4">
     <!-- 第一部分：图片 -->
-    <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
-      <view class="flex items-center gap-2 border-b border-[#D3BA9F]/30 pb-2.5">
-        <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
-        <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+    <view class="shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3">
+      <view class="flex items-center gap-2 border-b border-tx-border/30 pb-2.5">
+        <view class="h-4 w-1.5 rounded-full bg-tx-brown" />
+        <text class="text-base text-tx-ink font-black tracking-tight">
           图片 <text class="text-rose-500">*</text>
         </text>
       </view>
 
       <view
-        class="relative min-h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-[#D3BA9F] rounded-2xl border-dashed bg-[#F8F6F2] transition-colors active:bg-[#EFECE6]"
+        class="relative min-h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-tx-border rounded-2xl border-dashed bg-tx-surface transition-colors active:bg-[#EFECE6]"
         @tap="choosePhoto"
       >
         <wd-img
@@ -194,11 +195,11 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
           width="100%"
         />
         <view v-else class="flex flex-col items-center p-3 text-center space-y-1.5">
-          <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E]">
+          <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink">
             <text class="i-carbon:camera text-2xl font-black" />
           </view>
-          <text class="block text-sm text-[#1E1E1E] font-black">拍照或选取现场照片</text>
-          <text class="block text-xs text-[#756C5E] font-bold">需包含关键特征点以供判定</text>
+          <text class="block text-sm text-tx-ink font-black">拍照或选取现场照片</text>
+          <text class="block text-xs text-tx-ink-2 font-bold">需包含关键特征点以供判定</text>
         </view>
 
         <view v-if="formData.filePath" class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md">
@@ -209,29 +210,29 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
     </view>
 
     <!-- 第二部分：定位 -->
-    <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
-      <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-2.5">
+    <view class="shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3">
+      <view class="flex items-center justify-between border-b border-tx-border/30 pb-2.5">
         <view class="flex items-center gap-2">
-          <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
-          <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+          <view class="h-4 w-1.5 rounded-full bg-tx-brown" />
+          <text class="text-base text-tx-ink font-black tracking-tight">
             定位 <text class="text-rose-500">*</text>
           </text>
         </view>
         <view class="flex items-center gap-3">
           <view
-            class="flex cursor-pointer items-center gap-1 text-sm text-[#B69171] font-bold transition-opacity active:opacity-70"
+            class="flex cursor-pointer items-center gap-1 text-sm text-tx-brown font-bold transition-opacity active:opacity-70"
             @click="locationPickerRef?.locate()"
           >
-            <text class="i-carbon:location text-sm text-[#B69171]" />
+            <text class="i-carbon:location text-sm text-tx-brown" />
             <text>定位</text>
           </view>
           <!-- #ifndef H5 -->
           <!-- H5 端无全屏选点：uni-h5 系统弹窗确认需先选 POI 列表项，高德安全密钥模式下列表加载失败；小程序端为微信原生弹窗，无此限制 -->
           <view
-            class="flex cursor-pointer items-center gap-1 text-sm text-[#756C5E] font-medium transition-opacity active:opacity-70"
+            class="flex cursor-pointer items-center gap-1 text-sm text-tx-ink-2 font-medium transition-opacity active:opacity-70"
             @click="locationPickerRef?.chooseLocation()"
           >
-            <text class="i-carbon:map text-sm text-[#756C5E]" />
+            <text class="i-carbon:map text-sm text-tx-ink-2" />
             <text>全屏</text>
           </view>
           <!-- #endif -->
@@ -257,7 +258,7 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
         round
         block
         size="large"
-        custom-class="!font-bold !bg-[#B69171] !text-white shadow-xs"
+        custom-class="!font-bold !bg-tx-brown !text-white shadow-xs"
         :loading="loading"
         :disabled="loading"
         @click="handleSubmit"

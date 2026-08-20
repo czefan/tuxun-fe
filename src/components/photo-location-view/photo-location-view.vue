@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { DEFAULT_COORD_TYPE, normalizeToGcj02 } from '@/composables/use-map'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 defineOptions({
   options: {
@@ -50,25 +51,25 @@ function openFullScreenMap() {
 </script>
 
 <template>
-  <view class="photo-location-view shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
+  <view class="photo-location-view shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3">
     <!-- 头部区：地标标题与右侧融入背景的全屏入口 -->
     <view class="flex items-center justify-between">
       <view class="flex items-center gap-1.5 u-title-base font-bold">
-        <wd-icon name="location" size="18px" color="#B69171" />
+        <wd-icon name="location" size="18px" :color="TX_BG_BROWN" />
         <text>{{ title }}</text>
       </view>
       <view
-        class="flex cursor-pointer items-center gap-0.5 text-xs text-[#B69171] font-medium transition-opacity active:opacity-70"
+        class="flex cursor-pointer items-center gap-0.5 text-xs text-tx-brown font-medium transition-opacity active:opacity-70"
         @click="openFullScreenMap"
       >
         <text>全屏查看</text>
-        <text class="i-carbon:chevron-right text-xs text-[#B69171]" />
+        <text class="i-carbon:chevron-right text-xs text-tx-brown" />
       </view>
     </view>
 
     <!-- 地图卡片主体：点击全屏打开地图 -->
     <view
-      class="group relative h-48 w-full cursor-pointer overflow-hidden rounded-[14px] bg-[#F1DFC5]/30 ring-1 ring-[#D3BA9F]/40"
+      class="group relative h-48 w-full cursor-pointer overflow-hidden rounded-[14px] bg-tx-main/30 ring-1 ring-tx-border/40"
       @click="openFullScreenMap"
     >
       <map
@@ -80,8 +81,8 @@ function openFullScreenMap() {
         :enable-scroll="false"
         :enable-zoom="false"
       />
-      <view v-else class="h-full w-full flex items-center justify-center bg-[#F1DFC5]/40">
-        <text class="text-xs text-[#756C5E] font-bold">点击打开地图查看位置</text>
+      <view v-else class="h-full w-full flex items-center justify-center bg-tx-main/40">
+        <text class="text-xs text-tx-ink-2 font-bold">点击打开地图查看位置</text>
       </view>
 
       <!-- 答案中心定位针：与选点卡片完全一致的实心填充图标 i-carbon:location-filled -->

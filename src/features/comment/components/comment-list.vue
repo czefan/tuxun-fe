@@ -115,8 +115,8 @@ function confirmDelete(id: number) {
         <view
           v-for="(item, index) in commentsList"
           :key="item.id"
-          class="relative flex items-start gap-3 border-b border-[#D3BA9F]/30 rounded-xl px-1.5 pb-3.5 pt-1 transition-colors"
-          :class="activeMenuCommentId === item.id ? 'z-30 bg-[#EFECE6] ring-1 ring-[#B69171]/40 shadow-2xs' : 'active:bg-[#F8F6F2]'"
+          class="relative flex items-start gap-3 border-b border-tx-border/30 rounded-xl px-1.5 pb-3.5 pt-1 transition-colors"
+          :class="activeMenuCommentId === item.id ? 'z-30 bg-[#EFECE6] ring-1 ring-tx-brown/40 shadow-2xs' : 'active:bg-tx-surface'"
           @longpress.stop="handleLongPress(item)"
         >
           <!-- 朋友圈式主流长按 Popover 顶部/底部气泡菜单 (首条评论向下弹避免被 scroll-view 裁剪) -->
@@ -137,7 +137,7 @@ function confirmDelete(id: number) {
 
           <!-- 左侧头像 -->
           <wd-img
-            custom-class="h-9 w-9 flex-shrink-0 rounded-full bg-slate-100 object-cover ring-1 ring-[#D3BA9F]"
+            custom-class="h-9 w-9 flex-shrink-0 rounded-full bg-slate-100 object-cover ring-1 ring-tx-border"
             :src="item.author.avatar || '/static/images/default-avatar.png'"
             lazy-load
             mode="aspectFill"
@@ -151,15 +151,15 @@ function confirmDelete(id: number) {
             <!-- 第一行：评论者昵称（与下文时间字体风格一致），本人增加高亮「我」角标，点赞按钮在右 -->
             <view class="flex items-center justify-between gap-2">
               <view class="min-w-0 flex items-center">
-                <text class="truncate u-meta-time !text-[#8A7E70] !font-normal">{{ item.author.nickname }}</text>
-                <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-[#B69171]/15 px-1 py-0.2 text-[10px] text-[#B69171] font-bold leading-none">我</text>
+                <text class="truncate u-meta-time !text-tx-ink-3 !font-normal">{{ item.author.nickname }}</text>
+                <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
               </view>
               <like-button :liked="item.liked" :count="item.likesCount" icon-size="15px" font-size="12px" @click="handleToggleLike(item)" />
             </view>
             <!-- 第二行：评论正文（主要内容，醒目高亮） -->
-            <text class="block py-0.5 u-body-main text-[#1E1E1E]">{{ item.content }}</text>
+            <text class="block py-0.5 u-body-main text-tx-ink">{{ item.content }}</text>
             <!-- 第三行：发布时间（与昵称同风尚浅虚色） -->
-            <text class="block u-meta-time !text-[#8A7E70] !font-normal">{{ item.createdAt }}</text>
+            <text class="block u-meta-time !text-tx-ink-3 !font-normal">{{ item.createdAt }}</text>
           </view>
         </view>
 
@@ -186,21 +186,21 @@ function confirmDelete(id: number) {
 
     <!-- 发表评论框（常驻底部：固定在评论区最底端，不随列表滚动，点击唤起抖音风格多行输入弹层） -->
     <view
-      class="comment-bottom-bar box-border flex flex-shrink-0 select-none items-center gap-2.5 border-t border-[#D3BA9F]/30 px-4 pt-3"
+      class="comment-bottom-bar box-border flex flex-shrink-0 select-none items-center gap-2.5 border-t border-tx-border/30 px-4 pt-3"
       hover-class="none"
       @tap="handleOpenInput"
     >
       <view class="flex-1 cursor-pointer" hover-class="none">
-        <view class="box-border flex items-center border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-2.5 text-base transition-colors active:bg-[#EFECE6]">
-          <text v-if="commentText" class="truncate text-[#1E1E1E]">{{ commentText }}</text>
-          <text v-else class="text-[#8A7E70]">写下你的想法...</text>
+        <view class="box-border flex items-center border border-tx-border/60 rounded-xl bg-tx-surface p-2.5 text-base transition-colors active:bg-[#EFECE6]">
+          <text v-if="commentText" class="truncate text-tx-ink">{{ commentText }}</text>
+          <text v-else class="text-tx-ink-3">写下你的想法...</text>
         </view>
       </view>
       <wd-button
         type="warning"
         round
         size="small"
-        custom-class="!font-black !bg-[#B69171] !text-white !border-0 shadow-2xs !text-xs"
+        custom-class="!font-black !bg-tx-brown !text-white !border-0 shadow-2xs !text-xs"
         @tap.stop="handleOpenInput"
       >
         发送

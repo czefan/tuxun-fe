@@ -47,6 +47,11 @@ export default defineConfig({
     setupFiles: ['src/test-setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'src/uni_modules/**'],
+    // 限制测试并发 worker 数量，避免多核环境下过度占用内存
+    pool: 'forks',
+    poolOptions: {
+      forks: { minForks: 1, maxForks: 4 },
+    },
   },
   resolve: {
     alias: {

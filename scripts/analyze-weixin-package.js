@@ -12,7 +12,7 @@ const distDir = path.resolve(process.cwd(), process.argv[2] || process.env.MP_DI
 
 if (!fs.existsSync(distDir)) {
   console.error(`Weixin package output not found: ${distDir}`)
-  console.error('Run pnpm build:mp:prod before package size analysis.')
+  console.error('Run pnpm build:mp before package size analysis.')
   process.exit(1)
 }
 

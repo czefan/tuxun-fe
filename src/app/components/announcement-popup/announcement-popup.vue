@@ -73,10 +73,10 @@ function handleViewNotice() {
     custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;"
     @close="handleClose"
   >
-    <view class="relative mx-auto w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-white shadow-2xl">
+    <view class="relative mx-auto w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-white shadow-2xl">
       <!-- 右上角关闭按钮 -->
       <view
-        class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/10 text-[#756C5E] backdrop-blur-md transition-transform active:scale-90"
+        class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/10 text-tx-ink-2 backdrop-blur-md transition-transform active:scale-90"
         @tap="handleClose"
       >
         <wd-icon name="close" size="14px" />
@@ -88,16 +88,16 @@ function handleViewNotice() {
       </scroll-view>
 
       <!-- 底部操作区 -->
-      <view class="flex justify-end gap-2 border-t border-[#D3BA9F]/30 px-5 pb-5 pt-4">
+      <view class="flex justify-end gap-2 border-t border-tx-border/30 px-5 pb-5 pt-4">
         <view
           v-if="hasRelated"
-          class="flex cursor-pointer items-center gap-1 border border-[#D3BA9F] rounded-xl bg-white px-4 py-2 text-sm text-[#756C5E] font-medium transition-all active:scale-95 active:opacity-75"
+          class="flex cursor-pointer items-center gap-1 border border-tx-border rounded-xl bg-white px-4 py-2 text-sm text-tx-ink-2 font-medium transition-all active:scale-95 active:opacity-75"
           @tap="handleClose"
         >
           <text>关闭</text>
         </view>
         <view
-          class="shadow-xs flex cursor-pointer items-center gap-1 rounded-xl bg-[#F9DF95] px-4 py-2 text-sm text-[#1E1E1E] font-bold transition-all active:scale-95"
+          class="shadow-xs flex cursor-pointer items-center gap-1 rounded-xl bg-tx-accent px-4 py-2 text-sm text-tx-ink font-bold transition-all active:scale-95"
           @tap="hasRelated ? handleViewNotice() : handleClose()"
         >
           <text>{{ hasRelated ? '查看通知' : '关闭' }}</text>

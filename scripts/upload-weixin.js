@@ -181,7 +181,7 @@ async function main() {
   // 构建小程序（跳过自动打开开发者工具）
   console.log('\n📦 正在构建小程序...（跳过自动打开开发者工具）\n')
   try {
-    execSync('pnpm build:mp:prod', {
+    execSync('pnpm build:mp', {
       cwd: ROOT_DIR,
       stdio: 'inherit',
       env: {

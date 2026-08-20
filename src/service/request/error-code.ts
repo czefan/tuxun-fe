@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/auth'
 import { handleUnauthorized } from './shared'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 /** Toast 去重栈：1.5s 内相同 Toast 不重复弹出 */
 const toastStack = new Map<string, number>()
@@ -68,7 +69,7 @@ export function handleResponseError(
       content: msg,
       showCancel: false,
       confirmText: '我知道了',
-      confirmColor: '#B69171',
+      confirmColor: TX_BG_BROWN,
     })
     return { message: msg, code: 7 }
   }

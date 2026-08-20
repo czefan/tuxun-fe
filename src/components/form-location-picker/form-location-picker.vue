@@ -232,7 +232,7 @@ defineExpose({ locate: locate_, chooseLocation: chooseLocation_, isSubmittable }
 <template>
   <view class="space-y-2">
     <!-- 内嵌小地图 -->
-    <view class="relative overflow-hidden rounded-2xl ring-1 ring-[#D3BA9F]/60">
+    <view class="relative overflow-hidden rounded-2xl ring-1 ring-tx-border/60">
       <map
         id="locationPickerMap"
         class="h-60 w-full"

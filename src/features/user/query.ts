@@ -3,6 +3,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import { qk } from '@/service/query/keys'
 import { getUserInfo, updateAvatar, updateNickname } from './api'
+import type { UserInfo } from './types'
 
 export function useUserInfo(options?: {
   silentAuth?: boolean
@@ -22,8 +23,8 @@ export function useUpdateNickname() {
     mutationFn: (nickname: string) => updateNickname(nickname),
     onMutate: async (nickname: string) => {
       await queryClient.cancelQueries({ queryKey: qk.user.info() })
-      const prev = queryClient.getQueryData(qk.user.info())
-      queryClient.setQueryData(qk.user.info(), (old: any) => {
+      const prev = queryClient.getQueryData<UserInfo>(qk.user.info())
+      queryClient.setQueryData<UserInfo>(qk.user.info(), (old) => {
         if (!old)
           return old
         return { ...old, nickname }
@@ -46,8 +47,8 @@ export function useUpdateAvatar() {
     mutationFn: (filePath: string) => updateAvatar(filePath),
     onMutate: async (filePath: string) => {
       await queryClient.cancelQueries({ queryKey: qk.user.info() })
-      const prev = queryClient.getQueryData(qk.user.info())
-      queryClient.setQueryData(qk.user.info(), (old: any) => {
+      const prev = queryClient.getQueryData<UserInfo>(qk.user.info())
+      queryClient.setQueryData<UserInfo>(qk.user.info(), (old) => {
         if (!old)
           return old
         return { ...old, avatar: filePath }

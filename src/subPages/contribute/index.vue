@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { createPhoto } from '@/features/photo/api'
+import { useCreatePhoto } from '@/features/photo/query'
 import { useActiveActivities } from '@/features/activity/query'
 import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
 import { AppRoute } from '@/router/routes'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 import { useAuth } from '@/composables/use-auth'
 import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
@@ -16,6 +17,7 @@ definePage({
 })
 
 const { isLoggedIn, loginDirectly, requireLogin } = useAuth()
+const createMutation = useCreatePhoto()
 
 const form = reactive({
   activityId: 0,
@@ -175,7 +177,7 @@ async function handleSubmit() {
   }
 
   try {
-    await createPhoto({
+    await createMutation.mutateAsync({
       activityId: form.activityId,
       title: form.title.trim(),
       description: form.description.trim(),
@@ -197,7 +199,7 @@ async function handleSubmit() {
           content: '您的题目已成功提交，可在「我的投稿」中查看审核状态。',
           showCancel: false,
           confirmText: '我知道了',
-          confirmColor: '#B69171',
+          confirmColor: TX_BG_BROWN,
         })
       },
     })
@@ -211,7 +213,7 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
 </script>
 
 <template>
-  <view class="page-contribute safe-bottom-page box-border min-h-screen bg-[#F1DFC5] px-4 pt-4">
+  <view class="page-contribute safe-bottom-page box-border min-h-screen bg-tx-main px-4 pt-4">
     <!-- 未登录页面级提示卡片（与意见反馈/通知界面保持 100% 统一样式） -->
     <view v-if="!isLoggedIn()" class="min-h-[calc(100vh-120rpx)] flex flex-col items-center justify-center pb-12 -mt-12">
       <wd-empty icon="no-result" tip="登录后提交题目投稿" />
@@ -223,17 +225,17 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
     <!-- 已登录：完整投稿表单卡片 -->
     <view v-else class="space-y-4">
       <!-- 第一部分：文字部分 (Text Section) -->
-      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3.5">
-        <view class="flex items-center gap-2 border-b border-[#D3BA9F]/30 pb-2.5">
-          <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
-          <text class="text-base text-[#1E1E1E] font-black tracking-tight">文字信息</text>
+      <view class="shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3.5">
+        <view class="flex items-center gap-2 border-b border-tx-border/30 pb-2.5">
+          <view class="h-4 w-1.5 rounded-full bg-tx-brown" />
+          <text class="text-base text-tx-ink font-black tracking-tight">文字信息</text>
         </view>
 
         <!-- wd-form 只负责标签与排版；必填与坐标校验仍在 handleSubmit 显式判断（见 location-guard 测试） -->
         <wd-form :model="form" custom-class="block space-y-3.5">
           <!-- 1. 选择活动 -->
           <view class="space-y-1.5">
-            <text class="block text-xs text-[#756C5E] font-bold">
+            <text class="block text-xs text-tx-ink-2 font-bold">
               选择关联活动 <text class="text-rose-500">*</text>
             </text>
             <picker
@@ -241,16 +243,16 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
               range-key="title"
               @change="(e: any) => form.activityId = activityData?.list[e.detail.value]?.id || 0"
             >
-              <view class="flex items-center justify-between border border-[#D3BA9F]/60 rounded-xl bg-[#F8F6F2] p-3 text-sm text-[#1E1E1E] font-bold transition-colors active:bg-[#EFECE6]">
+              <view class="flex items-center justify-between border border-tx-border/60 rounded-xl bg-tx-surface p-3 text-sm text-tx-ink font-bold transition-colors active:bg-[#EFECE6]">
                 <text>{{ activityData?.list?.find(a => a.id === form.activityId)?.title || '点击选择活动' }}</text>
-                <text class="i-carbon:chevron-down text-[#B69171]" />
+                <text class="i-carbon:chevron-down text-tx-brown" />
               </view>
             </picker>
           </view>
 
           <!-- 2. 题目名称 -->
           <view class="space-y-1.5">
-            <text class="block text-xs text-[#756C5E] font-bold">
+            <text class="block text-xs text-tx-ink-2 font-bold">
               题目名称 <text class="text-rose-500">*</text>
             </text>
             <wd-input
@@ -258,39 +260,39 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
               placeholder="例如：图书馆东门石雕 (≤20字)"
               :maxlength="20"
               clearable
-              custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+              custom-class="!bg-tx-surface !rounded-xl !p-3 !border !border-tx-border/60"
             />
           </view>
 
           <!-- 3. 题目线索描述 -->
           <view class="space-y-1.5">
-            <text class="block text-xs text-[#756C5E] font-bold">
-              题目线索描述 <text class="text-xs text-[#8A7E70] font-normal">(选填)</text>
+            <text class="block text-xs text-tx-ink-2 font-bold">
+              题目线索描述 <text class="text-xs text-tx-ink-3 font-normal">(选填)</text>
             </text>
             <wd-textarea
               v-model="form.description"
               placeholder="描述地标周围特征 (≤50字)..."
               :maxlength="50"
               clearable
-              custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+              custom-class="!bg-tx-surface !rounded-xl !p-3 !border !border-tx-border/60"
             />
           </view>
         </wd-form>
       </view>
 
       <!-- 第二部分：图片部分 (Photo Section) -->
-      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
-        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-2.5">
+      <view class="shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3">
+        <view class="flex items-center justify-between border-b border-tx-border/30 pb-2.5">
           <view class="flex items-center gap-2">
-            <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
-            <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+            <view class="h-4 w-1.5 rounded-full bg-tx-brown" />
+            <text class="text-base text-tx-ink font-black tracking-tight">
               图片 <text class="text-rose-500">*</text>
             </text>
           </view>
         </view>
 
         <view
-          class="relative min-h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-[#D3BA9F] rounded-2xl border-dashed bg-[#F8F6F2] transition-colors active:bg-[#EFECE6]"
+          class="relative min-h-48 w-full flex flex-col cursor-pointer items-center justify-center overflow-hidden border-2 border-tx-border rounded-2xl border-dashed bg-tx-surface transition-colors active:bg-[#EFECE6]"
           @tap="choosePhoto"
           @dragover.prevent
           @drop.prevent="handleFileDrop"
@@ -304,13 +306,13 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
             width="100%"
           />
           <view v-else class="flex flex-col items-center p-3 text-center space-y-1.5">
-            <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E]">
+            <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink">
               <text class="i-carbon:cloud-upload text-2xl font-black" />
             </view>
-            <text class="block text-sm text-[#1E1E1E] font-black">
+            <text class="block text-sm text-tx-ink font-black">
               点击选择 或 拖拽上传图片
             </text>
-            <text class="block text-xs text-[#756C5E] font-bold">
+            <text class="block text-xs text-tx-ink-2 font-bold">
               支持 JPG / PNG 原图（建议清晰无遮挡）
             </text>
           </view>
@@ -326,29 +328,29 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
       </view>
 
       <!-- 第三部分：位置部分 (Location Section) -->
-      <view class="shadow-2xs border border-[#D3BA9F] rounded-[18px] bg-white p-4 space-y-3">
-        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-2.5">
+      <view class="shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3">
+        <view class="flex items-center justify-between border-b border-tx-border/30 pb-2.5">
           <view class="flex items-center gap-2">
-            <view class="h-4 w-1.5 rounded-full bg-[#B69171]" />
-            <text class="text-base text-[#1E1E1E] font-black tracking-tight">
+            <view class="h-4 w-1.5 rounded-full bg-tx-brown" />
+            <text class="text-base text-tx-ink font-black tracking-tight">
               位置 <text class="text-rose-500">*</text>
             </text>
           </view>
           <view class="flex items-center gap-3">
             <view
-              class="flex cursor-pointer items-center gap-1 text-sm text-[#B69171] font-bold transition-opacity active:opacity-70"
+              class="flex cursor-pointer items-center gap-1 text-sm text-tx-brown font-bold transition-opacity active:opacity-70"
               @click="locationPickerRef?.locate()"
             >
-              <text class="i-carbon:location text-sm text-[#B69171]" />
+              <text class="i-carbon:location text-sm text-tx-brown" />
               <text>定位</text>
             </view>
             <!-- #ifndef H5 -->
             <!-- H5 端无全屏选点：uni-h5 系统弹窗确认需先选 POI 列表项，高德安全密钥模式下列表加载失败；小程序端为微信原生弹窗，无此限制 -->
             <view
-              class="flex cursor-pointer items-center gap-1 text-sm text-[#756C5E] font-medium transition-opacity active:opacity-70"
+              class="flex cursor-pointer items-center gap-1 text-sm text-tx-ink-2 font-medium transition-opacity active:opacity-70"
               @click="locationPickerRef?.chooseLocation()"
             >
-              <text class="i-carbon:map text-sm text-[#756C5E]" />
+              <text class="i-carbon:map text-sm text-tx-ink-2" />
               <text>全屏</text>
             </view>
             <!-- #endif -->
@@ -371,7 +373,9 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
           round
           block
           size="large"
-          custom-class="!font-black !bg-[#B69171] !text-white !border-0 shadow-md active:scale-[0.99] transition-transform"
+          custom-class="!font-black !bg-tx-brown !text-white !border-0 shadow-md active:scale-[0.99] transition-transform"
+          :loading="createMutation.isPending.value"
+          :disabled="createMutation.isPending.value"
           @click="handleSubmit"
         >
           提交投稿

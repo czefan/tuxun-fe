@@ -2,6 +2,7 @@ import { AppRoute, withQuery } from '@/router/routes'
 import { currRoute } from '@/router/page'
 import { useAuthStore } from '@/store/auth'
 import { StorageKey } from '@/constants/storage'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 const isDev = import.meta.env.DEV
   || import.meta.env.VITE_ENABLE_MOCK === 'true'
@@ -222,7 +223,7 @@ export function requireLogin(onCancel?: () => void): boolean {
     content: '需要登录后才能继续操作，是否前往登录？',
     confirmText: '去登录',
     cancelText: '取消',
-    confirmColor: '#B69171',
+    confirmColor: TX_BG_BROWN,
     success: (res) => {
       if (res.confirm) {
         loginDirectly()

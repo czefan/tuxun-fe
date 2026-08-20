@@ -7,24 +7,24 @@ definePage({
 </script>
 
 <template>
-  <view class="page-fill bottom-space bg-[#F1DFC5] px-6 pt-8 space-y-8">
+  <view class="page-fill bottom-space bg-tx-main px-6 pt-8 space-y-8">
     <!-- 上半部分内容（品牌展示） -->
     <view class="text-center space-y-3">
-      <view class="mx-auto h-20 w-20 flex items-center justify-center rounded-3xl bg-[#B69171] text-white shadow-sm ring-4 ring-[#F9DF95]/50">
-        <text class="i-carbon:location text-4xl text-[#F9DF95] font-extrabold" />
+      <view class="mx-auto h-20 w-20 flex items-center justify-center rounded-3xl bg-tx-brown text-white shadow-sm ring-4 ring-tx-accent/50">
+        <text class="i-carbon:location text-4xl text-tx-accent font-extrabold" />
       </view>
       <view>
-        <text class="block text-2xl text-[#1E1E1E] font-black tracking-tight">图寻 TuXun</text>
-        <text class="mt-1 block text-xs text-[#756C5E] font-mono">Version 1.0.0 (Build 2026.08)</text>
+        <text class="block text-2xl text-tx-ink font-black tracking-tight">图寻 TuXun</text>
+        <text class="mt-1 block text-xs text-tx-ink-2 font-mono">Version 1.0.0 (Build 2026.08)</text>
       </view>
       <view class="flex items-center justify-center gap-2 pt-1">
-        <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] !border-[#D3BA9F]">
+        <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-tx-accent !text-tx-ink !border-tx-border">
           校园解密
         </wd-tag>
-        <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#B69171] !text-white !border-[#D3BA9F]">
+        <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-tx-brown !text-white !border-tx-border">
           机位探索
         </wd-tag>
-        <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] !border-[#D3BA9F]">
+        <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-tx-accent !text-tx-ink !border-tx-border">
           实景打卡
         </wd-tag>
       </view>
@@ -38,12 +38,12 @@ definePage({
     </view>
 
     <!-- 底部创建者与版权纯文本（无卡片包裹） -->
-    <view class="border-t border-[#D3BA9F]/40 pt-6 text-center space-y-3">
-      <view class="flex items-center justify-center gap-1.5 text-base text-[#756C5E] font-medium">
-        <text class="text-[#1E1E1E] font-bold">创建者：</text>
+    <view class="border-t border-tx-border/40 pt-6 text-center space-y-3">
+      <view class="flex items-center justify-center gap-1.5 text-base text-tx-ink-2 font-medium">
+        <text class="text-tx-ink font-bold">创建者：</text>
         <text class="text-[#5C4D3E] font-bold">挑战网</text>
       </view>
-      <text class="block text-xs text-[#8A7E70] font-medium">
+      <text class="block text-xs text-tx-ink-3 font-medium">
         © 2026 图寻 TuXun · 挑战网
       </text>
     </view>

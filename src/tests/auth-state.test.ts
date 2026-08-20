@@ -6,7 +6,6 @@ import { useAuth as useUserAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
 import { useAuthStore } from '@/store/auth'
 import { clearReturnPath, getLogoutUrl, takeReturnPath, validateAndClearState } from '@/service/auth/login'
-import { relaunchMiniProgram } from '@/utils/mp-webview'
 
 const PROFILE = {
   id: 1,
@@ -208,12 +207,5 @@ describe('clearReturnPath', () => {
     uni.setStorageSync('login_return_path', '/pages/my/index')
     clearReturnPath()
     expect(uni.getStorageSync('login_return_path')).toBeFalsy()
-  })
-})
-
-describe('relaunchMiniProgram', () => {
-  it('非小程序环境下直接返回 false', async () => {
-    const res = await relaunchMiniProgram()
-    expect(res).toBe(false)
   })
 })

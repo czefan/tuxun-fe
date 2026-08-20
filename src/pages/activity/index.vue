@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { formatDate } from '@/utils/date'
 import { AppRoute, withQuery } from '@/router/routes'
 import { useInfiniteActivityList } from '@/features/activity/query'
 import type { ActivityQueryParams, ActivityVM } from '@/features/activity/types'
 import { usePopupTopPadding, useStickyTop } from '@/composables/use-sticky-top'
+import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
+import { TX_INK } from '@/styles/constants'
 
 definePage({
   style: {
@@ -45,15 +46,11 @@ const {
 
 const activities = computed<ActivityVM[]>(() => data.value?.pages.flatMap(page => page.list) ?? [])
 
-onReachBottom(() => {
-  if (hasNextPage?.value && !isFetchingNextPage.value) {
-    fetchNextPage()
-  }
-})
-
-onPullDownRefresh(async () => {
-  await refetch()
-  uni.stopPullDownRefresh()
+useInfiniteListPage({
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+  refetch,
 })
 
 function goActivity(item: ActivityVM) {
@@ -91,9 +88,9 @@ function handleModalGoActivity() {
 </script>
 
 <template>
-  <view class="page-activity safe-bottom-page--fixed-bar bg-[#F1DFC5]">
+  <view class="page-activity safe-bottom-page--fixed-bar bg-tx-main">
     <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
-    <view class="sticky z-20 box-border w-full bg-[#F1DFC5] px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
+    <view class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
       <view class="flex items-center gap-2">
         <view class="min-w-0 flex-1">
           <wd-search
@@ -106,11 +103,11 @@ function handleModalGoActivity() {
           />
         </view>
         <view
-          class="shadow-2xs h-9 w-9 flex flex-shrink-0 cursor-pointer items-center justify-center border border-[#D3BA9F] rounded-full transition-transform active:scale-95"
-          :class="filterVisible ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+          class="shadow-2xs h-9 w-9 flex flex-shrink-0 cursor-pointer items-center justify-center border border-tx-border rounded-full transition-transform active:scale-95"
+          :class="filterVisible ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
           @tap="filterVisible = !filterVisible"
         >
-          <text class="i-carbon:filter text-base" :class="filterVisible ? 'text-white' : 'text-[#B69171]'" />
+          <text class="i-carbon:filter text-base" :class="filterVisible ? 'text-white' : 'text-tx-brown'" />
         </view>
       </view>
     </view>
@@ -125,27 +122,27 @@ function handleModalGoActivity() {
         @close="filterVisible = false"
       >
         <view
-          class="relative box-border w-full border-b border-[#D3BA9F] rounded-b-[24px] bg-[#F1DFC5] px-4 pb-5 shadow-2xl space-y-4"
+          class="relative box-border w-full border-b border-tx-border rounded-b-[24px] bg-tx-main px-4 pb-5 shadow-2xl space-y-4"
           :style="{ paddingTop: popupTop.paddingTop }"
         >
           <!-- 右上角绝对定位关闭按钮 -->
           <view
-            class="absolute right-4 z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-[#B69171]/30 transition-transform active:scale-95"
+            class="absolute right-4 z-1 h-8 w-8 flex cursor-pointer items-center justify-center rounded-full bg-tx-brown/30 transition-transform active:scale-95"
             :style="{ top: popupTop.closeTop }"
             @tap="filterVisible = false"
           >
-            <wd-icon name="close" size="18px" color="#1E1E1E" />
+            <wd-icon name="close" size="18px" :color="TX_INK" />
           </view>
 
           <!-- 活动状态筛选 -->
           <view class="space-y-1.5">
-            <text class="text-xs text-[#756C5E] font-bold">活动状态</text>
+            <text class="text-xs text-tx-ink-2 font-bold">活动状态</text>
             <view class="grid grid-cols-3 gap-2 py-0.5">
               <view
                 v-for="opt in filterOptions"
                 :key="opt.label"
                 class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
-                :class="activeFilter === opt.value ? 'border-[#B69171] bg-[#B69171] text-white shadow-xs' : 'border-[#D3BA9F] bg-white text-[#1E1E1E]'"
+                :class="activeFilter === opt.value ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
                 @tap="selectFilter(opt.value)"
               >
                 {{ opt.label }}
@@ -160,11 +157,11 @@ function handleModalGoActivity() {
         <view
           v-for="item in activities"
           :key="item.id"
-          class="group shadow-2xs relative cursor-pointer overflow-hidden border border-[#D3BA9F] rounded-xl bg-white transition-all active:scale-[0.99]"
+          class="group shadow-2xs relative cursor-pointer overflow-hidden border border-tx-border rounded-xl bg-white transition-all active:scale-[0.99]"
           @tap="openDetailModal(item)"
         >
           <!-- 图片卡片主视图 -->
-          <view class="relative h-44 w-full overflow-hidden bg-[#B69171]/10">
+          <view class="relative h-44 w-full overflow-hidden bg-tx-brown/10">
             <wd-img
               custom-class="h-full w-full object-cover"
               lazy-load
@@ -199,11 +196,11 @@ function handleModalGoActivity() {
                 {{ item.title }}
               </text>
               <view
-                class="shadow-xs flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-full bg-[#F9DF95] px-3 py-1.5 text-xs text-[#1E1E1E] font-black transition-transform active:scale-95"
+                class="shadow-xs flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-full bg-tx-accent px-3 py-1.5 text-xs text-tx-ink font-black transition-transform active:scale-95"
                 @tap.stop="goActivity(item)"
               >
                 <text>进入</text>
-                <wd-icon name="arrow-right" size="12px" color="#1E1E1E" />
+                <wd-icon name="arrow-right" size="12px" :color="TX_INK" />
               </view>
             </view>
           </view>
@@ -238,13 +235,17 @@ function handleModalGoActivity() {
         :z-index="999"
         custom-style="background: transparent; width: 90%; max-width: 400px;"
       >
-        <view v-if="selectedActivity" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-2xl bg-[#F1DFC5] shadow-2xl">
+        <view v-if="selectedActivity" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-tx-main shadow-2xl">
           <!-- 弹窗活动大图/封面 -->
-          <view class="relative w-full flex overflow-hidden bg-[#B69171]/10">
+          <view
+            class="relative w-full flex overflow-hidden bg-tx-brown/10"
+            :style="selectedActivity.coverImage?.width && selectedActivity.coverImage?.height ? { aspectRatio: `${selectedActivity.coverImage.width} / ${selectedActivity.coverImage.height}` } : {}"
+          >
             <wd-img
+              :key="`activity-modal-${selectedActivity.id}`"
               custom-class="w-full !block"
-              custom-style="display: block; vertical-align: top;"
-              :src="selectedActivity.coverImage.url"
+              :custom-style="`display: block; vertical-align: top; width: 100%;${selectedActivity.coverImage?.width && selectedActivity.coverImage?.height ? ` aspect-ratio: ${selectedActivity.coverImage.width} / ${selectedActivity.coverImage.height};` : ''}`"
+              :src="selectedActivity.coverImage.originUrl || selectedActivity.coverImage.url"
               lazy-load
               mode="widthFix"
               width="100%"
@@ -256,33 +257,33 @@ function handleModalGoActivity() {
 
           <!-- 弹窗可滚动内容区 -->
           <view class="min-h-0 flex-1 overflow-y-auto p-5 space-y-3.5">
-            <text class="block text-lg text-[#1E1E1E] font-black leading-snug tracking-tight">
+            <text class="block text-lg text-tx-ink font-black leading-snug tracking-tight">
               {{ selectedActivity.title }}
             </text>
 
             <!-- 完整描述内容 -->
-            <view class="border-t border-[#D3BA9F]/40 pt-2.5">
+            <view class="border-t border-tx-border/40 pt-2.5">
               <text class="block whitespace-pre-wrap text-sm text-[#555555] leading-relaxed">
                 {{ selectedActivity.description || '暂无详细描述。' }}
               </text>
             </view>
 
             <!-- 时间区间 -->
-            <view v-if="selectedActivity.startTime || selectedActivity.endTime" class="border-t border-[#D3BA9F]/30 pt-2.5">
-              <text class="block text-sm text-[#756C5E] font-bold font-numeric">
+            <view v-if="selectedActivity.startTime || selectedActivity.endTime" class="border-t border-tx-border/30 pt-2.5">
+              <text class="block text-sm text-tx-ink-2 font-bold font-numeric">
                 {{ formatDate(selectedActivity.startTime) }} ~ {{ formatDate(selectedActivity.endTime) }}
               </text>
             </view>
           </view>
 
           <!-- 底部固定主操作按钮 -->
-          <view class="flex-shrink-0 border-t border-[#D3BA9F]/30 p-4 pt-3">
+          <view class="flex-shrink-0 border-t border-tx-border/30 p-4 pt-3">
             <wd-button
               type="warning"
               round
               block
               size="large"
-              custom-class="!font-black !bg-[#F9DF95] !text-[#1E1E1E] !border-0 shadow-xs active:scale-[0.99] transition-transform"
+              custom-class="!font-black !bg-tx-accent !text-tx-ink !border-0 shadow-xs active:scale-[0.99] transition-transform"
               @click="handleModalGoActivity"
             >
               进入

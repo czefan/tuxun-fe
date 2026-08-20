@@ -40,11 +40,11 @@ function handlePreviewImage(url: string) {
       <view
         v-for="item in list"
         :key="item.id"
-        class="flex items-center gap-3 border-b border-[#D3BA9F]/30 pb-3.5 last:border-b-0"
+        class="flex items-center gap-3 border-b border-tx-border/30 pb-3.5 last:border-b-0"
       >
         <!-- 左侧：破解实拍缩略图（点击放大预览） -->
         <view
-          class="h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl bg-[#F8F6F2] ring-1 ring-[#D3BA9F]/60 transition-transform active:scale-95"
+          class="h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl bg-tx-surface ring-1 ring-tx-border/60 transition-transform active:scale-95"
           @click="handlePreviewImage(item.image.originUrl || item.image.url)"
         >
           <wd-img
@@ -63,7 +63,7 @@ function handlePreviewImage(url: string) {
             <!-- 作者头像与昵称（不加黑） -->
             <view class="flex items-center gap-2">
               <wd-img
-                custom-class="h-7 w-7 rounded-full bg-[#F8F6F2] object-cover ring-1 ring-[#B69171]/30 shadow-2xs"
+                custom-class="h-7 w-7 rounded-full bg-tx-surface object-cover ring-1 ring-tx-brown/30 shadow-2xs"
                 :src="item.author.avatar || '/static/images/default-avatar.png'"
                 lazy-load
                 mode="aspectFill"
@@ -73,7 +73,7 @@ function handlePreviewImage(url: string) {
               />
               <view class="min-w-0 flex items-center">
                 <text class="truncate u-user-name">{{ item.author.nickname }}</text>
-                <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-[#B69171]/15 px-1 py-0.2 text-[10px] text-[#B69171] font-bold leading-none">我</text>
+                <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
               </view>
             </view>
 

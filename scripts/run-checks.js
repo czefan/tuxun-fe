@@ -51,9 +51,24 @@ process.on('SIGTERM', () => {
   process.exit(143)
 })
 
-for (const result of await Promise.all(scripts.map(runScript))) {
-  results.push(result)
+const CONCURRENCY = Number(process.env.CHECK_CONCURRENCY) || 2
+
+async function runAll(list) {
+  const queue = [...list]
+  const listResults = []
+  const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+    while (queue.length > 0) {
+      const nextScript = queue.shift()
+      if (nextScript) {
+        listResults.push(await runScript(nextScript))
+      }
+    }
+  })
+  await Promise.all(workers)
+  return listResults
 }
+
+results.push(...await runAll(scripts))
 
 const failures = results.filter(result => result.code !== 0)
 

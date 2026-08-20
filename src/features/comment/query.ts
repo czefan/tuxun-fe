@@ -1,3 +1,4 @@
+import type { InfiniteData } from '@tanstack/vue-query'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
@@ -35,7 +36,7 @@ export function usePostComment(photoId: MaybeRefOrGetter<number>) {
       await queryClient.cancelQueries({ predicate: matchCommentQuery })
       const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
 
-      const currentUser = queryClient.getQueryData<any>(qk.user.info())
+      const currentUser = queryClient.getQueryData<{ id?: number, nickname?: string, avatar?: string }>(qk.user.info())
       const optimisticComment: CommentVM = {
         id: -Date.now(),
         content,
@@ -49,12 +50,12 @@ export function usePostComment(photoId: MaybeRefOrGetter<number>) {
         createdAt: '刚刚',
       }
 
-      queryClient.setQueriesData<any>(
+      queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
-        (old: any) => {
+        (old) => {
           if (!old)
             return old
-          if (typeof old === 'object' && 'pages' in old && Array.isArray(old.pages)) {
+          if ('pages' in old && Array.isArray(old.pages)) {
             if (old.pages.length === 0) {
               return {
                 ...old,
@@ -63,7 +64,7 @@ export function usePostComment(photoId: MaybeRefOrGetter<number>) {
             }
             return {
               ...old,
-              pages: old.pages.map((page: any, index: number) =>
+              pages: old.pages.map((page, index) =>
                 index === 0
                   ? {
                       ...page,
@@ -103,18 +104,18 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
       await queryClient.cancelQueries({ predicate: matchCommentQuery })
       const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
 
-      queryClient.setQueriesData<any>(
+      queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
-        (old: any) => {
+        (old) => {
           if (!old)
             return old
-          if (typeof old === 'object' && 'pages' in old && Array.isArray(old.pages)) {
+          if ('pages' in old && Array.isArray(old.pages)) {
             return {
               ...old,
-              pages: old.pages.map((page: any) => ({
+              pages: old.pages.map(page => ({
                 ...page,
                 list: Array.isArray(page.list)
-                  ? page.list.filter((item: any) => item.id !== commentId)
+                  ? page.list.filter(item => item.id !== commentId)
                   : page.list,
                 total: Math.max(0, (page.total ?? 0) - 1),
               })),
@@ -150,18 +151,18 @@ export function useSetCommentLike(_photoId?: MaybeRefOrGetter<number>) {
       await queryClient.cancelQueries({ predicate: matchCommentQuery })
       const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
 
-      queryClient.setQueriesData<any>(
+      queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
-        (old: any) => {
+        (old) => {
           if (!old)
             return old
-          if (typeof old === 'object' && 'pages' in old && Array.isArray(old.pages)) {
+          if ('pages' in old && Array.isArray(old.pages)) {
             return {
               ...old,
-              pages: old.pages.map((page: any) => ({
+              pages: old.pages.map(page => ({
                 ...page,
                 list: Array.isArray(page.list)
-                  ? page.list.map((item: any) => {
+                  ? page.list.map((item) => {
                       if (item.id !== commentId)
                         return item
                       const delta = item.liked === liked ? 0 : (liked ? 1 : -1)

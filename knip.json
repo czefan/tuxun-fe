@@ -12,7 +12,6 @@
     "src/components/**/*.vue",
     "src/mocks/browser.ts",
     "src/mocks/node.ts",
-    "src/**/*.test.ts",
     "pages.config.ts",
     "manifest.config.ts",
     "build/**/*.ts",

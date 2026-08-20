@@ -24,7 +24,7 @@ onHide(() => {
 useAppLifecycle()
 
 function logAppLifecycle(name: string, payload?: unknown) {
-  if (import.meta.env.MODE !== 'production') {
+  if (import.meta.env.DEV) {
     console.log(`App.vue ${name}`, payload)
   }
 }

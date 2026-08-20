@@ -7,10 +7,9 @@
 ## 📌 常见 Composables 说明
 
 - **`use-auth.ts`**：基础设施层登录态判断（`isLoggedIn` / `isMe`）、登录触发与前置登录拦截。
+- **`use-infinite-list-page.ts`**：列表页标准分页与下拉刷新管理（支持 Tab 分流）。
 - **`use-map.ts`**：地图坐标转换（`pixelToCoordinate` 等）与选点定位。
 - **`use-network-status.ts`**：网络状态监听。
-- **`use-request.ts`**：请求状态封装（加载中 / 数据 / 变更提交）。
-- **`use-timer.ts`**：定时器与倒计时。
 - **`use-view-transition.ts`**：基于原生 View Transitions API 的页面转场。
 
 ---

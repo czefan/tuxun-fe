@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import {
   useInfiniteAnnouncements,
   useInfiniteInteractions,
   useMarkAllInteractionsRead,
   useMarkInteractionRead,
 } from '@/features/notification/query'
+import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
 import type { AnnouncementVM, InteractionMessageVM } from '@/features/notification/types'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
@@ -78,27 +78,20 @@ const interactions = computed<InteractionMessageVM[]>(() => interactPagesData.va
 
 const unreadInteractCount = computed(() => interactPagesData.value?.pages[0]?.unreadCount ?? 0)
 
-onReachBottom(() => {
-  if (activeTab.value === '系统通知') {
-    if (hasNextAnnounce?.value && !isFetchingAnnounce.value) {
-      fetchNextAnnounce()
-    }
-  }
-  else {
-    if (hasNextInteract?.value && !isFetchingInteract.value) {
-      fetchNextInteract()
-    }
-  }
+useInfiniteListPage({
+  hasNextPage: hasNextAnnounce,
+  isFetchingNextPage: isFetchingAnnounce,
+  fetchNextPage: fetchNextAnnounce,
+  refetch: refetchAnnounce,
+  enabled: () => activeTab.value === '系统通知',
 })
 
-onPullDownRefresh(async () => {
-  if (activeTab.value === '系统通知') {
-    await refetchAnnounce()
-  }
-  else {
-    await refetchInteract()
-  }
-  uni.stopPullDownRefresh()
+useInfiniteListPage({
+  hasNextPage: hasNextInteract,
+  isFetchingNextPage: isFetchingInteract,
+  fetchNextPage: fetchNextInteract,
+  refetch: refetchInteract,
+  enabled: () => activeTab.value === '互动消息',
 })
 
 interface TimeGroup<T> {
@@ -235,7 +228,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
 </script>
 
 <template>
-  <view class="page-notice swiper-page bg-[#F1DFC5] px-3 pt-3">
+  <view class="page-notice swiper-page bg-tx-main px-3 pt-3">
     <!-- 融入页面的顶栏 Seamless Sub Tabs 导航 -->
     <view class="flex flex-shrink-0 items-end justify-between px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
       <view class="flex items-center gap-6">
@@ -243,7 +236,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
           v-for="opt in tabOptions"
           :key="opt"
           class="relative flex cursor-pointer items-center gap-1.5 pb-2.5 text-base transition-all active:scale-95"
-          :class="activeTab === opt ? 'text-[#1E1E1E] font-black' : 'text-[#8A7E70] font-bold'"
+          :class="activeTab === opt ? 'text-tx-ink font-black' : 'text-tx-ink-3 font-bold'"
           @tap="activeTab = opt"
         >
           <text>{{ opt }}</text>
@@ -251,7 +244,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
           <view v-if="isLoggedIn() && opt === '互动消息' && unreadInteractCount" class="h-2 w-2 rounded-full bg-rose-500" />
           <view
             v-if="activeTab === opt"
-            class="absolute left-0 right-0 h-[2.5px] rounded-full bg-[#B69171] -bottom-[1px]"
+            class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
           />
         </view>
       </view>
@@ -261,14 +254,14 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
         <view
           v-if="activeTab === '系统通知'"
           class="h-7 w-7 flex cursor-pointer items-center justify-center rounded-full transition-all active:scale-90"
-          :class="showSearchInput ? 'bg-[#B69171] text-white shadow-2xs' : 'text-[#756C5E] hover:text-[#1E1E1E]'"
+          :class="showSearchInput ? 'bg-tx-brown text-white shadow-2xs' : 'text-tx-ink-2 hover:text-tx-ink'"
           @tap="showSearchInput = !showSearchInput"
         >
           <text class="i-carbon:search text-base" />
         </view>
         <template v-if="activeTab === '互动消息' && unreadInteractCount">
           <view
-            class="cursor-pointer text-sm text-[#B69171] font-black transition-opacity active:opacity-75"
+            class="cursor-pointer text-sm text-tx-brown font-black transition-opacity active:opacity-75"
             @tap="handleReadAllInteractions"
           >
             一键已读
@@ -278,7 +271,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
     </view>
 
     <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
-    <view v-if="activeTab === '系统通知' && showSearchInput" class="w-full border-b border-[#D3BA9F]/50 pb-2 pt-2">
+    <view v-if="activeTab === '系统通知' && showSearchInput" class="w-full border-b border-tx-border/50 pb-2 pt-2">
       <wd-search
         v-model="searchKeyword"
         :focus="true"
@@ -327,14 +320,14 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                   {{ group.title }}
                 </text>
 
-                <view class="border-y border-[#B69171]">
+                <view class="border-y border-tx-brown">
                   <view
                     v-for="(item, index) in group.list"
                     :key="item.id"
                     class="cursor-pointer py-3.5 transition-colors space-y-1 active:opacity-70"
                     :class="[
-                      { 'border-t border-[#B69171]': index > 0 },
-                      !isAnnouncementRead(item.id) ? 'bg-[#F9DF95]/15 -mx-3 px-3' : '',
+                      { 'border-t border-tx-brown': index > 0 },
+                      !isAnnouncementRead(item.id) ? 'bg-tx-accent/15 -mx-3 px-3' : '',
                     ]"
                     @tap="goAnnouncementDetail(item.id)"
                   >
@@ -344,18 +337,18 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                         <view v-if="!isAnnouncementRead(item.id)" class="h-2 w-2 flex-shrink-0 rounded-full bg-rose-500" />
                         <text
                           class="truncate text-base tracking-tight"
-                          :class="!isAnnouncementRead(item.id) ? 'text-[#1E1E1E] font-black' : 'text-[#333333] font-bold'"
+                          :class="!isAnnouncementRead(item.id) ? 'text-tx-ink font-black' : 'text-[#333333] font-bold'"
                         >
                           {{ item.title }}
                         </text>
                       </view>
-                      <text class="flex-shrink-0 text-sm text-[#756C5E] font-bold font-numeric">
+                      <text class="flex-shrink-0 text-sm text-tx-ink-2 font-bold font-numeric">
                         {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
                       </text>
                     </view>
 
                     <!-- 内容预览 -->
-                    <text class="line-clamp-2 block text-sm leading-relaxed" :class="!isAnnouncementRead(item.id) ? 'text-[#333333]' : 'text-[#756C5E]'">
+                    <text class="line-clamp-2 block text-sm leading-relaxed" :class="!isAnnouncementRead(item.id) ? 'text-[#333333]' : 'text-tx-ink-2'">
                       {{ item.contentPreview }}
                     </text>
                   </view>
@@ -405,18 +398,18 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                   {{ group.title }}
                 </text>
 
-                <view class="border-y border-[#B69171]">
+                <view class="border-y border-tx-brown">
                   <view
                     v-for="(item, index) in group.list"
                     :key="item.id"
                     class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-70"
-                    :class="[{ 'border-t border-[#B69171]': index > 0 }, !item.isRead ? 'bg-[#F9DF95]/20 -mx-3 px-3' : '']"
+                    :class="[{ 'border-t border-tx-brown': index > 0 }, !item.isRead ? 'bg-tx-accent/20 -mx-3 px-3' : '']"
                     @tap="handleInteractionTap(item)"
                   >
                     <view class="min-w-0 flex flex-1 items-center gap-3">
                       <view class="relative flex-shrink-0">
                         <wd-img
-                          custom-class="h-11 w-11 block rounded-full bg-slate-100 object-cover ring-1 ring-[#B69171]"
+                          custom-class="h-11 w-11 block rounded-full bg-slate-100 object-cover ring-1 ring-tx-brown"
                           :src="item.user.avatar || '/static/images/default-avatar.png'"
                           lazy-load
                           mode="aspectFill"
@@ -435,18 +428,18 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
                         <!-- 第一行：用户名 (靠左) + 时间 (靠右) -->
                         <view class="flex items-center justify-between gap-2">
                           <view class="min-w-0 flex flex-1 items-center">
-                            <text class="truncate text-sm text-[#1E1E1E] font-black tracking-tight">
+                            <text class="truncate text-sm text-tx-ink font-black tracking-tight">
                               {{ item.user.nickname }}
                             </text>
-                            <text v-if="isMe(item.user.id)" class="ml-1 flex-shrink-0 rounded bg-[#B69171]/15 px-1 py-0.2 text-[10px] text-[#B69171] font-bold leading-none">我</text>
+                            <text v-if="isMe(item.user.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
                           </view>
-                          <text class="flex-shrink-0 text-xs text-[#756C5E] font-bold font-numeric">
+                          <text class="flex-shrink-0 text-xs text-tx-ink-2 font-bold font-numeric">
                             {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
                           </text>
                         </view>
 
                         <!-- 第二行：文字描述内容 (增加 break-all 允许自然断字填满行尾) -->
-                        <text class="line-clamp-2 block break-all text-sm text-[#756C5E] font-medium leading-relaxed">
+                        <text class="line-clamp-2 block break-all text-sm text-tx-ink-2 font-medium leading-relaxed">
                           {{ item.content }}
                         </text>
                       </view>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { normalizeToGcj02 } from '@/composables/use-map'
 import { useInfiniteMyPhotos, useMyPhotoDetail } from '@/features/record/query'
 import type { UserPhotoVM } from '@/features/record/types'
 import { useAuth } from '@/features/user/composables/use-auth'
+import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
 import { AppRoute, withQuery } from '@/router/routes'
 import { previewImage } from '@/utils/image-preview'
 
@@ -69,15 +69,11 @@ const detailVisible = computed({
   },
 })
 
-onReachBottom(() => {
-  if (hasNextPage?.value && !isFetchingNextPage.value) {
-    fetchNextPage()
-  }
-})
-
-onPullDownRefresh(async () => {
-  await refetch()
-  uni.stopPullDownRefresh()
+useInfiniteListPage({
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+  refetch,
 })
 
 function openDetail(item: UserPhotoVM) {
@@ -132,20 +128,20 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
 </script>
 
 <template>
-  <view class="page-my-contributions swiper-page bg-[#F1DFC5] px-3 pt-3">
+  <view class="page-my-contributions swiper-page bg-tx-main px-3 pt-3">
     <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
     <view class="flex flex-shrink-0 items-center gap-6 px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
       <view
         v-for="opt in statusOptions"
         :key="opt"
         class="relative cursor-pointer pb-2.5 text-base transition-all active:scale-95"
-        :class="activeStatusIndex === opt ? 'text-[#1E1E1E] font-black' : 'text-[#8A7E70] font-bold'"
+        :class="activeStatusIndex === opt ? 'text-tx-ink font-black' : 'text-tx-ink-3 font-bold'"
         @tap="activeStatusIndex = opt"
       >
         <text>{{ opt }}</text>
         <view
           v-if="activeStatusIndex === opt"
-          class="absolute left-0 right-0 h-[2.5px] rounded-full bg-[#B69171] -bottom-[1px]"
+          class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
         />
       </view>
     </view>
@@ -174,17 +170,17 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
                 重新加载
               </wd-button>
             </view>
-            <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-[#B69171]">
+            <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-tx-brown">
               <view
                 v-for="(item, index) in getFilteredList(opt)"
                 :key="item.id"
                 class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-75"
-                :class="index > 0 ? 'border-t border-[#B69171]' : ''"
+                :class="index > 0 ? 'border-t border-tx-brown' : ''"
                 @tap="openDetail(item)"
               >
                 <view class="mr-2 h-16 min-w-0 flex flex-1 items-center gap-3">
                   <wd-img
-                    custom-class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#B69171]/10 object-cover ring-1 ring-[#D3BA9F]"
+                    custom-class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-tx-brown/10 object-cover ring-1 ring-tx-border"
                     lazy-load
                     :src="item.image.url"
                     mode="aspectFill"
@@ -222,20 +218,24 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
       custom-style="background: transparent; width: 88vw; max-width: 640rpx;"
       @close="closeDetail"
     >
-      <view v-if="detailData" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-[#D3BA9F] rounded-[24px] bg-[#F1DFC5] shadow-2xl">
+      <view v-if="detailData" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-[24px] bg-tx-main shadow-2xl">
         <!-- 头部固定标题 -->
-        <view class="flex flex-shrink-0 items-center justify-between border-b border-[#D3BA9F]/40 px-5 pb-2.5 pt-4">
+        <view class="flex flex-shrink-0 items-center justify-between border-b border-tx-border/40 px-5 pb-2.5 pt-4">
           <text class="u-title-lg">{{ detailData.title }}</text>
-          <wd-icon name="close" size="20px" custom-class="cursor-pointer text-[#756C5E]" @click="closeDetail" />
+          <wd-icon name="close" size="20px" custom-class="cursor-pointer text-tx-ink-2" @click="closeDetail" />
         </view>
 
         <!-- 内容滚动区：图片 + 状态/描述/驳回原因 -->
         <view class="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2.5 space-y-3">
           <!-- 投稿图片区（点击放大预览，右下角悬浮【查看位置】胶囊按钮） -->
-          <view class="relative w-full flex overflow-hidden border border-[#D3BA9F]/50 rounded-xl bg-[#B69171]/10">
+          <view
+            class="relative w-full flex overflow-hidden border border-tx-border/50 rounded-xl bg-tx-brown/10"
+            :style="detailData.image?.width && detailData.image?.height ? { aspectRatio: `${detailData.image.width} / ${detailData.image.height}` } : {}"
+          >
             <wd-img
+              :key="`contrib-modal-${detailData.id}`"
               custom-class="shadow-2xs !block w-full cursor-pointer transition-opacity active:opacity-90"
-              custom-style="display: block; vertical-align: top;"
+              :custom-style="`display: block; vertical-align: top; width: 100%;${detailData.image?.width && detailData.image?.height ? ` aspect-ratio: ${detailData.image.width} / ${detailData.image.height};` : ''}`"
               lazy-load
               :src="detailData.image.originUrl || detailData.image.url"
               mode="widthFix"
@@ -249,7 +249,7 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
               class="absolute bottom-2.5 right-2.5 z-10 flex cursor-pointer items-center gap-1.5 border border-white/20 rounded-full bg-black/50 px-3 py-1 text-xs text-white font-bold shadow-md backdrop-blur-md transition-transform active:scale-95"
               @click.stop="handleOpenLocation"
             >
-              <text class="i-carbon:location text-sm text-[#F9DF95]" />
+              <text class="i-carbon:location text-sm text-tx-accent" />
               <text>查看位置</text>
             </view>
           </view>
@@ -275,7 +275,7 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
         </view>
 
         <!-- 底部固定操作栏（仅驳回状态展示） -->
-        <view v-if="detailData.status === 'rejected'" class="flex-shrink-0 border-t border-[#D3BA9F]/30 p-4">
+        <view v-if="detailData.status === 'rejected'" class="flex-shrink-0 border-t border-tx-border/30 p-4">
           <wd-button round block type="warning" size="medium" custom-class="!font-bold !text-sm" @click="handleResubmit">
             修改重新提交
           </wd-button>

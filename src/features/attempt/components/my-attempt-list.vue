@@ -44,13 +44,13 @@ function handleOpenLocation(location?: Location | null) {
       <view
         v-for="item in list"
         :key="item.id"
-        class="flex flex-col gap-2 border-b border-[#D3BA9F]/30 pb-3.5 pt-1 last:border-b-0"
+        class="flex flex-col gap-2 border-b border-tx-border/30 pb-3.5 pt-1 last:border-b-0"
       >
         <!-- 顶行：左侧作答图片 + 右侧常规信息 (时间在左、状态在右，定位在下，恢复原版垂直居中位置) -->
         <view class="flex items-center gap-3">
           <!-- 左侧：作答实拍缩略图（点击放大预览） -->
           <view
-            class="h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl bg-[#F8F6F2] ring-1 ring-[#D3BA9F]/60 transition-transform active:scale-95"
+            class="h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl bg-tx-surface ring-1 ring-tx-border/60 transition-transform active:scale-95"
             @click="handlePreview(item)"
           >
             <wd-img
@@ -72,7 +72,7 @@ function handleOpenLocation(location?: Location | null) {
                   class="flex u-action-link items-center gap-1 transition-opacity active:opacity-70"
                   @click="handleOpenLocation(item.location)"
                 >
-                  <text class="i-carbon:location text-sm text-[#B69171]" />
+                  <text class="i-carbon:location text-sm text-tx-brown" />
                   <text>查看位置</text>
                 </view>
               </view>

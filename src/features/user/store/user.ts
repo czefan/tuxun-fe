@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { AuthCleanupStorageKeys, SearchHistoryKeyPrefix } from '@/constants'
-import { invalidateRequestCache } from '@/composables/use-request'
 import { queryClient } from '@/service/query/client'
 import { useAuthStore } from '@/store/auth'
 import { useAnswerRecordLikeStore, useQuestionLikeStore } from '@/store/question-like'
@@ -69,7 +68,6 @@ export const useUserStore = defineStore(
 )
 
 function clearClientSessionState() {
-  invalidateRequestCache()
   useQuestionLikeStore().clearQuestionLiked()
   useAnswerRecordLikeStore().clearAnswerRecordLiked()
   queryClient.removeQueries()

@@ -5,7 +5,7 @@ import { useAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
 import { getCallbackUrl, redirectToOAuth, takeReturnPath, validateAndClearState } from '@/service/auth/login'
 import { AppRoute } from '@/router/routes'
-import { BRAND_PRIMARY_COLOR } from '@/styles/constants'
+import { TX_BG_BROWN } from '@/styles/constants'
 import { ApiRequestError } from '@/service/request/error'
 
 definePage({
@@ -111,8 +111,8 @@ onLoad(async (query: Record<string, any> = {}) => {
 
 <template>
   <view class="page-auth-callback min-h-100vh flex flex-col items-center justify-center gap-24rpx bg-white p-32rpx">
-    <wd-loading v-if="!isError" type="circular" :color="BRAND_PRIMARY_COLOR" size="44rpx" />
-    <text class="block text-center text-28rpx text-[#81786c] font-800">{{ statusText }}</text>
+    <wd-loading v-if="!isError" type="circular" :color="TX_BG_BROWN" size="44rpx" />
+    <text class="block text-center text-28rpx text-tx-ink-3 font-800">{{ statusText }}</text>
     <wd-button
       v-if="isError"
       type="warning"

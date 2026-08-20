@@ -94,21 +94,21 @@ function clearHistory() {
   <!-- 搜索栏正下方高级连体下拉面板 (High-end agency grade dropdown) -->
   <view
     v-if="visible"
-    class="absolute inset-x-0 top-full z-40 overflow-hidden border border-t-0 border-[#D3BA9F]/70 rounded-b-[24px] bg-[#FFFDF9]/98 p-4 pt-6 shadow-2xl backdrop-blur-xl -mt-5 space-y-3.5"
+    class="absolute inset-x-0 top-full z-40 overflow-hidden border border-t-0 border-tx-border/70 rounded-b-[24px] bg-[#FFFDF9]/98 p-4 pt-6 shadow-2xl backdrop-blur-xl -mt-5 space-y-3.5"
   >
     <!-- 仅显示：搜索历史记录 -->
     <view v-if="!searchKeyword" class="space-y-2.5">
       <view class="flex items-center justify-between px-0.5">
         <view class="flex items-center gap-1.5">
-          <text class="i-carbon:time text-xs text-[#B69171]" />
-          <text class="text-xs text-[#1E1E1E] font-black tracking-wide">搜索历史记录</text>
+          <text class="i-carbon:time text-xs text-tx-brown" />
+          <text class="text-xs text-tx-ink font-black tracking-wide">搜索历史记录</text>
         </view>
         <view
           v-if="historyList.length"
-          class="flex cursor-pointer items-center gap-1 text-xs text-[#756C5E] font-extrabold transition-opacity active:opacity-60"
+          class="flex cursor-pointer items-center gap-1 text-xs text-tx-ink-2 font-extrabold transition-opacity active:opacity-60"
           @tap="clearHistory"
         >
-          <text class="i-carbon:trash-can text-xs text-[#756C5E]" />
+          <text class="i-carbon:trash-can text-xs text-tx-ink-2" />
           <text>清空</text>
         </view>
       </view>
@@ -117,42 +117,42 @@ function clearHistory() {
         <view
           v-for="item in historyList"
           :key="item"
-          class="shadow-2xs inline-flex cursor-pointer items-center gap-1.5 border border-[#D3BA9F] rounded-full bg-[#F9DF95]/85 px-3 py-1 text-xs text-[#1E1E1E] font-bold transition-all active:scale-95 hover:bg-[#F9DF95]"
+          class="shadow-2xs inline-flex cursor-pointer items-center gap-1.5 border border-tx-border rounded-full bg-tx-accent/85 px-3 py-1 text-xs text-tx-ink font-bold transition-all active:scale-95 hover:bg-tx-accent"
           @tap="useHistory(item)"
         >
           <text class="max-w-200rpx truncate">{{ item }}</text>
           <text
-            class="i-carbon:close-small text-xs text-[#756C5E] transition-colors hover:text-[#1E1E1E]"
+            class="i-carbon:close-small text-xs text-tx-ink-2 transition-colors hover:text-tx-ink"
             @tap.stop="removeHistory(item)"
           />
         </view>
       </view>
       <view v-else class="py-3 text-center">
-        <text class="text-xs text-[#756C5E] font-bold">暂无历史记录</text>
+        <text class="text-xs text-tx-ink-2 font-bold">暂无历史记录</text>
       </view>
     </view>
 
     <!-- 仅显示：搜索推荐相关词 -->
     <view v-else class="space-y-1">
-      <text class="block px-0.5 text-xs text-[#1E1E1E] font-black tracking-wide">搜索推荐相关词</text>
-      <view class="pt-1 divide-y divide-[#D3BA9F]/20">
+      <text class="block px-0.5 text-xs text-tx-ink font-black tracking-wide">搜索推荐相关词</text>
+      <view class="pt-1 divide-y divide-tx-border/20">
         <view
           v-for="item in visibleResults"
           :key="item.id"
-          class="flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2.5 transition-all active:bg-[#B69171]/10"
+          class="flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2.5 transition-all active:bg-tx-brown/10"
           @tap="useHistory(item.title)"
         >
           <view class="min-w-0 flex flex-1 items-center gap-2.5">
-            <view class="h-6 w-6 flex items-center justify-center rounded-full bg-[#B69171]/15 text-[#B69171]">
+            <view class="h-6 w-6 flex items-center justify-center rounded-full bg-tx-brown/15 text-tx-brown">
               <text class="i-carbon:search text-xs font-bold" />
             </view>
-            <text class="truncate text-xs text-[#1E1E1E] font-black">{{ item.title }}</text>
+            <text class="truncate text-xs text-tx-ink font-black">{{ item.title }}</text>
           </view>
-          <text class="text-[11px] text-[#B69171] font-black">{{ item.meta }}</text>
+          <text class="text-[11px] text-tx-brown font-black">{{ item.meta }}</text>
         </view>
       </view>
       <view v-if="!visibleResults.length" class="py-4 text-center">
-        <text class="text-xs text-[#756C5E] font-bold">暂无相关推荐词</text>
+        <text class="text-xs text-tx-ink-2 font-bold">暂无相关推荐词</text>
       </view>
     </view>
   </view>

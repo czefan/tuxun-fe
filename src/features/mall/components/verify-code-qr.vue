@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue'
 import qrcode from 'qrcode-generator'
+import { TX_INK, TX_INK_2 } from '@/styles/constants'
 
 const props = defineProps<{
   verifyCode: string
@@ -46,10 +47,10 @@ watchEffect(() => {
   ctx.fillStyle = '#FFF'
   ctx.fillRect(0, 0, 480, 560)
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#1E1E1E'
+  ctx.fillStyle = TX_INK
   ctx.font = 'bold 24px sans-serif'
   ctx.fillText(props.goodName, 240, 50)
-  ctx.fillStyle = '#756C5E'
+  ctx.fillStyle = TX_INK_2
   ctx.font = '15px sans-serif'
   ctx.fillText('向现场工作人员出示防伪码或扫码核销', 240, 85)
 
@@ -89,7 +90,7 @@ function copyCode() {
 </script>
 
 <template>
-  <view class="relative mx-auto box-border w-full flex flex-col items-center gap-2.5 overflow-hidden border border-[#D3BA9F] rounded-2xl bg-white p-5 shadow-2xl">
+  <view class="relative mx-auto box-border w-full flex flex-col items-center gap-2.5 overflow-hidden border border-tx-border rounded-2xl bg-white p-5 shadow-2xl">
     <!-- 关闭按钮 -->
     <view class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-stone-100 text-stone-500 active:scale-90" @tap="emit('close')">
       <wd-icon name="close" size="14px" />
@@ -112,7 +113,7 @@ function copyCode() {
     <view class="relative box-border w-full cursor-pointer rounded-xl bg-stone-100 px-8 py-2.5 text-center active:opacity-85" @tap="copyCode">
       <text class="block text-xs text-stone-400 font-medium">核销防伪码</text>
       <text class="mt-0.5 block text-base text-stone-900 font-bold tracking-widest font-mono">{{ verifyCode }}</text>
-      <view class="absolute right-3 top-1/2 h-8 w-8 flex items-center justify-center rounded-lg bg-[#B69171]/10 text-[#B69171] -translate-y-1/2 active:scale-90" @tap.stop="copyCode">
+      <view class="absolute right-3 top-1/2 h-8 w-8 flex items-center justify-center rounded-lg bg-tx-brown/10 text-tx-brown -translate-y-1/2 active:scale-90" @tap.stop="copyCode">
         <text class="i-carbon:copy text-base" />
       </view>
     </view>

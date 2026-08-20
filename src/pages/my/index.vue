@@ -6,6 +6,7 @@ import { useUpdateAvatar, useUpdateNickname, useUserInfo } from '@/features/user
 import { smartCompressImage } from '@/utils/image-compress'
 import { AppRoute } from '@/router/routes'
 import { clearReturnPath, redirectToLogout } from '@/service/auth/login'
+import { TX_INK } from '@/styles/constants'
 
 definePage({
   style: {
@@ -156,16 +157,16 @@ function navigateTo(url: string) {
 </script>
 
 <template>
-  <view class="page-my safe-bottom-page--fixed-bar bg-[#F1DFC5] px-3 pt-3 space-y-4">
+  <view class="page-my safe-bottom-page--fixed-bar bg-tx-main px-3 pt-3 space-y-4">
     <!-- 用户身份单层精质通行证卡片 (Design-Spec #D3BA9F Passport Hero Card) -->
-    <view class="shadow-2xs overflow-hidden border border-[#B69171]/40 rounded-[18px] bg-[#D3BA9F] p-4.5 text-[#1E1E1E]">
+    <view class="shadow-2xs overflow-hidden border border-tx-brown/40 rounded-[18px] bg-tx-border p-4.5 text-tx-ink">
       <view v-if="isLoggedIn()" class="space-y-2">
         <view class="flex items-center justify-between">
           <view class="flex items-center gap-3.5">
             <view class="relative cursor-pointer transition-transform active:scale-95" @click="openEditAvatar">
               <wd-img
                 :key="heroAvatarUrl"
-                custom-class="h-16 w-16 rounded-full bg-[#D9D9D9] object-cover ring-2 ring-[#B69171] shadow-xs"
+                custom-class="h-16 w-16 rounded-full bg-[#D9D9D9] object-cover ring-2 ring-tx-brown shadow-xs"
                 :src="heroAvatarUrl"
                 lazy-load
                 mode="aspectFill"
@@ -173,7 +174,7 @@ function navigateTo(url: string) {
                 width="128rpx"
                 height="128rpx"
               />
-              <view class="shadow-xs absolute h-5 w-5 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E] ring-1 ring-white -bottom-0.5 -right-0.5">
+              <view class="shadow-xs absolute h-5 w-5 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink ring-1 ring-white -bottom-0.5 -right-0.5">
                 <text class="i-carbon:camera text-3xs font-black" />
               </view>
             </view>
@@ -181,37 +182,37 @@ function navigateTo(url: string) {
             <view class="space-y-1">
               <!-- 点击昵称直接弹出修改 -->
               <view class="inline-flex cursor-pointer items-center gap-1.5 active:opacity-75" @click="openEditNickname">
-                <text class="text-xl text-[#1E1E1E] font-black tracking-tight">{{ profileInfo?.nickname || userStore.userInfo?.nickname }}</text>
+                <text class="text-xl text-tx-ink font-black tracking-tight">{{ profileInfo?.nickname || userStore.userInfo?.nickname }}</text>
                 <wd-icon name="edit" size="14px" color="#756C5E" />
-                <view class="shadow-2xs rounded-full bg-[#F9DF95] px-2.5 py-0.5 text-[10px] text-[#1E1E1E] font-black">
+                <view class="shadow-2xs rounded-full bg-tx-accent px-2.5 py-0.5 text-[10px] text-tx-ink font-black">
                   {{ (profileInfo?.isAdmin || userStore.userInfo?.isAdmin) ? '管理员' : `Level ${(profileInfo?.level || userStore.userInfo?.level || 1)}` }}
                 </view>
               </view>
-              <text class="block text-sm text-[#756C5E] font-bold font-numeric">ID: {{ profileInfo?.id || userStore.userInfo?.id || profileInfo?.netid || userStore.userInfo?.netid }}</text>
+              <text class="block text-sm text-tx-ink-2 font-bold font-numeric">ID: {{ profileInfo?.id || userStore.userInfo?.id || profileInfo?.netid || userStore.userInfo?.netid }}</text>
             </view>
           </view>
         </view>
 
         <!-- 总积分 (向上靠紧，留白缩减) -->
-        <view class="flex items-center justify-end border-t border-[#B69171]/30 pt-1.5">
+        <view class="flex items-center justify-end border-t border-tx-brown/30 pt-1.5">
           <view class="flex cursor-pointer items-center gap-1 active:opacity-75" @click="navigateTo(AppRoute.MyPoints)">
-            <text class="text-xs text-[#756C5E] font-medium">总积分:</text>
-            <text class="ml-0.5 text-base text-[#1E1E1E] font-bold font-numeric">{{ profileInfo?.points ?? userStore.userInfo?.points ?? 0 }}</text>
+            <text class="text-xs text-tx-ink-2 font-medium">总积分:</text>
+            <text class="ml-0.5 text-base text-tx-ink font-bold font-numeric">{{ profileInfo?.points ?? userStore.userInfo?.points ?? 0 }}</text>
           </view>
         </view>
       </view>
 
       <view v-else class="flex items-center justify-between py-1">
         <view class="flex items-center gap-3.5">
-          <view class="shadow-xs h-12 w-12 flex items-center justify-center rounded-full bg-[#F9DF95] text-[#1E1E1E]">
-            <wd-icon name="user" size="24px" color="#1E1E1E" />
+          <view class="shadow-xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink">
+            <wd-icon name="user" size="24px" :color="TX_INK" />
           </view>
           <view>
-            <text class="block text-lg text-[#1E1E1E] font-black">未登录账户</text>
-            <text class="mt-0.5 block text-xs text-[#756C5E] font-bold">登录解锁校园机位与积分探索</text>
+            <text class="block text-lg text-tx-ink font-black">未登录账户</text>
+            <text class="mt-0.5 block text-xs text-tx-ink-2 font-bold">登录解锁校园机位与积分探索</text>
           </view>
         </view>
-        <wd-button size="small" round type="warning" custom-class="!font-bold !bg-[#F9DF95] !text-[#1E1E1E] shadow-xs" @click="loginDirectly">
+        <wd-button size="small" round type="warning" custom-class="!font-bold !bg-tx-accent !text-tx-ink shadow-xs" @click="loginDirectly">
           去登录
         </wd-button>
       </view>
@@ -224,23 +225,23 @@ function navigateTo(url: string) {
         :key="group.title"
         class="space-y-1"
       >
-        <text class="block px-1 text-xs text-[#756C5E] font-black tracking-wider font-mono uppercase">
+        <text class="block px-1 text-xs text-tx-ink-2 font-black tracking-wider font-mono uppercase">
           {{ group.title }}
         </text>
 
-        <view class="border-y border-[#B69171]">
+        <view class="border-y border-tx-brown">
           <view
             v-for="(item, index) in group.items"
             :key="item.title"
             class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-75"
-            :class="index > 0 ? 'border-t border-[#B69171]' : ''"
+            :class="index > 0 ? 'border-t border-tx-brown' : ''"
             @click="navigateTo(item.route)"
           >
             <view class="flex items-center gap-3.5">
-              <view class="h-8 w-8 flex items-center justify-center rounded-full bg-[#B69171]/15 text-[#B69171]">
+              <view class="h-8 w-8 flex items-center justify-center rounded-full bg-tx-brown/15 text-tx-brown">
                 <text class="text-lg font-bold" :class="item.icon" />
               </view>
-              <text class="text-sm text-[#1E1E1E] font-black tracking-tight">{{ item.title }}</text>
+              <text class="text-sm text-tx-ink font-black tracking-tight">{{ item.title }}</text>
             </view>
             <wd-icon name="arrow-right" size="14px" color="#756C5E" />
           </view>
@@ -257,27 +258,27 @@ function navigateTo(url: string) {
 
     <!-- 修改昵称 Popup -->
     <wd-popup v-model="editNameVisible" position="center" custom-style="background: transparent; width: 88vw; max-width: 620rpx; overflow: visible;" @close="editNameVisible = false">
-      <view class="box-border w-full border border-[#D3BA9F] rounded-[22px] bg-white p-5 shadow-xl space-y-4">
+      <view class="box-border w-full border border-tx-border rounded-[22px] bg-white p-5 shadow-xl space-y-4">
         <!-- 标题栏 -->
-        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-3">
+        <view class="flex items-center justify-between border-b border-tx-border/30 pb-3">
           <view class="flex items-center gap-2">
-            <view class="h-4 w-1.5 rounded-full bg-[#F9DF95]" />
+            <view class="h-4 w-1.5 rounded-full bg-tx-accent" />
             <text class="u-title-lg">修改个人昵称</text>
           </view>
-          <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#F9DF95]/50 !text-[#854D0E] !border-0">
+          <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-tx-accent/50 !text-[#854D0E] !border-0">
             剩余 {{ profileInfo?.nicknameEditsRemaining ?? userStore.userInfo?.nicknameEditsRemaining ?? 0 }} 次
           </wd-tag>
         </view>
 
         <!-- 输入框 -->
         <view class="space-y-1">
-          <text class="block text-xs text-[#756C5E] font-bold">新昵称</text>
+          <text class="block text-xs text-tx-ink-2 font-bold">新昵称</text>
           <wd-input
             v-model="newNickname"
             placeholder="请输入新昵称 (≤10字)"
             :maxlength="10"
             clearable
-            custom-class="!bg-[#F8F6F2] !rounded-xl !p-3 !border !border-[#D3BA9F]/60"
+            custom-class="!bg-tx-surface !rounded-xl !p-3 !border !border-tx-border/60"
           />
         </view>
 
@@ -287,7 +288,7 @@ function navigateTo(url: string) {
             class="flex-1"
             round
             size="medium"
-            custom-class="!bg-[#F8F6F2] !text-[#756C5E] !border !border-[#D3BA9F]/50 !font-bold"
+            custom-class="!bg-tx-surface !text-tx-ink-2 !border !border-tx-border/50 !font-bold"
             @click="editNameVisible = false"
           >
             取消
@@ -296,7 +297,7 @@ function navigateTo(url: string) {
             class="flex-1"
             round
             size="medium"
-            custom-class="!bg-[#F9DF95] !text-[#1E1E1E] !font-black shadow-xs active:scale-95 transition-transform"
+            custom-class="!bg-tx-accent !text-tx-ink !font-black shadow-xs active:scale-95 transition-transform"
             :disabled="!canSaveNickname || nicknameMutation.isPending.value"
             :loading="nicknameMutation.isPending.value"
             @click="confirmNickname"
@@ -309,25 +310,25 @@ function navigateTo(url: string) {
 
     <!-- 修改头像 Popup -->
     <wd-popup v-model="editAvatarVisible" position="center" custom-style="background: transparent; width: 88vw; max-width: 620rpx; overflow: visible;" @close="editAvatarVisible = false">
-      <view class="box-border w-full border border-[#D3BA9F] rounded-[22px] bg-white p-5 shadow-xl space-y-4">
+      <view class="box-border w-full border border-tx-border rounded-[22px] bg-white p-5 shadow-xl space-y-4">
         <!-- 标题栏 -->
-        <view class="flex items-center justify-between border-b border-[#D3BA9F]/30 pb-3">
+        <view class="flex items-center justify-between border-b border-tx-border/30 pb-3">
           <view class="flex items-center gap-2">
-            <view class="h-4 w-1.5 rounded-full bg-[#F9DF95]" />
+            <view class="h-4 w-1.5 rounded-full bg-tx-accent" />
             <text class="u-title-lg">修改个人头像</text>
           </view>
-          <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-[#F9DF95]/50 !text-[#854D0E] !border-0">
+          <wd-tag type="warning" round size="small" custom-class="!font-bold !bg-tx-accent/50 !text-[#854D0E] !border-0">
             剩余 {{ avatarRemaining }} 次
           </wd-tag>
         </view>
 
         <!-- 头像展示区 -->
         <view class="flex justify-center py-2">
-          <view class="relative rounded-full p-1 ring-4 ring-[#F9DF95]/40">
+          <view class="relative rounded-full p-1 ring-4 ring-tx-accent/40">
             <wd-img
               :key="modalAvatarUrl"
               lazy-load
-              custom-class="h-22 w-22 rounded-full bg-[#F8F6F2] object-cover ring-2 ring-[#F9DF95] shadow-sm"
+              custom-class="h-22 w-22 rounded-full bg-tx-surface object-cover ring-2 ring-tx-accent shadow-sm"
               :src="modalAvatarUrl"
               mode="aspectFill"
               round
@@ -341,7 +342,7 @@ function navigateTo(url: string) {
         <view class="space-y-2.5">
           <!-- #ifdef MP-WEIXIN -->
           <button class="m-0 w-full border-none bg-transparent p-0 outline-none" open-type="chooseAvatar" @chooseavatar="handleChooseAvatar">
-            <wd-button round block size="medium" custom-class="!bg-[#F8F6F2] !text-[#1E1E1E] !border !border-[#D3BA9F]/60 !font-bold">
+            <wd-button round block size="medium" custom-class="!bg-tx-surface !text-tx-ink !border !border-tx-border/60 !font-bold">
               <template #icon>
                 <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
               </template>
@@ -350,7 +351,7 @@ function navigateTo(url: string) {
           </button>
           <!-- #endif -->
           <!-- #ifndef MP-WEIXIN -->
-          <wd-button round block size="medium" custom-class="!bg-[#F8F6F2] !text-[#1E1E1E] !border !border-[#D3BA9F]/60 !font-bold" @click="startChooseAvatar">
+          <wd-button round block size="medium" custom-class="!bg-tx-surface !text-tx-ink !border !border-tx-border/60 !font-bold" @click="startChooseAvatar">
             <template #icon>
               <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
             </template>
@@ -363,7 +364,7 @@ function navigateTo(url: string) {
               class="flex-1"
               round
               size="medium"
-              custom-class="!bg-[#F8F6F2] !text-[#756C5E] !border !border-[#D3BA9F]/50 !font-bold"
+              custom-class="!bg-tx-surface !text-tx-ink-2 !border !border-tx-border/50 !font-bold"
               @click="editAvatarVisible = false"
             >
               取消
@@ -372,7 +373,7 @@ function navigateTo(url: string) {
               class="flex-1"
               round
               size="medium"
-              custom-class="!bg-[#F9DF95] !text-[#1E1E1E] !font-black shadow-xs active:scale-95 transition-transform"
+              custom-class="!bg-tx-accent !text-tx-ink !font-black shadow-xs active:scale-95 transition-transform"
               :disabled="!selectedAvatarPath || avatarMutation.isPending.value"
               :loading="avatarMutation.isPending.value"
               @click="confirmUpdateAvatar"

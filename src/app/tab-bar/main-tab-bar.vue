@@ -6,6 +6,7 @@ import { useTabBarStore } from './store'
 import type { CustomTabBarItem } from './types'
 import { useUserStore } from '@/features/user'
 import { AppRoute } from '@/router/routes'
+import { TX_BG_ACCENT, TX_TAB_INACTIVE } from '@/styles/constants'
 
 const store = useTabBarStore()
 const user = useUserStore()
@@ -54,8 +55,8 @@ function publish() {
     <template v-for="(item, i) in list" :key="item.pagePath || item.type || i">
       <!-- 中间 投稿加号按键 (由数据项 item.type === 'publish' 驱动) -->
       <view v-if="item.type === 'publish'" class="tab-item tab-center" @tap.stop="publish">
-        <view class="h-9 w-12 flex items-center justify-center rounded-2xl bg-[#f9df95] shadow-sm transition-transform -translate-y-1 active:scale-90">
-          <text class="i-carbon-add text-22px text-[#1e1e1e] font-black" />
+        <view class="h-9 w-12 flex items-center justify-center rounded-2xl bg-tx-accent shadow-sm transition-transform -translate-y-1 active:scale-90">
+          <text class="i-carbon-add text-22px text-tx-ink font-black" />
         </view>
       </view>
 
@@ -70,16 +71,16 @@ function publish() {
             v-if="item.iconType === 'wd'"
             class="tab-icon-wd"
             :name="isItemActive(item) ? (item.iconActive || item.icon) : item.icon"
-            :color="isItemActive(item) ? '#f9df95' : '#eedcc7'"
+            :color="isItemActive(item) ? TX_BG_ACCENT : TX_TAB_INACTIVE"
             size="52rpx"
           />
           <text
             v-else
             class="tab-icon"
             :class="[isItemActive(item) ? (item.iconActive || item.icon) : item.icon]"
-            :style="{ color: isItemActive(item) ? '#f9df95' : '#eedcc7' }"
+            :style="{ color: isItemActive(item) ? TX_BG_ACCENT : TX_TAB_INACTIVE }"
           />
-          <text class="tab-text" :style="{ color: isItemActive(item) ? '#f9df95' : '#eedcc7' }">{{ item.text }}</text>
+          <text class="tab-text" :style="{ color: isItemActive(item) ? TX_BG_ACCENT : TX_TAB_INACTIVE }">{{ item.text }}</text>
         </view>
       </view>
     </template>
@@ -88,7 +89,7 @@ function publish() {
 
 <style lang="scss">
 .main-tab-bar {
-  @apply fixed -bottom-[1px] left-0 right-0 z-50 flex items-center justify-around w-full h-[calc(var(--tx-tabbar-height)+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-[#b69171] border-t border-[#d3ba9f] shadow-lg box-border;
+  @apply fixed -bottom-[1px] left-0 right-0 z-50 flex items-center justify-around w-full h-[calc(var(--tx-tabbar-height)+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-tx-brown border-t border-tx-border shadow-lg box-border;
 }
 
 .tab-item {

@@ -11,8 +11,9 @@ import type { ExchangeRecordVM, GoodsQueryParams, GoodsVM } from './types'
 
 export function useInfiniteGoodsList(
   params?: MaybeRefOrGetter<GoodsQueryParams | undefined>,
-  options?: { refetchInterval?: number | false },
+  options?: { refetchInterval?: number | false, enabled?: MaybeRefOrGetter<boolean> },
 ) {
+  const authStore = useAuthStore()
   return useInfiniteQuery<PageResult<GoodsVM>>({
     queryKey: computed(() => qk.mall.goods(toValue(params))),
     queryFn: ({ pageParam = 1 }) => getGoods({ ...toValue(params), page: pageParam as number, page_size: 20 }),
@@ -20,6 +21,7 @@ export function useInfiniteGoodsList(
     getNextPageParam: nextPageByLoadedCount,
     refetchInterval: options?.refetchInterval ?? 15000,
     staleTime: 5000,
+    enabled: computed(() => authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled))),
   })
 }
 
