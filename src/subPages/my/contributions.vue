@@ -74,6 +74,7 @@ useInfiniteListPage({
   isFetchingNextPage,
   fetchNextPage,
   refetch,
+  enabled: () => isLoggedIn(),
 })
 
 function openDetail(item: UserPhotoVM) {

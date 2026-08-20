@@ -44,7 +44,7 @@ useInfiniteListPage({
   isFetchingNextPage,
   fetchNextPage,
   refetch,
-  enabled: () => activeTab.value === '积分明细',
+  enabled: () => isLoggedIn() && activeTab.value === '积分明细',
 })
 
 function handleLogTap(item: ScoreLogVM) {

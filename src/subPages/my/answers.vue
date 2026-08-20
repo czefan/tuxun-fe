@@ -61,6 +61,7 @@ useInfiniteListPage({
   isFetchingNextPage,
   fetchNextPage,
   refetch,
+  enabled: () => isLoggedIn(),
 })
 
 function goPhotoDetail(photoId: number) {
