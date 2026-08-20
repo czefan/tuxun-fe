@@ -1,3 +1,4 @@
+import path from 'node:path'
 import uniHelper from '@uni-helper/eslint-config'
 import boundaries from 'eslint-plugin-boundaries'
 
@@ -9,6 +10,9 @@ export default uniHelper({
     boundaries,
   },
   settings: {
+    'unocss': {
+      configPath: path.resolve('./uno.config.ts'),
+    },
     // boundaries 依赖 import 解析结果来判定被依赖方属于哪一层。
     // 不配 resolver 的话 `@/xxx` 一律解析失败 → 规则静默放行，
     // 而本项目几乎所有 import 都走 `@/` 别名，等于整条守卫失效。
