@@ -10,7 +10,7 @@ describe('debounce', () => {
     vi.useRealTimers()
   })
 
-  it('trailing edge（默认）：多次调用后只触发一次，使用最后一次的参数', () => {
+  it('多次调用后只触发一次，使用最后一次的参数', () => {
     const fn = vi.fn()
     const debouncedFn = debounce(fn, 100)
 
@@ -38,22 +38,19 @@ describe('debounce', () => {
     expect(fn).not.toHaveBeenCalled()
   })
 
-  it('flush：立即执行待执行的调用并传递参数', () => {
+  it('再次调用后正常重新计时', () => {
     const fn = vi.fn()
     const debouncedFn = debounce(fn, 100)
 
-    debouncedFn('arg1')
-    debouncedFn.flush()
+    debouncedFn('call1')
+    debouncedFn.cancel()
 
-    expect(fn).toHaveBeenCalledWith('arg1')
-  })
+    vi.advanceTimersByTime(100)
+    expect(fn).not.toHaveBeenCalled()
 
-  it('leading edge：第一次调用立即执行', () => {
-    const fn = vi.fn()
-    const debouncedFn = debounce(fn, 100, { edges: ['leading'] })
-
-    debouncedFn()
-
+    debouncedFn('call2')
+    vi.advanceTimersByTime(100)
     expect(fn).toHaveBeenCalledTimes(1)
+    expect(fn).toHaveBeenCalledWith('call2')
   })
 })

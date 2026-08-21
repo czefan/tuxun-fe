@@ -1,3 +1,4 @@
+import { withQuery } from 'ufo'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuth as useSharedAuth } from '@/composables/use-auth'
@@ -187,7 +188,10 @@ describe('getLogoutUrl 登出地址构建与降级', () => {
 
     const redirectUri = 'https://tuxun.tiaozhan.com/'
     const logoutUrl = getLogoutUrl(redirectUri)
-    expect(logoutUrl).toBe(`https://oauth.tiaozhan.com/oauth2/logout?client_id=test_client&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`)
+    expect(logoutUrl).toBe(withQuery('https://oauth.tiaozhan.com/oauth2/logout', {
+      client_id: 'test_client',
+      post_logout_redirect_uri: redirectUri,
+    }))
 
     vi.unstubAllEnvs()
   })

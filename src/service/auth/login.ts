@@ -1,3 +1,4 @@
+import { withQuery as ufoWithQuery } from 'ufo'
 import { AppRoute, withQuery } from '@/router/routes'
 import { currRoute } from '@/router/page'
 import { useAuthStore } from '@/store/auth'
@@ -25,10 +26,8 @@ function saveReturnPath() {
     if (!path || path.startsWith(AppRoute.AuthCallback) || path.startsWith(AppRoute.AuthWebview)) {
       return
     }
-    const qs = Object.entries(query || {})
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-      .join('&')
-    uni.setStorageSync(StorageKey.LoginReturnPath, qs ? `${path}?${qs}` : path)
+    const returnUrl = query && Object.keys(query).length ? ufoWithQuery(path, query) : path
+    uni.setStorageSync(StorageKey.LoginReturnPath, returnUrl)
   }
   catch {}
   // #endif
@@ -102,11 +101,10 @@ export function getLogoutUrl(postLogoutRedirectUri: string): string {
   if (!base || !clientId) {
     return ''
   }
-  const qs = [
-    `client_id=${encodeURIComponent(clientId)}`,
-    `post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirectUri)}`,
-  ].join('&')
-  return `${base}/oauth2/logout?${qs}`
+  return ufoWithQuery(`${base}/oauth2/logout`, {
+    client_id: clientId,
+    post_logout_redirect_uri: postLogoutRedirectUri,
+  })
 }
 
 /**

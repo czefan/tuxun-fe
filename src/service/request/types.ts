@@ -1,7 +1,7 @@
-import type { QueryParams } from '@/utils/query-string'
+import type { QueryObject } from 'ufo'
 
 type RequestMethod = NonNullable<UniApp.RequestOptions['method']>
-type RequestData = QueryParams
+type RequestData = QueryObject
 
 export interface RequestOptions {
   url: string

@@ -1,3 +1,5 @@
+import { withQuery as ufoWithQuery } from 'ufo'
+
 export const AppRoute = {
   Home: '/pages/index/index',
   ActivityList: '/pages/activity/index',
@@ -26,9 +28,8 @@ export type AppRoutePath = (typeof AppRoute)[keyof typeof AppRoute]
 export type RouteQueryValue = string | number | boolean | null | undefined
 
 export function withQuery(path: AppRoutePath, query: Record<string, RouteQueryValue>) {
-  const params = Object.entries(query)
-    .filter(([, value]) => value !== undefined && value !== null && value !== '')
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-
-  return params.length ? `${path}?${params.join('&')}` : path
+  const cleaned = Object.fromEntries(
+    Object.entries(query).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+  )
+  return ufoWithQuery(path, cleaned)
 }

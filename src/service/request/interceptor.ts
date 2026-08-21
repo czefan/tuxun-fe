@@ -1,5 +1,5 @@
+import { withQuery } from 'ufo'
 import { useAuthStore } from '@/store/auth'
-import { stringifyQuery } from '@/utils/query-string'
 import type { CustomRequestOptions } from './types'
 
 // 拦截器配置
@@ -8,15 +8,7 @@ const httpInterceptor = {
   invoke(options: CustomRequestOptions) {
     // 接口请求支持通过 query 参数配置 queryString
     if (options.query) {
-      const queryStr = stringifyQuery(options.query)
-      if (queryStr) {
-        if (options.url.includes('?')) {
-          options.url += `&${queryStr}`
-        }
-        else {
-          options.url += `?${queryStr}`
-        }
-      }
+      options.url = withQuery(options.url, options.query)
     }
     // 1. 请求超时
     options.timeout = 60000 // 60s

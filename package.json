@@ -81,6 +81,7 @@
     "pinia": "catalog:",
     "pinia-plugin-persistedstate": "catalog:",
     "qrcode-generator": "catalog:",
+    "ufo": "catalog:",
     "vue": "catalog:"
   },
   "devDependencies": {
