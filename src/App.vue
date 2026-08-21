@@ -14,8 +14,8 @@ onLaunch((options) => {
   installWechatUpdateManager()
   // #endif
 })
-onShow((options) => {
-  logAppLifecycle('onShow', options)
+onShow(() => {
+  logAppLifecycle('onShow')
 })
 onHide(() => {
   logAppLifecycle('onHide')

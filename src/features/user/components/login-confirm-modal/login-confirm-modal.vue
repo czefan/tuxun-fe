@@ -5,14 +5,11 @@ import { useAuthStore } from '@/store/auth'
 import { getUserInfo, testLogin } from '../../api'
 import { useUserStore } from '../../store/user'
 
-defineProps<{
-  modelValue: boolean
-}>()
-
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
   (e: 'success'): void
 }>()
+
+const visible = defineModel<boolean>({ default: false })
 
 const isMock = ref(import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.VITE_ENABLE_MOCK === 'Y')
 const isAudit = ref(import.meta.env.VITE_SHOW_AUDIT_LOGIN === 'true')
@@ -62,7 +59,7 @@ async function handleTestLogin() {
     const fullInfo = await getUserInfo()
     userStore.setUserInfo(fullInfo)
     uni.showToast({ title: '测试登录成功', icon: 'success' })
-    emit('update:modelValue', false)
+    visible.value = false
     emit('success')
   }
   catch (err) {
@@ -75,18 +72,18 @@ async function handleTestLogin() {
 }
 
 function handleOAuthLogin() {
-  emit('update:modelValue', false)
+  visible.value = false
   redirectToOAuth()
 }
 
 function handleClose() {
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 
 <template>
   <wd-popup
-    :model-value="modelValue"
+    :model-value="visible"
     position="center"
     :z-index="1000"
     :lock-scroll="true"

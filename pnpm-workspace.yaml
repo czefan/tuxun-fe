@@ -25,19 +25,19 @@ allowBuilds:
   vue-demi: true
 
 catalog:
-  '@antfu/eslint-config': ^9.1.0
+  '@antfu/eslint-config': 9.1.0
   '@commitlint/cli': ^21.2.1
-  '@commitlint/config-conventional': ^21.2.0
-  '@dcloudio/types': ^3.4.31
-  '@dcloudio/uni-app': 3.0.0-5010520260709002
-  '@dcloudio/uni-automator': 3.0.0-5010520260709002
-  '@dcloudio/uni-cli-shared': 3.0.0-5010520260709002
-  '@dcloudio/uni-components': 3.0.0-5010520260709002
-  '@dcloudio/uni-h5': 3.0.0-5010520260709002
-  '@dcloudio/uni-mp-weixin': 3.0.0-5010520260709002
-  '@dcloudio/uni-stacktracey': 3.0.0-5010520260709002
-  '@dcloudio/vite-plugin-uni': 3.0.0-5010520260709002
-  '@iconify-json/carbon': ^1.2.24
+  '@commitlint/config-conventional': ^21.2.2
+  '@dcloudio/types': ^3.4.32
+  '@dcloudio/uni-app': 3.0.0-5020420260813003
+  '@dcloudio/uni-automator': 3.0.0-5020420260813003
+  '@dcloudio/uni-cli-shared': 3.0.0-5020420260813003
+  '@dcloudio/uni-components': 3.0.0-5020420260813003
+  '@dcloudio/uni-h5': 3.0.0-5020420260813003
+  '@dcloudio/uni-mp-weixin': 3.0.0-5020420260813003
+  '@dcloudio/uni-stacktracey': 3.0.0-5020420260813003
+  '@dcloudio/vite-plugin-uni': 3.0.0-5020420260813003
+  '@iconify-json/carbon': ^1.2.25
   '@iconify/utils': ^3.1.4
   '@tanstack/vue-query': ^5.101.4
   '@types/node': ^22.20.1
@@ -48,47 +48,47 @@ catalog:
   '@uni-helper/unocss-preset-uni': 0.3.1
   '@uni-helper/vite-plugin-uni-components': 0.3.2
   '@uni-helper/vite-plugin-uni-manifest': 0.4.1
-  '@uni-helper/vite-plugin-uni-pages': 0.4.7
+  '@uni-helper/vite-plugin-uni-pages': 0.4.9
   '@uni-helper/vite-plugin-uni-platform': 0.1.2
   '@uni-ku/bundle-optimizer': ^2.2.0
-  '@uni-ku/root': 1.4.1
+  '@uni-ku/root': 1.5.0
   '@unocss/eslint-plugin': ^66.7.4
   '@unocss/preset-legacy-compat': 66.7.5
   '@vitejs/plugin-vue': ^6.0.8
   '@vue/test-utils': ^2.4.11
-  '@wot-ui/ui': ^2.2.0
+  '@wot-ui/ui': ^2.3.2
   ajv: ^8.20.0
   ajv-formats: ^3.0.1
   changelogen: ^0.6.2
   cross-env: ^10.1.0
-  dayjs: ^1.11.21
+  dayjs: ^1.11.23
   enquirer: ^2.4.1
-  eslint: ^10.7.0
+  eslint: ^10.8.1
   eslint-import-resolver-typescript: ^4.4.5
-  eslint-plugin-boundaries: ^7.1.0
+  eslint-plugin-boundaries: ^7.2.0
   eslint-plugin-format: ^2.0.1
   jsdom: ^29.1.1
-  knip: ^6.29.0
-  lint-staged: ^17.0.8
-  miniprogram-api-typings: ^5.2.1
+  knip: ^6.32.2
+  lint-staged: ^17.3.0
+  miniprogram-api-typings: ^5.2.3
   miniprogram-ci: ^2.1.31
   msw: ^2.15.0
   openapi-typescript: ^7.13.0
-  oxfmt: ^0.59.0
-  oxlint: ^1.74.0
+  oxfmt: ^0.64.0
+  oxlint: ^1.79.0
   picocolors: ^1.1.1
-  pinia: ^3.0.4
+  pinia: ^4.0.3
   pinia-plugin-persistedstate: ^4.7.1
-  postcss: ^8.5.19
+  postcss: ^8.5.26
   qrcode-generator: ^1.4.4
   rollup: 4.14.3
-  rollup-plugin-visualizer: ^7.0.1
-  sass: ^1.101.0
+  rollup-plugin-visualizer: ^7.1.1
+  sass: ^1.103.0
   simple-git-hooks: ^2.13.1
   typescript: ^6.0.3
   unocss: 66.7.5
-  unplugin-auto-import: ^21.0.0
+  unplugin-auto-import: ^21.1.0
   vite: ^5.2.8
   vitest: 3.2.6
   vue: ^3.5.39
-  vue-tsc: ^3.3.7
+  vue-tsc: ^3.3.10

@@ -4,7 +4,6 @@ import { nextTick, onUnmounted, ref, watch } from 'vue'
 const props = withDefaults(
   defineProps<{
     visible: boolean
-    modelValue: string
     loading?: boolean
     maxLength?: number
     placeholder?: string
@@ -18,9 +17,10 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void
-  (e: 'update:modelValue', value: string): void
   (e: 'submit'): void
 }>()
+
+const text = defineModel<string>({ default: '' })
 
 const DEFAULT_EMOJIS = ['😂', '🤔', '🌹', '👍', '🤙', '👏', '😁', '🔥', '🎉', '🤣', '😭', '😍', '👀', '💯', '🙏', '😎', '🥳', '💪']
 const STORAGE_KEY = 'comment_recent_emojis'
@@ -80,9 +80,9 @@ onUnmounted(() => {
 })
 
 function handleInsertEmoji(emoji: string) {
-  if (props.modelValue.length + emoji.length > props.maxLength)
+  if (text.value.length + emoji.length > props.maxLength)
     return
-  emit('update:modelValue', props.modelValue + emoji)
+  text.value += emoji
   isFocus.value = true
   syncEmojis([emoji, ...emojiList.value.filter(item => item !== emoji)])
 }
@@ -108,7 +108,7 @@ function handleClose() {
       <!-- 多行输入区域 -->
       <view class="box-border w-full border border-tx-border/60 rounded-xl bg-tx-surface p-2.5 transition-colors focus-within:border-tx-brown">
         <textarea
-          :value="modelValue"
+          :value="text"
           :placeholder="placeholder"
           placeholder-class="text-tx-ink-3 text-base"
           :maxlength="maxLength"
@@ -118,7 +118,7 @@ function handleClose() {
           :hold-keyboard="true"
           :show-confirm-bar="false"
           class="box-border max-h-[140px] min-h-[46px] w-full text-base text-tx-ink leading-relaxed"
-          @input="(e: any) => emit('update:modelValue', e.detail?.value ?? '')"
+          @input="(e: any) => text = e.detail?.value ?? ''"
           @keyboardheightchange="(e: any) => keyboardHeight = e.detail?.height ?? 0"
         />
       </view>
@@ -140,8 +140,8 @@ function handleClose() {
 
         <view
           class="flex flex-shrink-0 cursor-pointer items-center justify-center rounded-full px-4 py-1.5 text-xs font-bold transition-all"
-          :class="modelValue.trim() && !loading ? 'bg-tx-brown text-white shadow-xs active:scale-95' : 'bg-[#F2F2F4] text-[#A0A0A0] cursor-not-allowed'"
-          @tap="!loading && modelValue.trim() && emit('submit')"
+          :class="text.trim() && !loading ? 'bg-tx-brown text-white shadow-xs active:scale-95' : 'bg-[#F2F2F4] text-[#A0A0A0] cursor-not-allowed'"
+          @tap="!loading && text.trim() && emit('submit')"
         >
           <text v-if="loading" class="i-carbon:circle-dash mr-1 animate-spin text-xs" />
           <text>发送</text>
