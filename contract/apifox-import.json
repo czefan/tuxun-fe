@@ -5838,14 +5838,7 @@
         "tags": ["奖品"],
         "summary": "奖品列表",
         "operationId": "listGoods",
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "sessionIdAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "page",
@@ -5928,34 +5921,9 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "未登录",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/ErrorResponseBase"
-                    },
-                    {
-                      "type": "object",
-                      "required": ["resp"],
-                      "properties": {
-                        "resp": {
-                          "type": "object",
-                          "nullable": true,
-                          "example": null
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
           }
         },
-        "description": "客户端奖品列表，仅返回上架（in_store）奖品，无任何管理员分支；下架奖品只在管理端列表可见。列表项已含全部奖品字段，不设奖品详情接口。"
+        "description": "客户端奖品列表，仅返回上架（in_store）奖品，返回内容不因调用者身份变化；下架奖品只在管理端列表可见。多个筛选条件按 AND 组合。列表项已含全部奖品字段，不设奖品详情接口。兑换（POST /exchange）仍需登录。"
       }
     },
     "/activity": {
