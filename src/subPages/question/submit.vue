@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import FormLocationPicker from '@/components/form-location-picker/form-location-picker.vue'
 import { useSubmitAttempt } from '@/features/attempt/query'
 import { useAuth } from '@/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
@@ -8,6 +9,7 @@ import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-comp
 import { TX_BG_BROWN } from '@/styles/constants'
 
 import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
+import { SubmitDraftKeyPrefix } from '@/constants'
 
 definePage({
   style: {
@@ -27,7 +29,7 @@ const formData = reactive({
   coordType: DEFAULT_COORD_TYPE as 'wgs84' | 'gcj02',
 })
 
-const DRAFT_KEY_PREFIX = 'tuxun_submit_attempt_draft_'
+const DRAFT_KEY_PREFIX = SubmitDraftKeyPrefix
 
 const submitMutation = useSubmitAttempt(() => photoId.value)
 

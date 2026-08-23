@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onUnmounted, ref, watch } from 'vue'
+import { StorageKey } from '@/constants'
 
 const props = withDefaults(
   defineProps<{
@@ -23,7 +24,7 @@ const emit = defineEmits<{
 const text = defineModel<string>({ default: '' })
 
 const DEFAULT_EMOJIS = ['😂', '🤔', '🌹', '👍', '🤙', '👏', '😁', '🔥', '🎉', '🤣', '😭', '😍', '👀', '💯', '🙏', '😎', '🥳', '💪']
-const STORAGE_KEY = 'comment_recent_emojis'
+const STORAGE_KEY = StorageKey.CommentRecentEmojis
 
 const emojiList = ref<string[]>([...DEFAULT_EMOJIS])
 const isFocus = ref(false)

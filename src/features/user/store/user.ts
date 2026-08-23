@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { AuthCleanupStorageKeys, SearchHistoryKeyPrefix } from '@/constants'
+import { AuthCleanupStorageKeys, SubmitDraftKeyPrefix } from '@/constants'
 import { queryClient } from '@/service/query/client'
 import { useAuthStore } from '@/store/auth'
 import { useAnswerRecordLikeStore, useQuestionLikeStore } from '@/store/question-like'
@@ -76,7 +76,7 @@ function clearClientSessionState() {
 
   try {
     const { keys } = uni.getStorageInfoSync()
-    keysToRemove.push(...keys.filter(key => key.startsWith(SearchHistoryKeyPrefix)))
+    keysToRemove.push(...keys.filter(key => key.startsWith(SubmitDraftKeyPrefix)))
   }
   catch {
     // 拿不到 storage 列表时跳过，不影响其余清理

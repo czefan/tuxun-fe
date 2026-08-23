@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import FormLocationPicker from '@/components/form-location-picker/form-location-picker.vue'
 import { useCreatePhoto } from '@/features/photo/query'
 import { useActiveActivities } from '@/features/activity/query'
 import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
@@ -9,6 +10,7 @@ import { TX_BG_BROWN } from '@/styles/constants'
 
 import { useAuth } from '@/composables/use-auth'
 import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
+import { StorageKey } from '@/constants'
 
 definePage({
   style: {
@@ -30,7 +32,7 @@ const form = reactive({
   coordType: DEFAULT_COORD_TYPE as 'wgs84' | 'gcj02',
 })
 
-const DRAFT_KEY = 'tuxun_contribute_draft'
+const DRAFT_KEY = StorageKey.ContributeDraft
 const { data: activityData } = useActiveActivities()
 
 // 驳回回填时 filePath 是远端 URL，仅作预览，提交前必须重新选图

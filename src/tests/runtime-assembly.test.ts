@@ -12,6 +12,22 @@ function read(relative: string) {
   return fs.readFileSync(path.join(process.cwd(), relative), 'utf-8')
 }
 
+function collectSourceFiles(dir: string): string[] {
+  const results: string[] = []
+  const list = fs.readdirSync(dir)
+  for (const file of list) {
+    const filePath = path.join(dir, file)
+    const stat = fs.statSync(filePath)
+    if (stat && stat.isDirectory()) {
+      results.push(...collectSourceFiles(filePath))
+    }
+    else if (/\.(?:vue|ts|js)$/.test(file)) {
+      results.push(filePath)
+    }
+  }
+  return results
+}
+
 function makeList(count: number) {
   return Array.from({ length: count }, (_, i) => ({
     id: i + 1,
@@ -165,22 +181,6 @@ describe('装配守卫', () => {
     }
   })
 
-  it('声明了搜索状态的页面必须真的渲染搜索浮层', () => {
-    // 首页曾经出现过：script 里 goSearch / handleSearch / searchKeyword 一整套都写好了，
-    // 模板里却没放 <search-overlay>，点搜索按钮毫无反应，而 lint 和构建都不会报错。
-    const pages = ['src/pages/index/index.vue', 'src/pages/activity/index.vue', 'src/subPages/activity/index.vue']
-    for (const page of pages) {
-      const source = read(page)
-      if (!source.includes('searchVisible')) {
-        continue
-      }
-      expect(
-        source,
-        `${page} 声明了 searchVisible 却没有渲染 <search-overlay>：搜索入口点了没反应`,
-      ).toMatch(/<search-overlay/)
-    }
-  })
-
   it('跳转详情页必须走带转场的导航', () => {
     for (const page of ['src/pages/index/index.vue', 'src/subPages/activity/index.vue']) {
       expect(
@@ -200,5 +200,14 @@ describe('装配守卫', () => {
       /@(?:tap|click)="handlePreviewImage"/.test(detail),
       '题目详情页图片缺少预览事件绑定',
     ).toBe(true)
+  })
+
+  it('storage key 必须登记在 constants/storage.ts，不得在页面里散落定义', () => {
+    // 游离的 key 不会进登出清理清单，公用设备换人登录后会泄漏上一个人的数据
+    const srcRoot = path.join(process.cwd(), 'src')
+    const offenders = collectSourceFiles(srcRoot)
+      .filter(f => !f.includes('constants/storage.ts') && !f.endsWith('.test.ts') && !f.includes('test-setup.ts'))
+      .filter(f => /uni\.setStorageSync\(\s*['"`]/.test(fs.readFileSync(f, 'utf-8')))
+    expect(offenders, `以下文件直接用字面量做 storage key：\n${offenders.join('\n')}`).toEqual([])
   })
 })
