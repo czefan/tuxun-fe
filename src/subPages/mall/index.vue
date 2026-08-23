@@ -5,10 +5,10 @@ import { useExchangeGood, useInfiniteExchangeList, useInfiniteGoodsList } from '
 import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
 import type { ExchangeRecordVM, GoodsVM } from '@/features/mall/types'
 import VerifyCodeQr from '@/features/mall/components/verify-code-qr.vue'
+import GoodDetailPopup from '@/features/mall/components/good-detail-popup.vue'
 import { useUserStore } from '@/features/user'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { debounce } from '@/utils/debounce'
-import { TX_BG_BROWN } from '@/styles/constants'
 
 definePage({
   style: {
@@ -86,25 +86,15 @@ const qrModalVisible = ref(false)
 const activeGood = ref<GoodsVM | null>(null)
 const goodDetailVisible = ref(false)
 
-const exchangeCount = ref(1)
-const exchangeInputStr = ref('1')
-
 // 列表热更新时同步已打开弹层的商品最新库存
 watch(goodsList, (list) => {
   if (activeGood.value) {
     const fresh = list.find(g => g.id === activeGood.value?.id)
     if (fresh) {
       activeGood.value = fresh
-      if (exchangeCount.value > fresh.stock) {
-        exchangeCount.value = Math.max(1, fresh.stock)
-        exchangeInputStr.value = String(exchangeCount.value)
-      }
     }
   }
 })
-
-const totalExchangeScore = computed(() => (activeGood.value?.scorePrice ?? 0) * exchangeCount.value)
-const isPointsInsufficient = computed(() => isLoggedIn() && (userStore.userInfo?.points ?? 0) < totalExchangeScore.value)
 
 function openQrModal(record: ExchangeRecordVM) {
   if (record.status !== 'pending')
@@ -115,49 +105,18 @@ function openQrModal(record: ExchangeRecordVM) {
 
 function openGoodDetail(good: GoodsVM) {
   activeGood.value = good
-  setExchangeCount(1)
   goodDetailVisible.value = true
 }
 
-function setExchangeCount(val: number) {
-  const max = activeGood.value?.stock ?? 1
-  if (val > max) {
-    uni.showToast({ title: `最多可兑换 ${max} 件`, icon: 'none' })
-  }
-  const count = Math.max(1, Math.min(val, max))
-  exchangeCount.value = count
-  exchangeInputStr.value = String(count)
-}
-
-function handleExchange(goodId: number) {
-  if (!requireLogin() || !activeGood.value)
-    return
-
-  if (isPointsInsufficient.value) {
-    uni.showToast({ title: '积分不足，无法兑换', icon: 'none' })
+function handleExchange({ goodId, quantity }: { goodId: number, quantity: number }) {
+  if (!requireLogin()) {
     return
   }
-
-  const totalScore = totalExchangeScore.value
-  const goodName = activeGood.value.name
-  const count = exchangeCount.value
-
-  uni.showModal({
-    title: '确认兑换商品？',
-    content: `将消耗 ${totalScore} 积分兑换 ${count} 件“${goodName}”，确认继续？`,
-    confirmText: '确认兑换',
-    cancelText: '取消',
-    confirmColor: TX_BG_BROWN,
-    success: (res) => {
-      if (res.confirm) {
-        const idempotencyKey = `ex-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-        exchangeMutation.mutate({ goodId, quantity: count, idempotencyKey }, {
-          onSuccess: () => {
-            goodDetailVisible.value = false
-            uni.showToast({ title: '兑换成功！', icon: 'success' })
-          },
-        })
-      }
+  const idempotencyKey = `ex-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  exchangeMutation.mutate({ goodId, quantity, idempotencyKey }, {
+    onSuccess: () => {
+      goodDetailVisible.value = false
+      uni.showToast({ title: '兑换成功！', icon: 'success' })
     },
   })
 }
@@ -207,7 +166,7 @@ function handleExchange(goodId: number) {
       <wd-search
         v-model="searchKeyword"
         :focus="true"
-        placeholder="搜索名称或描述..."
+        placeholder="搜索商品名称或描述..."
         hide-cancel
         custom-class="tx-search"
         placeholder-left
@@ -215,47 +174,55 @@ function handleExchange(goodId: number) {
       />
     </view>
 
-    <!-- 支持左右连贯手势滑屏的 Swiper 容器 -->
+    <!-- 可左右滑动的 Swiper 容器 (全屏物理宽度) -->
     <swiper
       class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
       :current="currentTabIndex"
       :duration="300"
       @change="(e) => activeTab = tabOptions[e.detail.current]"
     >
-      <!-- 滑块 1：积分商城 -->
+      <!-- 滑块 1：积分商城列表 -->
       <swiper-item class="box-border">
         <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextGoods()">
-          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
-            <wd-empty icon="no-result" tip="登录后查看积分商城" />
-            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
-              去登录
-            </wd-button>
-          </view>
-          <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
-            <view v-if="goodsLoading" class="grid grid-cols-2 gap-2.5">
-              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }]" />
-              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }]" />
+          <view class="bottom-space--bar px-3 pt-2.5 space-y-4">
+            <view v-if="goodsLoading" class="grid grid-cols-2 gap-3">
+              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '140px' }]" />
+              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '140px' }]" />
             </view>
             <view v-else-if="goodsError" class="flex flex-col items-center justify-center gap-3 py-20">
-              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-empty icon="network-error" tip="加载失败，请重试" />
               <wd-button size="small" plain round @click="refetchGoods">
                 重新加载
               </wd-button>
             </view>
+            <!-- 2 列网格布局，干净相纸卡片 (包含大图、商品名称、所需积分与库存数量) -->
             <view v-else-if="goodsList.length" class="grid grid-cols-2 gap-2.5">
-              <!-- 干净相纸卡片 (包含大图、商品名称、所需积分与库存数量) -->
               <view
                 v-for="item in goodsList"
                 :key="item.id"
                 class="shadow-2xs flex flex-col cursor-pointer justify-between overflow-hidden border border-tx-border/60 rounded-lg bg-white transition-all active:scale-[0.98]"
                 @tap="openGoodDetail(item)"
               >
-                <view class="aspect-square w-full overflow-hidden bg-tx-brown/10">
-                  <wd-img custom-class="h-full w-full object-cover" lazy-load :src="item.image.url" mode="aspectFill" width="100%" height="100%" />
+                <!-- 商品图片 (固定正方形比例，cover 裁剪) -->
+                <view class="relative aspect-square w-full overflow-hidden bg-tx-brown/10">
+                  <wd-img
+                    custom-class="h-full w-full object-cover block"
+                    :src="item.image?.originUrl || item.image?.url"
+                    mode="aspectFill"
+                    lazy-load
+                    width="100%"
+                    height="100%"
+                  />
+                  <!-- 库存为 0 售罄遮罩 -->
+                  <view v-if="item.stock <= 0" class="absolute inset-0 z-2 flex items-center justify-center bg-black/40 text-white font-bold">
+                    已售罄
+                  </view>
                 </view>
+                <!-- 商品信息区：固定两行高度保持卡片对齐 -->
                 <view class="flex flex-1 flex-col justify-between p-2.5 space-y-1">
                   <text class="line-clamp-2 block min-h-[2.6em] text-sm text-tx-ink font-medium leading-snug">{{ item.name }}</text>
                   <view class="flex items-center justify-between pt-0.5">
+                    <!-- 积分图标 + 数字 -->
                     <view class="flex items-center gap-0.5">
                       <text class="i-my-icons-points text-xs text-tx-brown" />
                       <text class="text-xs text-tx-brown font-bold font-numeric">{{ item.scorePrice }}</text>
@@ -266,14 +233,14 @@ function handleExchange(goodId: number) {
               </view>
             </view>
             <view v-else class="py-20">
-              <wd-empty icon="no-result" tip="暂无上架商品" />
+              <wd-empty icon="no-result" tip="暂无商品" />
             </view>
             <wd-loadmore v-if="isFetchingGoods" state="loading" @reload="fetchNextGoods" />
           </view>
         </scroll-view>
       </swiper-item>
 
-      <!-- 滑块 2：兑换记录 -->
+      <!-- 滑块 2：兑换记录列表 -->
       <swiper-item class="box-border">
         <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextExchanges()">
           <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
@@ -282,43 +249,54 @@ function handleExchange(goodId: number) {
               去登录
             </wd-button>
           </view>
-          <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
+          <view v-else class="bottom-space--bar px-3 pt-2.5 space-y-3">
             <view v-if="exchangeLoading" class="space-y-3">
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
             </view>
             <view v-else-if="exchangeError" class="flex flex-col items-center justify-center gap-3 py-20">
-              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
+              <wd-empty icon="network-error" tip="加载失败，请重试" />
               <wd-button size="small" plain round @click="refetchExchanges">
                 重新加载
               </wd-button>
             </view>
+            <!-- 兑换记录卡片列表 -->
             <view v-else-if="exchangeList.length" class="space-y-3">
               <view
                 v-for="item in exchangeList"
                 :key="item.id"
-                class="shadow-2xs min-h-[80px] flex items-stretch justify-between overflow-hidden border border-tx-border/60 rounded-lg bg-white transition-all"
+                class="shadow-2xs min-h-[84px] flex items-stretch justify-between overflow-hidden border border-tx-border/60 rounded-xl bg-white transition-all"
                 :class="item.status === 'pending' ? 'cursor-pointer active:scale-[0.99]' : 'opacity-85'"
                 @tap="openQrModal(item)"
               >
-                <!-- 左侧图片：完全撑满卡片上下高度，零四周留白 -->
-                <view class="w-20 flex-shrink-0 self-stretch bg-tx-brown/10">
-                  <wd-img custom-class="h-full w-full object-cover" lazy-load :src="item.good.image.url" mode="aspectFill" width="80px" height="100%" />
+                <!-- 左侧图片：84px 正方形通高大图 -->
+                <view class="relative min-h-[84px] w-[84px] flex-shrink-0 self-stretch overflow-hidden bg-tx-brown/10">
+                  <wd-img
+                    custom-class="h-full w-full object-cover block"
+                    lazy-load
+                    :src="item.good.image?.originUrl || item.good.image?.url"
+                    mode="aspectFill"
+                    width="100%"
+                    height="100%"
+                  />
                 </view>
 
-                <!-- 中间说明区：上下顶底分布并带有恰当内缩边距 -->
-                <view class="min-w-0 flex flex-1 flex-col self-stretch justify-between py-2 pl-5 pr-1.5">
-                  <text class="line-clamp-2 block text-sm text-tx-ink font-bold leading-snug">{{ item.good.name }}</text>
+                <!-- 中间说明区：上下顶底分布并带有内边距 -->
+                <view class="min-w-0 flex flex-1 flex-col self-stretch justify-between py-2.5 pl-3.5 pr-2">
+                  <text class="line-clamp-2 block text-sm text-tx-ink font-bold leading-snug">
+                    {{ item.good.name }}
+                    <text class="ml-1 text-xs text-tx-ink-2 font-medium font-numeric">×{{ item.quantity }}</text>
+                  </text>
                   <view class="flex items-center justify-between gap-1">
                     <view class="flex flex-shrink-0 items-center gap-0.5">
                       <text class="i-my-icons-points text-xs text-tx-brown" />
                       <text class="text-xs text-tx-brown font-bold font-numeric">-{{ item.scoreCost }}</text>
                     </view>
-                    <text v-if="item.createdAt" class="truncate u-meta-time">{{ item.createdAt }}</text>
+                    <text v-if="item.createdAt" class="truncate text-xs text-tx-ink-2 font-numeric">{{ item.createdAt }}</text>
                   </view>
                 </view>
 
                 <!-- 右侧状态 Tag 与二维码 UI 图标 -->
-                <view class="flex flex-col items-center self-stretch justify-center py-2 pl-1 pr-2.5 space-y-1">
+                <view class="flex flex-col items-center self-stretch justify-center py-2.5 pl-1 pr-3 space-y-1.5">
                   <view
                     v-if="item.status === 'pending'"
                     class="flex items-center justify-center text-tx-brown transition-transform active:scale-90"
@@ -345,97 +323,17 @@ function handleExchange(goodId: number) {
       </swiper-item>
     </swiper>
 
-    <!-- 商品详情与兑换弹窗 (展示完整描述、支持手动输入及按钮限制的计数器与兑换计算) -->
-    <wd-popup
-      v-model="goodDetailVisible"
-      position="center"
-      :z-index="999"
-      custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;"
+    <!-- 商品详情与兑换弹窗 -->
+    <GoodDetailPopup
+      v-model:visible="goodDetailVisible"
+      :good="activeGood"
+      :user-points="userStore.userInfo?.points ?? 0"
+      :is-logged-in="isLoggedIn()"
+      :is-pending="exchangeMutation.isPending.value"
+      @require-login="requireLogin"
+      @exchange="handleExchange"
       @close="goodDetailVisible = false"
-    >
-      <view v-if="activeGood" class="relative mx-auto box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-white shadow-2xl">
-        <!-- 详情大图用高清原图 -->
-        <view
-          class="relative w-full flex overflow-hidden bg-tx-brown/10"
-          :style="activeGood.image?.width && activeGood.image?.height ? { aspectRatio: `${activeGood.image.width} / ${activeGood.image.height}` } : {}"
-        >
-          <wd-img
-            :key="`good-modal-${activeGood.id}`"
-            custom-class="w-full !block"
-            :custom-style="`display: block; vertical-align: top; width: 100%;${activeGood.image?.width && activeGood.image?.height ? ` aspect-ratio: ${activeGood.image.width} / ${activeGood.image.height};` : ''}`"
-            lazy-load
-            :src="activeGood.image.originUrl || activeGood.image.url"
-            mode="widthFix"
-            width="100%"
-          />
-          <!-- 右上角关闭按钮 -->
-          <view
-            class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-transform active:scale-90"
-            @tap="goodDetailVisible = false"
-          >
-            <wd-icon name="close" size="16px" />
-          </view>
-        </view>
-
-        <!-- 弹窗可滚动内容区 -->
-        <view class="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
-          <view class="flex items-baseline justify-between gap-3">
-            <text class="min-w-0 flex-1 text-base text-tx-ink font-bold leading-snug">{{ activeGood.name }}</text>
-            <text class="flex-shrink-0 whitespace-nowrap text-xs text-tx-ink-2 font-mono">库存: {{ activeGood.stock }}</text>
-          </view>
-
-          <text class="block text-sm text-[#555555] leading-relaxed">{{ activeGood.description }}</text>
-
-          <!-- 数量选择器（支持点击 - / + 以及直接键盘手动输入数字，自动限制不超过库存） -->
-          <view class="flex items-center justify-between border-t border-tx-border/30 pt-3">
-            <text class="text-sm text-tx-ink font-bold">兑换数量</text>
-            <view class="flex items-center gap-2">
-              <view
-                class="h-7 w-7 flex cursor-pointer items-center justify-center border border-tx-border rounded-lg bg-stone-100 text-tx-ink active:scale-90"
-                :class="exchangeCount <= 1 ? 'opacity-40 cursor-not-allowed' : ''"
-                @tap="setExchangeCount(exchangeCount - 1)"
-              >
-                <text class="text-base font-bold">-</text>
-              </view>
-              <input
-                v-model="exchangeInputStr"
-                type="number"
-                class="h-7 w-12 border border-tx-border/60 rounded-md bg-stone-50 py-0.5 text-center text-sm text-tx-ink font-bold font-numeric"
-                @input="(e: any) => { const v = parseInt(e.detail?.value, 10); if (isNaN(v)) exchangeInputStr = ''; else setExchangeCount(v) }"
-                @blur="setExchangeCount(parseInt(exchangeInputStr, 10) || 1)"
-              >
-              <view
-                class="h-7 w-7 flex cursor-pointer items-center justify-center border border-tx-border rounded-lg bg-stone-100 text-tx-ink active:scale-90"
-                :class="exchangeCount >= activeGood.stock ? 'opacity-40 cursor-not-allowed' : ''"
-                @tap="setExchangeCount(exchangeCount + 1)"
-              >
-                <text class="text-base font-bold">+</text>
-              </view>
-            </view>
-          </view>
-          <!-- 底部确认与积分统计 -->
-          <view class="flex items-center justify-between border-t border-tx-border/30 pt-3">
-            <view class="flex flex-col">
-              <text class="text-xs text-tx-ink-2">合计积分</text>
-              <view class="flex items-center gap-0.5">
-                <text class="i-my-icons-points text-sm text-tx-brown" />
-                <text class="text-base text-tx-brown font-bold font-numeric">{{ totalExchangeScore }}</text>
-              </view>
-            </view>
-            <wd-button
-              type="warning"
-              round
-              size="medium"
-              custom-class="!font-bold !bg-tx-accent !text-tx-ink shadow-xs"
-              :disabled="activeGood.stock <= 0 || isPointsInsufficient || exchangeMutation.isPending.value"
-              @click="handleExchange(activeGood.id)"
-            >
-              {{ activeGood.stock <= 0 ? '暂时缺货' : isPointsInsufficient ? '积分不足' : '确认兑换' }}
-            </wd-button>
-          </view>
-        </view>
-      </view>
-    </wd-popup>
+    />
 
     <!-- 二维码核销弹窗 -->
     <wd-popup v-model="qrModalVisible" position="center" custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;" @close="qrModalVisible = false">

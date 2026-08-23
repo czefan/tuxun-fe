@@ -101,12 +101,11 @@ function copyCode() {
     <text class="text-xs text-gray-500">向现场工作人员出示防伪码或扫码核销</text>
 
     <!-- 二维码展现区 (展示纯黑白，长按保存合成全套图) -->
-    <view class="my-1 flex flex-col items-center gap-1">
+    <view class="my-1 flex flex-col items-center">
       <view class="relative overflow-hidden border-4 border-white rounded-xl bg-white p-1 shadow-sm">
         <image v-if="pureQrUrl" :src="pureQrUrl" mode="aspectFit" class="pointer-events-none block h-44 w-44" />
         <image v-if="compositeUrl" :src="compositeUrl" show-menu-by-longpress mode="aspectFill" class="absolute inset-0 h-full w-full opacity-0" />
       </view>
-      <text v-if="compositeUrl" class="text-[10px] text-stone-400 font-medium">长按二维码保存至相册</text>
     </view>
 
     <!-- 核销防伪码 -->
