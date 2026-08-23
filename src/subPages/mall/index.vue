@@ -49,12 +49,10 @@ const goodsList = computed<GoodsVM[]>(() => goodsData.value?.pages.flatMap(p => 
 const exchangeList = computed<ExchangeRecordVM[]>(() => exchangeData.value?.pages.flatMap(p => p.list) ?? [])
 
 onShow(() => {
-  if (!isLoggedIn())
-    return
   if (activeTab.value === '积分商城') {
     refetchGoods()
   }
-  else {
+  else if (isLoggedIn()) {
     refetchExchanges()
   }
 })
@@ -64,7 +62,7 @@ useInfiniteListPage({
   isFetchingNextPage: isFetchingGoods,
   fetchNextPage: fetchNextGoods,
   refetch: refetchGoods,
-  enabled: () => isLoggedIn() && activeTab.value === '积分商城',
+  enabled: () => activeTab.value === '积分商城',
 })
 
 useInfiniteListPage({
@@ -327,7 +325,7 @@ function handleExchange({ goodId, quantity }: { goodId: number, quantity: number
     <GoodDetailPopup
       v-model:visible="goodDetailVisible"
       :good="activeGood"
-      :user-points="userStore.userInfo?.points ?? 0"
+      :user-points="userStore.userInfo?.points"
       :is-logged-in="isLoggedIn()"
       :is-pending="exchangeMutation.isPending.value"
       @require-login="requireLogin"

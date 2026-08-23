@@ -5,7 +5,7 @@ import { TX_BG_BROWN } from '@/styles/constants'
 
 const props = defineProps<{
   good: GoodsVM | null
-  userPoints: number
+  userPoints?: number | null
   isLoggedIn: boolean
   isPending?: boolean
 }>()
@@ -43,7 +43,12 @@ watch(visible, (val) => {
 })
 
 const totalExchangeScore = computed(() => (props.good?.scorePrice ?? 0) * exchangeCount.value)
-const isPointsInsufficient = computed(() => props.isLoggedIn && props.userPoints < totalExchangeScore.value)
+const isPointsInsufficient = computed(() => {
+  if (!props.isLoggedIn || props.userPoints == null) {
+    return false
+  }
+  return props.userPoints < totalExchangeScore.value
+})
 
 function setExchangeCount(val: number) {
   const max = props.good?.stock ?? 1

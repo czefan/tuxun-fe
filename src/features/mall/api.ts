@@ -5,7 +5,7 @@ import type { ExchangeRecordVM, GoodsQueryParams, GoodsVM } from './types'
 
 import { formatDate } from '@/utils/date'
 
-/** 商品列表 GET /goods（权限：L1） */
+/** 商品列表 GET /goods（权限：L0） */
 export async function getGoods(params?: GoodsQueryParams): Promise<PageResult<GoodsVM>> {
   const { page, page_size } = clampPageParams(params)
   const raw = await request<PageResult<GoodItem>>({
