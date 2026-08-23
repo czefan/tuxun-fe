@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
+import AnnouncementList from '@/features/notification/components/announcement-list.vue'
+import InteractionList from '@/features/notification/components/interaction-list.vue'
 import {
   useInfiniteAnnouncements,
   useInfiniteInteractions,
@@ -11,7 +13,6 @@ import type { AnnouncementVM, InteractionMessageVM } from '@/features/notificati
 import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
 import { StorageKey } from '@/constants/storage'
-import { formatRelativeTime } from '@/utils/date'
 import { debounce } from '@/utils/debounce'
 
 definePage({
@@ -21,7 +22,7 @@ definePage({
   },
 })
 
-const { isLoggedIn, isMe, loginDirectly } = useAuth()
+const { isLoggedIn, loginDirectly } = useAuth()
 const activeTab = ref('系统通知')
 const tabOptions = ['系统通知', '互动消息']
 
@@ -94,80 +95,6 @@ useInfiniteListPage({
   enabled: () => activeTab.value === '互动消息',
 })
 
-interface TimeGroup<T> {
-  title: string
-  list: T[]
-}
-
-function groupItemsByTime<T extends { createdAt: string, rawCreatedAt?: string }>(items: T[]): TimeGroup<T>[] {
-  if (!items || items.length === 0)
-    return []
-
-  const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay()
-  const thisWeekStart = todayStart - (dayOfWeek - 1) * 86400000
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-
-  const getTimestamp = (item: T): number => {
-    if (item.rawCreatedAt) {
-      const t = new Date(item.rawCreatedAt).getTime()
-      if (!Number.isNaN(t))
-        return t
-    }
-    if (typeof item.createdAt === 'string') {
-      if (item.createdAt.includes('刚刚') || item.createdAt.includes('今天'))
-        return Date.now()
-      if (item.createdAt.includes('昨天'))
-        return Date.now() - 86400000
-    }
-    const t = new Date(item.createdAt).getTime()
-    // 相对字符串 "MM-DD HH:mm" 会被 new Date() 误解析成 2001 年，视为无效，避免分错组
-    if (!Number.isNaN(t)) {
-      const parsedYear = new Date(t).getFullYear()
-      if (!(parsedYear === 2001 && !item.createdAt.includes('2001')))
-        return t
-    }
-    return 0
-  }
-
-  const sorted = [...items].sort((a, b) => getTimestamp(b) - getTimestamp(a))
-
-  const thisWeek: T[] = []
-  const thisMonth: T[] = []
-  const earlier: T[] = []
-
-  sorted.forEach((item) => {
-    const time = getTimestamp(item)
-    if (time >= thisWeekStart) {
-      thisWeek.push(item)
-    }
-    else if (time >= thisMonthStart) {
-      thisMonth.push(item)
-    }
-    else {
-      earlier.push(item)
-    }
-  })
-
-  const result: TimeGroup<T>[] = []
-  if (thisWeek.length > 0)
-    result.push({ title: '本周', list: thisWeek })
-  if (thisMonth.length > 0)
-    result.push({ title: '本月', list: thisMonth })
-  if (earlier.length > 0)
-    result.push({ title: '更早', list: earlier })
-
-  if (result.length === 0 && items.length > 0) {
-    result.push({ title: '更早', list: items })
-  }
-
-  return result
-}
-
-const groupedAnnouncements = computed(() => groupItemsByTime(announcements.value))
-const groupedInteractions = computed(() => groupItemsByTime(interactions.value))
-
 function handleInteractionTap(item: InteractionMessageVM) {
   if (!item.isRead) {
     markReadMutation.mutate(item.id)
@@ -176,7 +103,6 @@ function handleInteractionTap(item: InteractionMessageVM) {
     return
   // 契约：related_type 指向触发事件的对象（like→photo/solve/comment；comment→photo），前端据此跳转。
   // 轻量定位：评论消息/评论点赞 → 评论区 Tab；破解点赞 → 已破解 Tab；题目点赞 → 详情顶部即点赞位置，无需切 Tab。
-  // 滚动定位到具体评论需要评论列表接口按 id 定位（契约暂未提供），待后续 API 完善后再补。
   const tab = item.relatedType === 'solve'
     ? 'solves'
     : (item.relatedType === 'comment' || item.type === 'comment') ? 'comments' : undefined
@@ -203,10 +129,6 @@ function loadReadAnnouncementIds(): number[] {
   }
 }
 
-function isAnnouncementRead(id: number): boolean {
-  return readAnnouncementIds.value.includes(id)
-}
-
 function markAnnouncementRead(id: number) {
   if (!readAnnouncementIds.value.includes(id)) {
     readAnnouncementIds.value.push(id)
@@ -224,6 +146,7 @@ function goAnnouncementDetail(id: number) {
   markAnnouncementRead(id)
   uni.navigateTo({ url: withQuery(AppRoute.NoticeDetail, { id }) })
 }
+
 const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
 </script>
 
@@ -292,173 +215,33 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
     >
       <!-- 滑块 1：系统通知 -->
       <swiper-item class="box-border">
-        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextAnnounce()">
-          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
-            <wd-empty icon="no-result" tip="登录后查看系统通知" />
-            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
-              去登录
-            </wd-button>
-          </view>
-          <view v-else class="bottom-space--bar px-3 pt-2.5 space-y-4">
-            <view v-if="announceLoading" class="space-y-3">
-              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '80px' }, { width: '100%', height: '80px' }]" />
-            </view>
-            <view v-else-if="announceError" class="flex flex-col items-center justify-center gap-3 py-20">
-              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-              <wd-button size="small" plain round @click="refetchAnnounce">
-                重新加载
-              </wd-button>
-            </view>
-            <view v-else-if="announcements.length" class="space-y-4">
-              <view
-                v-for="group in groupedAnnouncements"
-                :key="group.title"
-                class="space-y-1.5"
-              >
-                <!-- 时间分组小标题 (本周 / 本月 / 更早) -->
-                <text class="block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase font-numeric">
-                  {{ group.title }}
-                </text>
-
-                <view class="border-y border-tx-brown">
-                  <view
-                    v-for="(item, index) in group.list"
-                    :key="item.id"
-                    class="cursor-pointer py-3.5 transition-colors space-y-1 active:opacity-70"
-                    :class="[
-                      { 'border-t border-tx-brown': index > 0 },
-                      !isAnnouncementRead(item.id) ? 'bg-tx-accent/15 -mx-3 px-3' : '',
-                    ]"
-                    @tap="goAnnouncementDetail(item.id)"
-                  >
-                    <!-- 顶栏：标题 + 未读红点 + 格式化时间 -->
-                    <view class="flex items-baseline justify-between gap-3">
-                      <view class="min-w-0 flex flex-1 items-center gap-1.5">
-                        <view v-if="!isAnnouncementRead(item.id)" class="h-2 w-2 flex-shrink-0 rounded-full bg-rose-500" />
-                        <text
-                          class="truncate text-base tracking-tight"
-                          :class="!isAnnouncementRead(item.id) ? 'text-tx-ink font-black' : 'text-[#333333] font-bold'"
-                        >
-                          {{ item.title }}
-                        </text>
-                      </view>
-                      <text class="flex-shrink-0 text-sm text-tx-ink-2 font-bold font-numeric">
-                        {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
-                      </text>
-                    </view>
-
-                    <!-- 内容预览 -->
-                    <text class="line-clamp-2 block text-sm leading-relaxed" :class="!isAnnouncementRead(item.id) ? 'text-[#333333]' : 'text-tx-ink-2'">
-                      {{ item.contentPreview }}
-                    </text>
-                  </view>
-                </view>
-              </view>
-            </view>
-            <view v-else class="py-20">
-              <wd-empty icon="no-result" tip="暂无系统通知" />
-            </view>
-
-            <wd-loadmore
-              v-if="isFetchingAnnounce"
-              :state="isFetchingAnnounce ? 'loading' : undefined"
-              @reload="fetchNextAnnounce"
-            />
-          </view>
-        </scroll-view>
+        <AnnouncementList
+          :items="announcements"
+          :loading="announceLoading"
+          :error="announceError"
+          :is-fetching-next-page="isFetchingAnnounce"
+          :is-logged-in="isLoggedIn()"
+          :read-ids="readAnnouncementIds"
+          @login="loginDirectly"
+          @reload="refetchAnnounce"
+          @load-more="fetchNextAnnounce"
+          @select="goAnnouncementDetail"
+        />
       </swiper-item>
 
       <!-- 滑块 2：互动消息 -->
       <swiper-item class="box-border">
-        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextInteract()">
-          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
-            <wd-empty icon="no-result" tip="登录后查看互动消息" />
-            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
-              去登录
-            </wd-button>
-          </view>
-          <view v-else class="bottom-space--bar px-3 pt-2.5 space-y-4">
-            <view v-if="interactLoading" class="space-y-3">
-              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
-            </view>
-            <view v-else-if="interactError" class="flex flex-col items-center justify-center gap-3 py-20">
-              <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-              <wd-button size="small" plain round @click="refetchInteract">
-                重新加载
-              </wd-button>
-            </view>
-            <view v-else-if="interactions.length" class="space-y-4">
-              <view
-                v-for="group in groupedInteractions"
-                :key="group.title"
-                class="space-y-1.5"
-              >
-                <!-- 时间分组小标题 (本周 / 本月 / 更早) -->
-                <text class="block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase font-numeric">
-                  {{ group.title }}
-                </text>
-
-                <view class="border-y border-tx-brown">
-                  <view
-                    v-for="(item, index) in group.list"
-                    :key="item.id"
-                    class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-70"
-                    :class="[{ 'border-t border-tx-brown': index > 0 }, !item.isRead ? 'bg-tx-accent/20 -mx-3 px-3' : '']"
-                    @tap="handleInteractionTap(item)"
-                  >
-                    <view class="min-w-0 flex flex-1 items-center gap-3">
-                      <view class="relative flex-shrink-0">
-                        <wd-img
-                          custom-class="h-11 w-11 block rounded-full bg-slate-100 object-cover ring-1 ring-tx-brown"
-                          :src="item.user.avatar || '/static/images/default-avatar.png'"
-                          lazy-load
-                          mode="aspectFill"
-                          round
-                          width="88rpx"
-                          height="88rpx"
-                        />
-                        <!-- 未读红点：挂在头像右上角 (精致小巧无白色边框) -->
-                        <view
-                          v-if="!item.isRead"
-                          class="absolute right-0 top-0 z-1 h-2 w-2 rounded-full bg-rose-500"
-                        />
-                      </view>
-
-                      <view class="min-w-0 flex-1 space-y-1">
-                        <!-- 第一行：用户名 (靠左) + 时间 (靠右) -->
-                        <view class="flex items-center justify-between gap-2">
-                          <view class="min-w-0 flex flex-1 items-center">
-                            <text class="truncate text-sm text-tx-ink font-black tracking-tight">
-                              {{ item.user.nickname }}
-                            </text>
-                            <text v-if="isMe(item.user.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
-                          </view>
-                          <text class="flex-shrink-0 text-xs text-tx-ink-2 font-bold font-numeric">
-                            {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
-                          </text>
-                        </view>
-
-                        <!-- 第二行：文字描述内容 (增加 break-all 允许自然断字填满行尾) -->
-                        <text class="line-clamp-2 block break-all text-sm text-tx-ink-2 font-medium leading-relaxed">
-                          {{ item.content }}
-                        </text>
-                      </view>
-                    </view>
-                  </view>
-                </view>
-              </view>
-            </view>
-            <view v-else class="py-20">
-              <wd-empty icon="no-result" tip="暂无互动消息" />
-            </view>
-
-            <wd-loadmore
-              v-if="isFetchingInteract"
-              :state="isFetchingInteract ? 'loading' : undefined"
-              @reload="fetchNextInteract"
-            />
-          </view>
-        </scroll-view>
+        <InteractionList
+          :items="interactions"
+          :loading="interactLoading"
+          :error="interactError"
+          :is-fetching-next-page="isFetchingInteract"
+          :is-logged-in="isLoggedIn()"
+          @login="loginDirectly"
+          @reload="refetchInteract"
+          @load-more="fetchNextInteract"
+          @select="handleInteractionTap"
+        />
       </swiper-item>
     </swiper>
   </view>
