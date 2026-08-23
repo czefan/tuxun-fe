@@ -1,4 +1,4 @@
-import type { InfiniteData } from '@tanstack/vue-query'
+import type { InfiniteData, QueryClient } from '@tanstack/vue-query'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
@@ -7,7 +7,7 @@ import { nextPageByLoadedCount } from '@/service/query/pagination'
 import { qk } from '@/service/query/keys'
 import { useAuthStore } from '@/store/auth'
 import { createPhoto, getPhotoDetail, getPhotos, setPhotoLike } from './api'
-import type { CreatePhotoPayload, PhotoCardVM, PhotoDetailVM, PhotoQueryParams } from './types'
+import type { CreatePhotoPayload, PhotoCardVM, PhotoDetailVM, PhotoFilterParams, PhotoQueryParams } from './types'
 
 export function useCreatePhoto() {
   const queryClient = useQueryClient()
@@ -96,4 +96,53 @@ export function useSetPhotoLike() {
       queryClient.invalidateQueries({ queryKey: qk.photo.detail(variables.id) })
     },
   })
+}
+
+/**
+ * 从已缓存的题目列表里找相邻题。
+ *
+ * 详情页的上下滑切题必须沿着「用户进来时那个列表」走 —— 用户是从某个
+ * 筛选/排序结果点进来的，重新请求会跳到别的顺序上。所以这里匹配 queryKey
+ * 里的查询参数，而不是发新请求。
+ */
+export function findAdjacentPhotoId(
+  queryClient: QueryClient,
+  params: PhotoFilterParams | null | undefined,
+  currentId: number,
+  offset: 1 | -1,
+): number | null {
+  // 1. 若携带来源列表参数，通过匹配列表查询缓存（兼容 page_size 等默认字段差异）精准定位
+  if (params) {
+    const listQueries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[], total?: number }>>({ queryKey: qk.photo.all() })
+    for (const [key, data] of listQueries) {
+      if (Array.isArray(key) && key[1] === 'list' && typeof key[2] === 'object' && key[2]) {
+        const p = key[2] as Record<string, any>
+        const match
+          = (params.activity_id === undefined || p.activity_id === params.activity_id)
+            && (params.activity_status === undefined || p.activity_status === params.activity_status)
+            && (params.sort_by === undefined || p.sort_by === params.sort_by)
+            && (params.solved === undefined || p.solved === params.solved)
+            && (params.keyword === undefined || p.keyword === params.keyword)
+
+        if (match && data?.pages) {
+          const list: PhotoCardVM[] = data.pages.flatMap(pg => pg.list ?? [])
+          const idx = list.findIndex(item => item.id === currentId)
+          if (idx !== -1 && list[idx + offset]) {
+            return list[idx + offset].id
+          }
+        }
+      }
+    }
+  }
+
+  // 2. 回退兜底：从所有包含当前题目的 photo 列表缓存中查找
+  const queries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[], total?: number }>>({ queryKey: qk.photo.all() })
+  for (const [_, data] of queries) {
+    const list: PhotoCardVM[] = data?.pages?.flatMap(p => p.list ?? []) ?? []
+    const idx = list.findIndex(p => p.id === currentId)
+    if (idx !== -1 && list[idx + offset]) {
+      return list[idx + offset].id
+    }
+  }
+  return null
 }

@@ -1,8 +1,9 @@
-import { VueQueryPlugin } from '@tanstack/vue-query'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PhotoQueryParams } from './types'
+import { qk } from '@/service/query/keys'
+import type { PhotoCardVM, PhotoQueryParams } from './types'
 
 const getPhotos = vi.fn(async (_params?: unknown) => ({ list: [], total: 0 }))
 
@@ -12,7 +13,7 @@ vi.mock('./api', () => ({
   setPhotoLike: vi.fn(async () => ({ liked: true })),
 }))
 
-const { useInfinitePhotoList } = await import('./query')
+const { useInfinitePhotoList, findAdjacentPhotoId } = await import('./query')
 
 describe('photo query keys', () => {
   beforeEach(() => {
@@ -45,5 +46,57 @@ describe('photo query keys', () => {
       getPhotos.mock.calls.length,
       'queryKey 不再随参数变化：切换排序/搜索不会重新请求',
     ).toBeGreaterThan(1)
+  })
+})
+
+describe('findAdjacentPhotoId', () => {
+  it('匹配指定筛选条件的缓存并推算下一题与上一题', () => {
+    const queryClient = new QueryClient()
+    const mockPhotos = [
+      { id: 101, title: 'Photo 101' },
+      { id: 102, title: 'Photo 102' },
+      { id: 103, title: 'Photo 103' },
+    ] as PhotoCardVM[]
+
+    queryClient.setQueryData(
+      [...qk.photo.list({ activity_id: 1, sort_by: 'hot' }), true],
+      {
+        pages: [{ list: mockPhotos, total: 3 }],
+        pageParams: [1],
+      },
+    )
+
+    // 中间题目：下一题 103，上一题 101
+    expect(findAdjacentPhotoId(queryClient, { activity_id: 1, sort_by: 'hot' }, 102, 1)).toBe(103)
+    expect(findAdjacentPhotoId(queryClient, { activity_id: 1, sort_by: 'hot' }, 102, -1)).toBe(101)
+
+    // 首题无上一题，末题无下一题
+    expect(findAdjacentPhotoId(queryClient, { activity_id: 1, sort_by: 'hot' }, 101, -1)).toBeNull()
+    expect(findAdjacentPhotoId(queryClient, { activity_id: 1, sort_by: 'hot' }, 103, 1)).toBeNull()
+  })
+
+  it('条件未命中时回退到包含当前题目的通用列表缓存', () => {
+    const queryClient = new QueryClient()
+    const mockPhotos = [
+      { id: 201, title: 'Photo 201' },
+      { id: 202, title: 'Photo 202' },
+    ] as PhotoCardVM[]
+
+    queryClient.setQueryData(
+      [...qk.photo.list({ sort_by: 'created_at' }), false],
+      {
+        pages: [{ list: mockPhotos, total: 2 }],
+        pageParams: [1],
+      },
+    )
+
+    // 传入未完全吻合的 params 或 null，依然能够从现有 photo 缓存中定位相邻题
+    expect(findAdjacentPhotoId(queryClient, { keyword: 'unknown' }, 201, 1)).toBe(202)
+    expect(findAdjacentPhotoId(queryClient, null, 202, -1)).toBe(201)
+  })
+
+  it('缓存中不存在题目时返回 null', () => {
+    const queryClient = new QueryClient()
+    expect(findAdjacentPhotoId(queryClient, null, 9999, 1)).toBeNull()
   })
 })

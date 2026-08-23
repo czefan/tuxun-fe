@@ -9,6 +9,8 @@ export interface PhotoQueryParams extends PageParams {
   solved?: boolean
 }
 
+export type PhotoFilterParams = Omit<PhotoQueryParams, keyof PageParams>
+
 interface PhotoAuthorVM {
   id: number
   nickname: string

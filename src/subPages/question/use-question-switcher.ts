@@ -1,19 +1,10 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { onUnload } from '@dcloudio/uni-app'
-import type { InfiniteData } from '@tanstack/vue-query'
 import { useQueryClient } from '@tanstack/vue-query'
 import { AppRoute, withQuery } from '@/router/routes'
-import { qk } from '@/service/query/keys'
-import type { PhotoCardVM } from '@/features/photo/types'
-
-export interface QuestionListContext {
-  activity_id?: number
-  activity_status?: 'active' | 'ended'
-  sort_by?: 'created_at' | 'hot'
-  solved?: boolean
-  keyword?: string
-}
+import { findAdjacentPhotoId } from '@/features/photo/query'
+import type { PhotoFilterParams } from '@/features/photo/types'
 
 const ACTIVITY_STATUS = ['active', 'ended'] as const
 const SORT_BY = ['created_at', 'hot'] as const
@@ -35,7 +26,7 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
   const touchStartY = ref(0)
   let bannerTimer: ReturnType<typeof setTimeout> | null = null
 
-  const listContext = ref<QuestionListContext | null>(null)
+  const listContext = ref<PhotoFilterParams | null>(null)
 
   function initSwitcherFromQuery(query?: Record<string, any>) {
     if (query?.activity_id || query?.activity_status || query?.sort_by || query?.solved !== undefined || query?.keyword) {
@@ -78,40 +69,7 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
 
   /** 从缓存列表中推算前一个或后一个题目 ID */
   function getAdjacentPhotoId(offset: 1 | -1): number | null {
-    // 1. 若携带来源列表参数，通过匹配列表查询缓存（兼容 page_size 等默认字段差异）精准定位
-    if (listContext.value) {
-      const listQueries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[], total?: number }>>({ queryKey: qk.photo.all() })
-      for (const [key, data] of listQueries) {
-        if (Array.isArray(key) && key[1] === 'list' && typeof key[2] === 'object' && key[2]) {
-          const p = key[2] as Record<string, any>
-          const match
-            = (listContext.value.activity_id === undefined || p.activity_id === listContext.value.activity_id)
-              && (listContext.value.activity_status === undefined || p.activity_status === listContext.value.activity_status)
-              && (listContext.value.sort_by === undefined || p.sort_by === listContext.value.sort_by)
-              && (listContext.value.solved === undefined || p.solved === listContext.value.solved)
-              && (listContext.value.keyword === undefined || p.keyword === listContext.value.keyword)
-
-          if (match && data?.pages) {
-            const list: PhotoCardVM[] = data.pages.flatMap(pg => pg.list ?? [])
-            const idx = list.findIndex(item => item.id === questionId.value)
-            if (idx !== -1 && list[idx + offset]) {
-              return list[idx + offset].id
-            }
-          }
-        }
-      }
-    }
-
-    // 2. 回退兜底：从所有包含当前题目的 photo 列表缓存中查找
-    const queries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[], total?: number }>>({ queryKey: qk.photo.all() })
-    for (const [_, data] of queries) {
-      const list: PhotoCardVM[] = data?.pages?.flatMap(p => p.list ?? []) ?? []
-      const idx = list.findIndex(p => p.id === questionId.value)
-      if (idx !== -1 && list[idx + offset]) {
-        return list[idx + offset].id
-      }
-    }
-    return null
+    return findAdjacentPhotoId(queryClient, listContext.value, questionId.value, offset)
   }
 
   /** 统一切题处理（offset: 1 为下一题，-1 为上一题） */
