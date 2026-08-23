@@ -248,11 +248,11 @@ describe('契约变更负向守卫', () => {
 
     const offenders = collectSourceFiles(SRC_ROOT)
       .filter(f => f.endsWith('.vue'))
-      .filter(f => !allowlist.has(path.relative(PROJECT_ROOT, f)))
+      .filter(f => !allowlist.has(path.relative(PROJECT_ROOT, f).replace(/\\/g, '/')))
       .filter(f => hasWriteOp(fs.readFileSync(f, 'utf-8')))
       .filter(f => !/requireLogin\s*\(/.test(fs.readFileSync(f, 'utf-8')))
 
-    expect(offenders, `以下组件发起写操作但没有 requireLogin() 拦截：\n${offenders.map(f => path.relative(PROJECT_ROOT, f)).join('\n')}`).toEqual([])
+    expect(offenders, `以下组件发起写操作但没有 requireLogin() 拦截：\n${offenders.map(f => path.relative(PROJECT_ROOT, f).replace(/\\/g, '/')).join('\n')}`).toEqual([])
   })
 
   it('写操作检测器：必须能抓到 mutateAsync 与动词不在结尾的 hook（useSubmitAttempt 等）', () => {
@@ -607,9 +607,9 @@ describe('契约变更负向守卫', () => {
     // 直连 api 会绕过 TanStack 的缓存失效声明：写操作成功后相关列表不会刷新。
     // 投稿页曾因此导致「投稿成功后我的投稿列表看不到新数据」。
     const offenders = collectSourceFiles(SRC_ROOT)
-      .filter(f => /\/(?:pages|subPages)\//.test(f))
+      .filter(f => /[\\/](?:pages|subPages)[\\/]/.test(f))
       .filter(f => /from ['"]@\/features\/[a-z]+\/api['"]/.test(fs.readFileSync(f, 'utf-8')))
-      .map(f => path.relative(PROJECT_ROOT, f))
+      .map(f => path.relative(PROJECT_ROOT, f).replace(/\\/g, '/'))
     expect(offenders, `发现页面直连 features/*/api：\n${offenders.join('\n')}`).toEqual([])
   })
 

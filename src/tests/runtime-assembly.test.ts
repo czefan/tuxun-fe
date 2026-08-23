@@ -206,7 +206,10 @@ describe('装配守卫', () => {
     // 游离的 key 不会进登出清理清单，公用设备换人登录后会泄漏上一个人的数据
     const srcRoot = path.join(process.cwd(), 'src')
     const offenders = collectSourceFiles(srcRoot)
-      .filter(f => !f.includes('constants/storage.ts') && !f.endsWith('.test.ts') && !f.includes('test-setup.ts'))
+      .filter((f) => {
+        const normalized = f.replace(/\\/g, '/')
+        return !normalized.includes('constants/storage.ts') && !normalized.endsWith('.test.ts') && !normalized.includes('test-setup.ts')
+      })
       .filter(f => /uni\.setStorageSync\(\s*['"`]/.test(fs.readFileSync(f, 'utf-8')))
     expect(offenders, `以下文件直接用字面量做 storage key：\n${offenders.join('\n')}`).toEqual([])
   })
