@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StatusTag from '@/components/status-tag/status-tag.vue'
 import { previewImage } from '@/utils/image-preview'
 import type { MyAttemptVM } from '../types'
 import type { Location } from '@/service/contract/types'

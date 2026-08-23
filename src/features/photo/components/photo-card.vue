@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import LikeButton from '@/components/like-button/like-button.vue'
 import type { PhotoCardVM } from '../types'
 import { useSetPhotoLike } from '../query'
 import { useAuth } from '@/composables/use-auth'
@@ -58,7 +59,7 @@ function handleLikeTap(e?: Event) {
     <view class="shadow-2xs overflow-hidden border border-tx-border/60 rounded-lg bg-white">
       <view class="relative w-full overflow-hidden">
         <wd-img
-          custom-class="w-full block transition-transform duration-500 hover:scale-105"
+          custom-class="w-full block overflow-hidden rounded-t-lg transition-transform duration-500 hover:scale-105"
           :style="opening ? { 'view-transition-name': `photo-cover-${item.id}` } : undefined"
           lazy-load
           :src="item.image.url"

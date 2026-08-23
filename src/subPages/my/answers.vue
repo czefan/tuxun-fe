@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import StatusTag from '@/components/status-tag/status-tag.vue'
 import { useInfiniteMyAttemptRecords } from '@/features/record/query'
 import type { UserAttemptRecordVM } from '@/features/record/types'
 import { useAuth } from '@/features/user/composables/use-auth'

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import LikeButton from '@/components/like-button/like-button.vue'
 import { useDeleteComment, useInfiniteCommentList, useSetCommentLike } from '../query'
 import type { CommentVM } from '../types'
 import { useAuth } from '@/composables/use-auth'

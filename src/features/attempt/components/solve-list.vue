@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LikeButton from '@/components/like-button/like-button.vue'
 import type { SolveRecordVM } from '../types'
 import { useSetSolveLike } from '../query'
 import { useAuth } from '@/composables/use-auth'

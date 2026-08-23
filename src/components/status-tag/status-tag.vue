@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-export type TagStatus = 'pending' | 'wrong' | 'correct' | 'approved' | 'rejected' | 'solved' | 'unsolved'
+type TagStatus = 'pending' | 'wrong' | 'correct' | 'approved' | 'rejected' | 'solved' | 'unsolved'
 
 defineOptions({
   options: {

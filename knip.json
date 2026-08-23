@@ -9,7 +9,6 @@
     "src/pages/**/*.vue",
     "src/subPages/**/*.vue",
     "src/app/**/*.vue",
-    "src/components/**/*.vue",
     "src/mocks/browser.ts",
     "src/mocks/node.ts",
     "pages.config.ts",

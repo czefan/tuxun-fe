@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
+import LikeButton from '@/components/like-button/like-button.vue'
+import PhotoLocationView from '@/components/photo-location-view/photo-location-view.vue'
 import SolveList from '@/features/attempt/components/solve-list.vue'
 import MyAttemptList from '@/features/attempt/components/my-attempt-list.vue'
 import CommentList from '@/features/comment/components/comment-list.vue'
@@ -223,7 +225,7 @@ function goSubmit() {
       <view class="shadow-2xs overflow-hidden border border-tx-border rounded-[18px] bg-white">
         <view class="relative w-full overflow-hidden">
           <wd-img
-            custom-class="w-full cursor-pointer block"
+            custom-class="w-full cursor-pointer block overflow-hidden rounded-t-[18px]"
             :style="{
               'view-transition-name': `photo-cover-${question.id}`,
               'aspectRatio': `${question.image.width} / ${question.image.height}`,

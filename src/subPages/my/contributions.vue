@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import StatusTag from '@/components/status-tag/status-tag.vue'
 import { normalizeToGcj02 } from '@/composables/use-map'
 import { useInfiniteMyPhotos, useMyPhotoDetail } from '@/features/record/query'
 import type { UserPhotoVM } from '@/features/record/types'
