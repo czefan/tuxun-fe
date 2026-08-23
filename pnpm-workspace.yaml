@@ -81,7 +81,7 @@ catalog:
   pinia-plugin-persistedstate: ^4.7.1
   postcss: ^8.5.26
   qrcode-generator: ^1.4.4
-  rollup: 4.14.3
+  rollup: 4.62.5
   rollup-plugin-visualizer: ^7.1.1
   sass: ^1.103.0
   simple-git-hooks: ^2.13.1
