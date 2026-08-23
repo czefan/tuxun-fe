@@ -14,7 +14,7 @@ description: High-level agent development rules and guidelines for tuxun-fe.
 ## 2. 核心硬约束
 
 1. **禁止直接修改生成产物**：切勿手动修改 `src/service/contract/schema.d.ts`、`src/pages.json`、`src/manifest.json` 及 `src/types/auto-import.d.ts` 等自动生成文件。
-2. **依赖方向限制**：组件与逻辑严格遵循单向依赖 `page → app → feature → service → shared`；`features` 之间禁止跨域相互 import，外壳层 (`app/`) 不得依赖业务域 (`features/`)。
+2. **依赖方向限制**：严格遵循单向依赖 `(pages / subPages / app) → features → (service / shared)`；`features` 之间禁止跨域相互 import；基础公共层（`components` / `composables` / `store` / `utils` / `constants` / `styles`）严禁反向依赖 `features` 与 `app`。
 3. **命名空间与变体隔离**：契约中的 `snake_case` 只能存在于 `service/` 与各域 `api.ts` 内部，跨出 API 边界一律转换为 `camelCase` View Model。
 4. **禁止导出 Barrel**：取消模块级 `index.ts` 统一导出机制（如无 `features/photo/index.ts`），必须精确按需导入。
 5. **SFC 代码块顺序**：Vue SFC 统一必须按 `<script setup>` → `<template>` → `<style>` 顺序组织。

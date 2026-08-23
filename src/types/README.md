@@ -10,8 +10,9 @@
 | --------------------- | ---------------------------------- | --------------------------------------------------------------------------------------- |
 | **全局声明**          | `src/types/*.d.ts`                 | 存放全局环境声明、第三方模块补丁及自动生成类型（如 `uni-pages.d.ts`）。                 |
 | **契约 DTO**          | `src/service/contract/schema.d.ts` | OpenAPI 工具根据 `contract/apifox-import.json` 自动生成的强类型契约，**禁止手动修改**。 |
-| **业务 API DTO**      | `src/service/api/*.ts`             | 导出接口参数与响应 DTO，基于契约强类型定义。                                            |
-| **模块/组件私有类型** | 就近存放在各目录的 `types.ts`      | Feature、页面或组件私有的类型定义（如 `src/features/activity/types.ts`）。              |
+| **通用/公共契约 VM**  | `src/service/contract/types.ts`    | 跨业务域通用的 Contract ViewModel 映射与基础类型（如 `ImageVM`, `PageResult` 等）。     |
+| **业务域 DTO / VM**   | `src/features/*/types.ts`          | 各业务域专属的请求参数、响应 DTO 与 View Model 结构。                                   |
+| **页面/组件私有类型** | 就近存放在各目录的 `types.ts`      | 页面或组件私有的临时状态定义（如 `subPages/question/types.ts`）。                       |
 
 ---
 

@@ -34,9 +34,9 @@ pnpm fmt             # oxfmt 格式化文档与配置文件
 
 ### 核心规则速览
 
-1. **统一接口导入**：业务层必须从 `@/service/api` 导入 API 接口，禁止在页面层直接写裸 HTTP 请求。
+1. **业务域接口聚合**：业务 API 请求与 Query Hooks 统一收敛在各业务域 `@/features/*`，禁止在页面层直接调用裸 HTTP 请求。
 2. **状态管理**：服务端状态使用 `@tanstack/vue-query`，客户端状态使用 Pinia。
-3. **路由分包**：主包仅保留 TabBar 核心页面（`index`, `my`, `history`, `notice`），其余二级页面统一放入 `subPages/` 分包。
+3. **路由分包**：主包仅保留 TabBar 核心入口页面（`index`, `activity`, `notice`, `my`），其余二级页面统一放入 `subPages/` 分包。
 4. **静态资源**：主包禁止存放过大媒体文件，单静态资源必须 `<= 300KB`（通过 `pnpm check:assets` 校验）。
 
 ---
