@@ -1,19 +1,4 @@
 /* ==========================================================================
-   全局复用：样式混入宏 (SCSS Mixins)
-   ========================================================================== */
-
-// 原生风格自定义返回键折角箭头
-@mixin nav-back-arrow($color: rgba(31, 27, 20, 0.95)) {
-  width: 12px;
-  height: 12px;
-  border-left: 1.5px solid $color;
-  border-top: 1.5px solid $color;
-  transform: rotate(-45deg);
-  margin-top: 1px;
-  box-sizing: border-box;
-}
-
-/* ==========================================================================
    全局基础重置与全局变量
    ========================================================================== */
 
@@ -105,9 +90,10 @@ page {
 
 /* 无底栏页面：底部留白 = 统一间隙 + 安全区。
    min-height 用导航栏以下的可见区 calc 公式（与 .page-fill/.swiper-page 一致）而非 100vh：
-   否则短内容页会比实际可见区多出导航栏高度，下方空出一大块、还能多滚一段空白。 */
+   --window-top 由 uni-app 按平台注入：H5 是页面内导航栏高度（44px），小程序为 0
+   （小程序导航栏由系统画在 webview 外，100vh 已不含它）。写死 44px 会让小程序端矮一截。 */
 .safe-bottom-page {
-  min-height: calc(100vh - 44px - env(safe-area-inset-top)) !important;
+  min-height: calc(100vh - var(--window-top, 0px) - env(safe-area-inset-top)) !important;
   box-sizing: border-box;
   padding-bottom: calc(var(--tx-bottom-space) + env(safe-area-inset-bottom)) !important;
 }
@@ -115,7 +101,7 @@ page {
 /* 有底栏页面（底部 tab 栏）：底部留白 = 统一间隙 + 底栏高度 + 安全区。
    min-height 同上；底栏为 fixed 悬浮，由 padding-bottom 垫开，不额外扣减。 */
 .safe-bottom-page--fixed-bar {
-  min-height: calc(100vh - 44px - env(safe-area-inset-top)) !important;
+  min-height: calc(100vh - var(--window-top, 0px) - env(safe-area-inset-top)) !important;
   box-sizing: border-box;
   padding-bottom: calc(
     var(--tx-bottom-space) + var(--tx-tabbar-height) + env(safe-area-inset-bottom)
@@ -135,7 +121,7 @@ page {
 }
 
 /* 顶部滑动切换（swiper + 内嵌 scroll-view）页面专用容器：
-   页面高度锁定为 H5 原生导航栏（44px）以下的可见区域，且禁止整页滚动。
+   页面高度锁定为导航栏（--window-top）以下的可见区域，且禁止整页滚动。
    否则根节点用 min-h-screen(100vh) 会比实际可见区多出导航栏高度，列表滚到底后
    整页会被带动 / 底部拼接出一段空白。底部的安全间距改由 scroll-view 内容区
    （pb-*）承担，而不是页面根节点。 */
@@ -143,19 +129,19 @@ page {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  height: calc(100vh - 44px - env(safe-area-inset-top));
+  height: calc(100vh - var(--window-top, 0px) - env(safe-area-inset-top));
   overflow: hidden;
 }
 
 /* 全高 Flex 内容页：内容顶部对齐，底部可钉一条信息（如版权/版本号）。
-   用 min-height（而非 min-h-screen 的 100vh）锁到导航栏以下的可见区域，
+   用 min-height（而非 min-h-screen 的 100vh）锁到导航栏（--window-top）以下的可见区域，
    短内容页不会再在下方空出一大块，也不会多出导航栏高度的滚动区。 */
 .page-fill {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
-  min-height: calc(100vh - 44px - env(safe-area-inset-top));
+  min-height: calc(100vh - var(--window-top, 0px) - env(safe-area-inset-top));
 }
 
 /* #ifdef H5 */
@@ -229,18 +215,4 @@ uni-page-body {
 .tx-search .wd-search__placeholder-txt {
   color: #a09688 !important;
   font-size: 28rpx !important;
-}
-
-/* 兼容表单特定嵌套结构微调 */
-.field-top .form-label {
-  margin-bottom: 0;
-}
-
-/* 通用段落排版类 */
-.u-paragraph {
-  display: block;
-  margin-bottom: 20rpx;
-  font-size: 33rpx;
-  line-height: 1.75;
-  color: #3a342c;
 }

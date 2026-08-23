@@ -7,7 +7,7 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { isTabBarPage } from '@/app/tab-bar/store'
-import NetworkBar from '@/components/network-bar/network-bar.vue'
+import NetworkBar from '../network-bar/network-bar.vue'
 import LoginConfirmModal from '@/features/user/components/login-confirm-modal/login-confirm-modal.vue'
 import { currRoute } from '@/router/page'
 import { useAuthStore } from '@/store/auth'
