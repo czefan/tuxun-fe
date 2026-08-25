@@ -8,9 +8,9 @@
 
 - **框架**：[Uni-app](https://uniapp.dcloud.net.cn/) (Vue 3 / TypeScript / Vite 5)
 - **UI 组件库**：[Wot Design Uni](https://wot-ui.cn/) (`wot-ui-v2`)
-- **CSS 框架**：[UnoCSS](https://unocss.dev/)
+- **CSS**：[UnoCSS](https://unocss.dev/) + 原生 CSS
 - **状态管理**：[Pinia](https://pinia.vuejs.org/) + [@tanstack/vue-query](https://tanstack.com/query/latest)
-- **网络与契约**：适配 `uni.request` 的拦截器 + OpenAPI 自动生成契约类型
+- **工具链**：[Oxlint](https://oxc.rs/) / [Oxfmt](https://oxc.rs/) / [git-cliff](https://git-cliff.org/)
 - **包管理器**：[pnpm](https://pnpm.io/)
 
 ---

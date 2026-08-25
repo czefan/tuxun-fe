@@ -23,7 +23,7 @@ src/
 │   ├── query/                   # Vue Query client / Query Key 工厂 / 分页钳制
 │   └── request/                 # 适配 uni.request / uploadFile 的底层请求库与拦截器
 ├── store/                       # Pinia 客户端全局状态（如用户会话态、客户端点赞态等）
-├── styles/                      # 全局公共样式、设计变量与 Sass mixins
+├── styles/                      # 全局基础样式 (index.css) 与 UnoCSS 配置
 ├── subPages/                    # 分包页面（非核心业务页面，如详情、投稿、商城等）
 ├── types/                       # 全局类型声明 (*.d.ts) 与插件生成声明
 └── utils/                       # 纯工具函数（业务无关）
@@ -47,12 +47,13 @@ src/
 
 ## 🔒 静态与运行时守护
 
-依赖规则由自动化校验探针实时守护（可通过提交或 CI 触发）：
+依赖规则由自动化校验探针实时守护：
 
-1. **ESLint 边界规则 (`eslint.config.mjs`)**：IDE 实时校验 `boundaries/dependencies` 违规。
-2. **Python 边界脚本 (`scripts/check-boundaries.py`)**：执行 `pnpm check:boundaries` 独立检测分层关系。
-3. **契约一致性校验 (`scripts/check-contract.py`)**：执行 `pnpm check:contract` 校验 API 路径与 operationId。
-4. **运行时装配守卫 (`src/tests/runtime-assembly.test.ts`)**：验证组件装配与状态响应性。
+1. **oxlint (`.oxlintrc.json`)**：亚秒级拦截分层与跨域依赖违规。
+2. **ESLint (`eslint.config.mjs`)**：`boundaries/dependencies` 解析模块依赖图兜底相对路径。
+3. **Python 边界脚本 (`scripts/check-boundaries.py`)**：执行 `pnpm check:boundaries` 独立检测分层关系。
+4. **契约一致性校验 (`scripts/check-contract.py`)**：执行 `pnpm check:contract` 校验 API 路径与 operationId。
+5. **运行时装配守卫 (`src/tests/runtime-assembly.test.ts`)**：验证组件装配与状态响应性。
 
 ---
 

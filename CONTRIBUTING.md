@@ -9,20 +9,21 @@
 提交代码前，请确保本地通过项目的静态与测试校验：
 
 ```bash
-# 运行完整校验（静态资源、Lint、类型检查、单元测试）
+# 运行完整校验
 pnpm check
 
-# 本地并行极速校验
+# 并行校验
 pnpm check:parallel
 
-# 单独校验项
-pnpm lint            # 运行 oxlint 与 eslint
-pnpm lint:fix        # 自动修复代码格式问题
-pnpm type-check      # vue-tsc 类型检查
-pnpm test:run        # 运行单元测试
-pnpm check:contract  # 校验 API 契约一致性
-pnpm check:boundaries# 校验分层依赖隔离
-pnpm fmt             # oxfmt 格式化文档与配置文件
+# 单独校验
+pnpm lint:quick       # oxlint 极速自检
+pnpm lint             # oxlint 与 eslint
+pnpm fmt              # oxfmt 格式化
+pnpm type-check       # vue-tsc 类型检查
+pnpm test:run         # 运行单元测试
+pnpm check:contract   # API 契约校验
+pnpm check:boundaries # 分层依赖校验
+pnpm changelog        # 生成更新日志
 ```
 
 ---
@@ -43,7 +44,7 @@ pnpm fmt             # oxfmt 格式化文档与配置文件
 
 ## 📝 Git Commit 提交规范
 
-项目强制开启 Git Commit 消息校验，请使用标准 **Angular Commit 格式**：
+项目强制开启 Git Commit 消息校验，请使用标准 **Conventional Commits 规范**：
 
 ```text
 <type>(<scope>): <subject>
@@ -54,11 +55,14 @@ pnpm fmt             # oxfmt 格式化文档与配置文件
 - `feat`：新增功能
 - `fix`：修复缺陷
 - `docs`：文档更新
-- `style`：代码格式调整（不改变逻辑）
-- `refactor`：代码重构（不增加功能也不修复 bug）
+- `style`：代码格式调整
+- `refactor`：代码重构
 - `perf`：性能优化
-- `test`：增加或修改测试用例
-- `chore`：构建过程、依赖库或辅助脚本变动
+- `test`：测试用例
+- `build`：构建系统或依赖变动
+- `ci`：CI 配置变动
+- `chore`：辅助工具或脚本变动
+- `revert`：代码回滚
 
 ### 提交示例
 
