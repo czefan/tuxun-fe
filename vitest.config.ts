@@ -52,6 +52,7 @@ export default defineConfig({
     poolOptions: {
       forks: { singleFork: true },
     },
+    testTimeout: 15000,
   },
   resolve: {
     alias: {

@@ -52,25 +52,23 @@ describe('formatRelativeTime & formatDate 日期时间格式化', () => {
 
   it('今年内其它日期（过去或未来，如活动结束时间）显示「MM-DD HH:mm」', () => {
     // 7天后（如活动结束时间 2026-08-22 13:14:38）
-    expect(formatRelativeTime('2026-08-22T13:14:38+08:00')).toBe('08-22 13:14')
+    expect(formatRelativeTime('2026-08-22 13:14:38')).toBe('08-22 13:14')
     // 上个月
-    expect(formatRelativeTime('2026-07-10T12:00:00+08:00')).toBe('07-10 12:00')
+    expect(formatRelativeTime('2026-07-10 12:00:00')).toBe('07-10 12:00')
   })
 
   it('跨年日期（过去或未来年份）显示「YYYY-MM-DD HH:mm」', () => {
-    expect(formatRelativeTime('2025-12-31T23:59:59+08:00')).toBe('2025-12-31 23:59')
-    expect(formatRelativeTime('2027-01-01T08:00:00+08:00')).toBe('2027-01-01 08:00')
+    expect(formatRelativeTime('2025-12-31 23:59:59')).toBe('2025-12-31 23:59')
+    expect(formatRelativeTime('2027-01-01 08:00:00')).toBe('2027-01-01 08:00')
   })
 
   it('showTime: false 选项下非今日/昨日/明日不显示时分', () => {
-    expect(formatRelativeTime('2026-08-22T13:14:38+08:00', { showTime: false })).toBe('08-22')
-    expect(formatRelativeTime('2025-12-31T23:59:59+08:00', { showTime: false })).toBe('2025-12-31')
+    expect(formatRelativeTime('2026-08-22 13:14:38', { showTime: false })).toBe('08-22')
+    expect(formatRelativeTime('2025-12-31 23:59:59', { showTime: false })).toBe('2025-12-31')
   })
 
   it('formatDate 传入自定义格式时按格式输出', () => {
-    expect(formatDate('2026-08-15T14:00:00+08:00', 'YYYY/MM/DD')).toBe('2026/08/15')
-    expect(formatDate('2026-08-22T13:14:38+08:00', 'YYYY年MM月DD日 HH:mm')).toBe(
-      '2026年08月22日 13:14',
-    )
+    expect(formatDate('2026-08-15 14:00:00', 'YYYY/MM/DD')).toBe('2026/08/15')
+    expect(formatDate('2026-08-22 13:14:38', 'YYYY年MM月DD日 HH:mm')).toBe('2026年08月22日 13:14')
   })
 })

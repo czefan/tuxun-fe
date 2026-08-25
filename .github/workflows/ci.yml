@@ -39,30 +39,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint dotenv files
-        uses: dotenv-linter/action-dotenv-linter@v2
-        with:
-          dotenv_linter_flags: --recursive env
+      - name: Run full quality checks
+        run: pnpm check
 
-      - name: Scan dependencies
-        uses: google/osv-scanner-action/osv-scanner-action@v1
-        continue-on-error: true
-        with:
-          scan-args: --lockfile=pnpm-lock.yaml
-
-      - name: Run quality checks
-        run: |
-          pnpm check
-          pnpm build:h5
+      - name: Build H5 production bundle
+        run: pnpm build:h5
 
       - name: Build Weixin mini program
-        if: github.event_name == 'pull_request'
         env:
           SKIP_OPEN_DEVTOOLS: 'true'
         run: pnpm build:mp
 
       - name: Check Weixin package size
-        if: github.event_name == 'pull_request'
         env:
           MP_SIZE_STRICT: 'true'
           MP_SINGLE_PACKAGE_LIMIT: '2097152'

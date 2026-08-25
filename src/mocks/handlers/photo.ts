@@ -112,12 +112,8 @@ export const photoHandlers = [
     })
   }),
 
-  http.post('*/api/photos', async ({ request }) => {
-    const body = (await request.json().catch(() => ({}))) as {
-      title?: string
-      description?: string
-    }
-    return created(db.createPhoto(body.title || '投稿地标', body.description || '地标描述'))
+  http.post('*/api/photos', () => {
+    return created(db.createPhoto('投稿地标', '地标描述'))
   }),
 
   http.get('*/api/photos/:id', ({ params }) => {

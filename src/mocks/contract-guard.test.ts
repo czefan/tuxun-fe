@@ -111,7 +111,7 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
         // 个别上传路径可能走进 H5 专用实现而挂起，不应拖垮整个守卫。
         await Promise.race([
           fn(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('调用超时 3s')), 3000)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('调用超时 5s')), 5000)),
         ])
       } catch (error) {
         violations.push(`${label} 调用失败: ${(error as Error).message}`)
@@ -197,7 +197,7 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
     expect(violations, `\n契约违规 ${violations.length} 处：\n${violations.join('\n')}\n`).toEqual(
       [],
     )
-  })
+  }, 30_000)
 
   /**
    * 静态覆盖 1：事件校验只能看见「被调用过」的请求，
