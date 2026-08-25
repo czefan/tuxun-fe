@@ -14,7 +14,7 @@ const dryRun = process.argv.includes('--dry-run')
  *
  * 版本号的事实源是 manifest.config.ts（小程序上传读的是 versionName / versionCode），
  * 但 package.json 里也有一个 version。不同步的话两个数会越差越远，
- * changelogen 之类按 package.json 取版本的工具就会给出错误的版本。
+ * git-cliff / CI 之类按 package.json 取版本的工具就会给出错误的版本。
  */
 function syncPackageVersion(nextVersionName) {
   const raw = fs.readFileSync(packageJsonPath, 'utf8')
