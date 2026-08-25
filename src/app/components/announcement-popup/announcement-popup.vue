@@ -74,16 +74,8 @@ function handleViewNotice() {
     <view
       class="relative mx-auto w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-white shadow-2xl"
     >
-      <!-- 右上角关闭按钮 -->
-      <view
-        class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/10 text-tx-ink-2 backdrop-blur-md transition-transform active:scale-90"
-        @tap="handleClose"
-      >
-        <wd-icon name="close" size="14px" />
-      </view>
-
       <!-- 公告正文（支持超长富文本内容上下滑动） -->
-      <scroll-view scroll-y class="box-border max-h-[60vh] min-w-0 w-full px-5 pb-4 pt-10">
+      <scroll-view scroll-y class="box-border max-h-[60vh] min-w-0 w-full px-5 pb-4 pt-5">
         <rich-text :nodes="popup.content" class="block break-words" />
       </scroll-view>
 
