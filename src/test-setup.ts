@@ -1,5 +1,29 @@
+import { config } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, vi } from 'vitest'
+
+// 全局 Stub Wot UI 组件，避免单测环境由于未加载完整组件库产生的解析警告
+config.global.stubs = {
+  'wd-icon': true,
+  'wd-button': true,
+  'wd-popup': true,
+  'wd-tag': true,
+  'wd-input': true,
+  'wd-navbar': true,
+}
+
+// 屏蔽测试环境下 UniApp 专有标签 (map/image/scroll-view) 的 HTML 保留字预期提示
+const originalWarn = console.warn
+console.warn = (...args: unknown[]) => {
+  const msg = typeof args[0] === 'string' ? args[0] : ''
+  if (
+    msg.includes('Do not use built-in or reserved HTML elements') ||
+    msg.includes('Failed to resolve component')
+  ) {
+    return
+  }
+  originalWarn(...args)
+}
 
 // 每个测试前重置 Pinia 实例
 beforeEach(() => {

@@ -36,6 +36,9 @@ if (isMp) {
       `[build] 小程序产物只注册了 ${total} 个页面，navigateTo 会大面积失败。检查 create-base-files 与插件顺序。`,
     )
   }
+  console.log(
+    `✅ [postbuild] 小程序页面注册校验通过: 共 ${total} 个页面（主包 ${appJson.pages?.length ?? 0} + 分包 ${total - (appJson.pages?.length ?? 0)}）`,
+  )
 } else {
   const pagesJsonPath = path.resolve('src/pages.json')
   const assetsDir = path.join(outDir, 'assets')
@@ -68,4 +71,5 @@ if (isMp) {
       `[build] H5 产物中页面级 chunk 只有 ${pageChunks.length} 个（期望 ≥2），产物是单页模式（__UNI_FEATURE_PAGES__ = false），全站导航会失效。检查 scripts/create-base-files.js 的 scanPages 与 UniPages 插件顺序。`,
     )
   }
+  console.log(`✅ [postbuild] H5 页面 Chunk 校验通过: 共 ${pageChunks.length} 个页面 Chunk`)
 }

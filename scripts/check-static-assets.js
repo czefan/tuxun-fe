@@ -25,6 +25,7 @@ const staticDir = path.resolve(
 const singleAssetLimit = readByteLimit('STATIC_ASSET_SINGLE_LIMIT', DEFAULT_SINGLE_ASSET_LIMIT)
 const totalAssetLimit = readByteLimit('STATIC_ASSET_TOTAL_LIMIT', DEFAULT_TOTAL_ASSET_LIMIT)
 const strict = process.env.STATIC_ASSET_STRICT !== 'false'
+const verbose = process.argv.includes('--verbose')
 
 if (!fs.existsSync(staticDir)) {
   console.error(`Static asset directory not found: ${staticDir}`)
@@ -96,10 +97,17 @@ function createWarnings(assets, totalSize) {
 }
 
 function printReport(rootDir, assets, totalSize, warnings) {
+  if (warnings.length === 0 && !verbose) {
+    console.log(
+      `📦 静态资源检查通过: ${assets.length} 个文件，总大小 ${formatBytes(totalSize)}（单文件限制 ${formatBytes(singleAssetLimit)}，总额度 ${formatBytes(totalAssetLimit)}）`,
+    )
+    return
+  }
+
   const visibleAssets = assets.slice(0, 20)
   const nameWidth = Math.max('Asset'.length, ...visibleAssets.map((asset) => asset.path.length))
 
-  console.log(`Static asset budget report: ${rootDir}`)
+  console.log(`Static asset report: ${rootDir}`)
   console.log(
     `Limits: single ${formatBytes(singleAssetLimit)}, total ${formatBytes(totalAssetLimit)}`,
   )

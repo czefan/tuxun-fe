@@ -139,7 +139,7 @@ function createWarnings(rows, total) {
 function printReport(rootDir, rows, total, warnings) {
   const nameWidth = Math.max('Package'.length, ...rows.map((row) => row.name.length))
 
-  console.log(`Weixin package size report: ${rootDir}`)
+  console.log(`📦 微信小程序分包体积分析: ${rootDir}`)
   console.log(`${padEnd('Package', nameWidth)}  Raw        Gzip       Files`)
   console.log(`${padEnd('-'.repeat(nameWidth), nameWidth)}  ---------  ---------  -----`)
 
@@ -154,9 +154,9 @@ function printReport(rootDir, rows, total, warnings) {
   )
 
   if (warnings.length > 0) {
-    console.log('\nWarnings:')
+    console.log('\n⚠️ 分包体积超标告警:')
     for (const warning of warnings) {
-      console.log(`- ${warning}`)
+      console.log(`- ⚠️ ${warning}`)
     }
   }
 }

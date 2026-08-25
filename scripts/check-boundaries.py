@@ -49,5 +49,5 @@ if violations:
         print(f"  - {v}")
     sys.exit(1)
 else:
-    print("✅ 架构与域边界校验 100% 通过！")
+    print("📐 架构与域边界校验通过")
     sys.exit(0)
