@@ -19,11 +19,11 @@
   "explorer.fileNesting.patterns": {
     "package.json": "tsconfig*.json, pnpm-lock.yaml, pnpm-workspace.yaml, knip.json, skills-lock.json, .npmrc, .gitignore, .gitattributes",
     "vite.config.ts": "vitest.config.ts, uno.config.ts, wot-ui-resolver.ts, index.html, build/*, env/*",
-    "eslint.config.mjs": "commitlint.config.mjs, .oxlintrc.json, .oxfmtrc.json, .commitlintrc.*, .prettier*, .eslint*, .editorconfig",
+    "eslint.config.mjs": "commitlint.config.mjs, cliff.toml, .oxlintrc.json, .oxfmtrc.json, .commitlintrc.*, .eslint*, .editorconfig",
     "pages.config.ts": "manifest.config.ts",
-    "README.md": "LICENSE, SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md, CHANGELOG.md",
+    "README.md": "LICENSE, SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md, CHANGELOG.md, cliff.toml",
     "docker.md": "Dockerfile, docker*.md, nginx*, .dockerignore",
-    "*.vue": "${capture}.test.ts, ${capture}.spec.ts, ${capture}.scss, ${capture}.css",
+    "*.vue": "${capture}.test.ts, ${capture}.spec.ts, ${capture}.css, ${capture}.scss",
     "*.ts": "${capture}.test.ts, ${capture}.spec.ts"
   },
 

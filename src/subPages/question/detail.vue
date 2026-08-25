@@ -478,7 +478,7 @@ function goSubmit() {
   </view>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 @keyframes slideUpOut {
   from {
     transform: translateY(0);

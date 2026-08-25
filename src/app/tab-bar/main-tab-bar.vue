@@ -94,17 +94,17 @@ function publish() {
   </view>
 </template>
 
-<style lang="scss">
+<style>
 .main-tab-bar {
   @apply fixed -bottom-[1px] left-0 right-0 z-50 flex items-center justify-around w-full h-[calc(var(--tx-tabbar-height)+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-tx-brown border-t border-tx-border shadow-lg box-border;
 }
 
 .tab-item {
   @apply relative flex-1 flex items-center justify-center h-full cursor-pointer;
+}
 
-  &.tab-center {
-    @apply flex-none w-[110rpx];
-  }
+.tab-item.tab-center {
+  @apply flex-none w-[110rpx];
 }
 
 .tab-content {

@@ -40,6 +40,6 @@ onUnmounted(() => {
 // #endif
 </script>
 
-<style lang="scss">
-@import '@/styles/index.scss';
+<style>
+@import '@/styles/index.css';
 </style>

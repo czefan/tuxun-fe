@@ -164,16 +164,16 @@ const splitColumns = computed(() => {
   </view>
 </template>
 
-<style lang="scss">
+<style>
 .photo-waterfall {
   @apply box-border w-full py-1;
+}
 
-  &__grid {
-    @apply flex gap-1.5 align-start;
-  }
+.photo-waterfall__grid {
+  @apply flex gap-1.5 align-start;
+}
 
-  &__col {
-    @apply flex-1 flex flex-col min-w-0;
-  }
+.photo-waterfall__col {
+  @apply flex-1 flex flex-col min-w-0;
 }
 </style>

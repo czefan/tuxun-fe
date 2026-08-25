@@ -40,7 +40,7 @@ export const shortcuts: Extract<UserShortcuts, any[]> = [
     'u-user-name': 'text-base text-tx-ink font-medium leading-tight',
 
     // 7. 统一时间与日期 (14px 数字字体)
-    // 数字字体栈是全局 SCSS 自定义类 .font-numeric（见 styles/index.scss），
+    // 数字字体栈是全局 CSS 自定义类 .font-numeric（见 styles/index.css），
     // 不是 unocss 工具类——直接用类名而非 shortcut，避免「unmatched utility」警告
     'u-meta-time': 'font-numeric text-sm text-tx-ink-2 font-medium leading-none',
 

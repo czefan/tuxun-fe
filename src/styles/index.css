@@ -19,10 +19,10 @@ textarea {
 
 button {
   box-sizing: border-box;
+}
 
-  &::after {
-    border: 0; /* 清除微信小程序默认伪元素框线 */
-  }
+button::after {
+  border: 0; /* 清除微信小程序默认伪元素框线 */
 }
 
 /* 全局移动端原生滚动条完全隐藏 (适用于全站所有 App / 微信小程序 / H5 页面及 scroll-view 区域) */
