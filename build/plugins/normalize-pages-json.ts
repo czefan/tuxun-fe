@@ -32,8 +32,7 @@ function dedupeByKey<T extends PagesJsonItem>(items: T[] | undefined, key: strin
     if (existingIndex === undefined) {
       indexByKey.set(value, result.length)
       result.push(item)
-    }
-    else {
+    } else {
       result[existingIndex] = item
     }
   }
@@ -54,13 +53,12 @@ export function normalizeGeneratedPagesJson(rootDir: string) {
 
   try {
     pagesJson = JSON.parse(withoutLineComments)
-  }
-  catch {
+  } catch {
     return
   }
 
   pagesJson.pages = dedupeByKey(pagesJson.pages, 'path')
-  pagesJson.subPackages = pagesJson.subPackages?.map(subPackage => ({
+  pagesJson.subPackages = pagesJson.subPackages?.map((subPackage) => ({
     ...subPackage,
     pages: dedupeByKey(subPackage.pages, 'path'),
   }))

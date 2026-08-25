@@ -17,7 +17,7 @@ export const attemptHandlers = [
     const paginated = paginateArray(list, page, pageSize)
     return ok({
       total: list.length,
-      list: paginated.map(s => ({
+      list: paginated.map((s) => ({
         id: s.id,
         author: s.author,
         image: toBothMedia(s.image),
@@ -35,7 +35,7 @@ export const attemptHandlers = [
     const paginated = paginateArray(list, page, pageSize)
     return ok({
       total: list.length,
-      list: paginated.map(a => ({
+      list: paginated.map((a) => ({
         id: a.id,
         image: toBothMedia(a.image),
         location: a.location,
@@ -55,18 +55,18 @@ export const attemptHandlers = [
     let filtered = [...db.attempts]
 
     if (status) {
-      filtered = filtered.filter(a => a.status === status)
+      filtered = filtered.filter((a) => a.status === status)
     }
 
     if (activityId) {
-      filtered = filtered.filter(a => a.photo?.activity?.id === Number(activityId))
+      filtered = filtered.filter((a) => a.photo?.activity?.id === Number(activityId))
     }
 
     const paginated = paginateArray(filtered, page, pageSize)
 
     return ok({
       total: filtered.length,
-      list: paginated.map(a => ({
+      list: paginated.map((a) => ({
         id: a.id,
         user_attempts_count: a.user_attempts_count,
         status: a.status,
@@ -84,7 +84,7 @@ export const attemptHandlers = [
     const id = Number(params.id)
     const body = (await request.json()) as { liked?: boolean }
     const liked = Boolean(body.liked)
-    const item = db.solves.find(s => s.id === id)
+    const item = db.solves.find((s) => s.id === id)
     if (item) {
       item.liked = liked
       item.likes_count += liked ? 1 : -1

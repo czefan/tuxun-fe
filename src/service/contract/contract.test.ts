@@ -64,7 +64,7 @@ describe('全域 API 契约真实结构与逻辑集成断言', () => {
 
     const solves = await getSolves(101)
     expect(solves.list.length).toBeGreaterThan(0)
-    expect(solves.list.every(item => item.liked === false)).toBe(true)
+    expect(solves.list.every((item) => item.liked === false)).toBe(true)
 
     const myAttempts = await getMyAttempts(101)
     expect(myAttempts.list[0].status).toBe('pending')
@@ -73,7 +73,7 @@ describe('全域 API 契约真实结构与逻辑集成断言', () => {
   it('comment 域: getComments & postComment 契约结构测试', async () => {
     const comments = await getComments(101)
     expect(comments.list.length).toBeGreaterThan(0)
-    expect(comments.list.every(item => item.liked === false)).toBe(true)
+    expect(comments.list.every((item) => item.liked === false)).toBe(true)
 
     const postRes = await postComment(101, '好地标！')
     expect(postRes.status).toBe('pending')

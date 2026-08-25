@@ -68,7 +68,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "bump-version": "node ./scripts/bump-version.js",
-    "changelog": "changelogen --output CHANGELOG.md --no-commit --no-tag"
+    "changelog": "git-cliff -o CHANGELOG.md"
   },
   "dependencies": {
     "@dcloudio/uni-app": "catalog:",
@@ -113,7 +113,6 @@
     "@vue/test-utils": "catalog:",
     "ajv": "catalog:",
     "ajv-formats": "catalog:",
-    "changelogen": "catalog:",
     "cross-env": "catalog:",
     "enquirer": "catalog:",
     "eslint": "catalog:",

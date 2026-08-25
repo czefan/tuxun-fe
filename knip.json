@@ -20,5 +20,5 @@
   "ignore": ["src/env.d.ts", "src/uni.scss"],
   "ignoreDependencies": ["@dcloudio/.*", "postcss", "@tanstack/query-core"],
   "vite": false,
-  "ignoreBinaries": ["uv"]
+  "ignoreBinaries": ["uv", "git-cliff"]
 }

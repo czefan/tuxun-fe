@@ -13,7 +13,7 @@ import {
 export const theme = {
   colors: {
     /** 基础主题色，用法如: text-primary */
-    'primary': 'var(--wot-color-theme,#0957DE)',
+    primary: 'var(--wot-color-theme,#0957DE)',
     /** 设计系统语义颜色 Token */
     'tx-main': TX_BG_MAIN,
     'tx-brown': TX_BG_BROWN,

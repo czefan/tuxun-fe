@@ -7,8 +7,7 @@ const toastStack = new Map<string, number>()
 const TOAST_DEBOUNCE_MS = 1500
 
 export function showToastDeduplicated(title: string) {
-  if (!title)
-    return
+  if (!title) return
   const now = Date.now()
   const lastTime = toastStack.get(title)
   if (lastTime && now - lastTime < TOAST_DEBOUNCE_MS) {
@@ -46,7 +45,7 @@ export function handleResponseError(
   responseData?: Partial<ContractResponse>,
   hideErrorToast?: boolean,
   silentAuth?: boolean,
-): { message: string, code: number } {
+): { message: string; code: number } {
   const code = responseData?.code ?? -1
   const serverMessage = responseData?.message || ''
 
@@ -98,8 +97,7 @@ export function handleResponseError(
     default:
       if (statusCode === 429) {
         displayMessage = serverMessage || '请求过于频繁，请稍后再试'
-      }
-      else if (!displayMessage) {
+      } else if (!displayMessage) {
         displayMessage = '请求失败，请稍后再试'
       }
       break

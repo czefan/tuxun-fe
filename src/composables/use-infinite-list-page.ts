@@ -17,19 +17,15 @@ export interface UseInfiniteListPageOptions {
  */
 export function useInfiniteListPage(options: UseInfiniteListPageOptions) {
   onReachBottom(() => {
-    if (options.enabled && !options.enabled())
-      return
-    if (options.hasNextPage?.value && !options.isFetchingNextPage?.value)
-      options.fetchNextPage()
+    if (options.enabled && !options.enabled()) return
+    if (options.hasNextPage?.value && !options.isFetchingNextPage?.value) options.fetchNextPage()
   })
 
   onPullDownRefresh(async () => {
     try {
       // 未激活的 Tab 实例不发起请求，但仍需在 finally 中结束下拉动画
-      if (!options.enabled || options.enabled())
-        await options.refetch()
-    }
-    finally {
+      if (!options.enabled || options.enabled()) await options.refetch()
+    } finally {
       uni.stopPullDownRefresh()
     }
   })

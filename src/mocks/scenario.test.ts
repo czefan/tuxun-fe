@@ -12,9 +12,9 @@ describe('mock 数据场景与逻辑过滤测试', () => {
     expect(db.announcements.length).toBeGreaterThanOrEqual(10)
 
     // 验证“我的投稿”各个状态切片均包含丰富数据
-    expect(db.myPhotos.filter(p => p.status === 'approved').length).toBeGreaterThan(5)
-    expect(db.myPhotos.filter(p => p.status === 'pending').length).toBeGreaterThan(5)
-    expect(db.myPhotos.filter(p => p.status === 'rejected').length).toBeGreaterThan(5)
+    expect(db.myPhotos.filter((p) => p.status === 'approved').length).toBeGreaterThan(5)
+    expect(db.myPhotos.filter((p) => p.status === 'pending').length).toBeGreaterThan(5)
+    expect(db.myPhotos.filter((p) => p.status === 'rejected').length).toBeGreaterThan(5)
 
     // 验证极限数据最长字数与次数在 API 契约限制范围内 (activity title<=20, activity description<=50, reject_reason<=50, nickname<=10, user_attempts_count<=5)
     expect(db.user.nickname.length).toBeLessThanOrEqual(10)

@@ -25,15 +25,13 @@ export function useUpdateNickname() {
       await queryClient.cancelQueries({ queryKey: qk.user.info() })
       const prev = queryClient.getQueryData<UserInfo>(qk.user.info())
       queryClient.setQueryData<UserInfo>(qk.user.info(), (old) => {
-        if (!old)
-          return old
+        if (!old) return old
         return { ...old, nickname }
       })
       return { prev }
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev)
-        queryClient.setQueryData(qk.user.info(), ctx.prev)
+      if (ctx?.prev) queryClient.setQueryData(qk.user.info(), ctx.prev)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.user.info() })
@@ -49,15 +47,13 @@ export function useUpdateAvatar() {
       await queryClient.cancelQueries({ queryKey: qk.user.info() })
       const prev = queryClient.getQueryData<UserInfo>(qk.user.info())
       queryClient.setQueryData<UserInfo>(qk.user.info(), (old) => {
-        if (!old)
-          return old
+        if (!old) return old
         return { ...old, avatar: filePath }
       })
       return { prev }
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev)
-        queryClient.setQueryData(qk.user.info(), ctx.prev)
+      if (ctx?.prev) queryClient.setQueryData(qk.user.info(), ctx.prev)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.user.info() })

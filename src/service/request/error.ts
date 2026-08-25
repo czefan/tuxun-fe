@@ -6,7 +6,7 @@ export class ApiRequestError extends Error {
 
   constructor(
     message: string,
-    options: { code?: number, statusCode?: number, data?: unknown, isSilent?: boolean } = {},
+    options: { code?: number; statusCode?: number; data?: unknown; isSilent?: boolean } = {},
   ) {
     super(message)
     this.name = 'ApiRequestError'

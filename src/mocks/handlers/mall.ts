@@ -10,14 +10,13 @@ export const mallHandlers = [
     // 契约：keyword 按名称或描述文字模糊搜索（最长 50）
     const keyword = new URL(request.url).searchParams.get('keyword')?.trim().toLowerCase() || ''
     const list = db.goods.filter((g) => {
-      if (!keyword)
-        return true
+      if (!keyword) return true
       return g.name.toLowerCase().includes(keyword) || g.description.toLowerCase().includes(keyword)
     })
     const paginated = paginateArray(list, page, pageSize)
     return ok({
       total: list.length,
-      list: paginated.map(g => ({
+      list: paginated.map((g) => ({
         ...g,
         image: toBothMedia(g.image),
       })),
@@ -35,7 +34,7 @@ export const mallHandlers = [
     const paginated = paginateArray(db.exchanges, page, pageSize)
     return ok({
       total: db.exchanges.length,
-      list: paginated.map(e => ({
+      list: paginated.map((e) => ({
         ...e,
         good: {
           ...e.good,

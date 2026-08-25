@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 const isOffline = ref(false)
 const queryClient = useQueryClient()
 
-function handleNetworkChange(res: { isConnected: boolean, networkType: string }) {
+function handleNetworkChange(res: { isConnected: boolean; networkType: string }) {
   const offline = !res.isConnected || res.networkType === 'none'
   // 网络恢复时重拉数据：断网期间失败的查询不会自己重试
   if (isOffline.value && !offline) {

@@ -21,7 +21,7 @@ describe('登出清理', () => {
 
     useUserStore().logout()
 
-    const removed = removeStorageSync.mock.calls.map(call => call[0])
+    const removed = removeStorageSync.mock.calls.map((call) => call[0])
     expect(removed, '答题草稿没有被清理').toContain('tuxun_submit_attempt_draft_1')
     expect(removed).toContain('tuxun_submit_attempt_draft_2')
     // 投稿草稿与鉴权键一并清理

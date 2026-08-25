@@ -27,8 +27,7 @@ const showLoginModal = computed({
   set: (val: boolean) => {
     if (val) {
       authStore.openLoginModal()
-    }
-    else {
+    } else {
       authStore.closeLoginModal()
     }
   },

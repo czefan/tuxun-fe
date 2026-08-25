@@ -11,7 +11,7 @@ focusManager.setFocused(true)
 onlineManager.setEventListener((setOnline) => {
   setOnline(true)
 
-  const handleNetworkChange = (res: { isConnected: boolean, networkType: string }) => {
+  const handleNetworkChange = (res: { isConnected: boolean; networkType: string }) => {
     setOnline(Boolean(res.isConnected) && res.networkType !== 'none')
   }
 

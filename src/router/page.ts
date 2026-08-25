@@ -26,8 +26,7 @@ export function currRoute() {
         while (val.startsWith('%')) {
           try {
             val = decodeURIComponent(val)
-          }
-          catch {
+          } catch {
             break
           }
         }

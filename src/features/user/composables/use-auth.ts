@@ -26,11 +26,9 @@ export function useAuth() {
     try {
       await logoutApi()
       serverCleared = true
-    }
-    catch {
+    } catch {
       // 服务端登出失败不阻断本地登出：本地状态必须清，否则用户会卡在登录态里
-    }
-    finally {
+    } finally {
       userStore.logout()
     }
     return { serverCleared }
@@ -43,8 +41,7 @@ export function useAuth() {
    * 基础设施层的 useAuth 则读取 authStore.userId（避免基础设施反向依赖 features/user）。
    */
   function isMe(authorId?: number | null): boolean {
-    if (!userStore.isLoggedIn() || !userStore.userInfo?.id || !authorId)
-      return false
+    if (!userStore.isLoggedIn() || !userStore.userInfo?.id || !authorId) return false
     return userStore.userInfo.id === authorId
   }
 

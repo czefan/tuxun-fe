@@ -27,10 +27,8 @@ const emit = defineEmits<{
 }>()
 
 const iconSize = computed(() => {
-  if (props.iconSize)
-    return props.iconSize
-  if (props.size === 'lg')
-    return '42rpx'
+  if (props.iconSize) return props.iconSize
+  if (props.size === 'lg') return '42rpx'
   return '28rpx' // sm, md
 })
 
@@ -38,17 +36,14 @@ const iconColor = computed(() => {
   if (props.liked) {
     return props.activeColor || (props.size === 'md' ? '#e45064' : '#e54d42')
   }
-  if (props.color)
-    return props.color
-  if (props.size === 'lg')
-    return '#222222'
+  if (props.color) return props.color
+  if (props.size === 'lg') return '#222222'
   return '#777777' // sm, md
 })
 
 /** 点赞数按设计规范格式化（万/亿 分级），见 @/utils/format-count */
 const displayCount = computed(() => {
-  if (props.count === undefined || props.count === null)
-    return ''
+  if (props.count === undefined || props.count === null) return ''
   return formatCompactCount(props.count)
 })
 
@@ -58,10 +53,8 @@ const textStyle = computed(() => {
       color: props.activeColor || (props.size === 'md' ? '#e45064' : '#e54d42'),
     }
   }
-  if (props.size === 'lg')
-    return { color: '#333333' }
-  if (props.size === 'md')
-    return { color: '#666666' }
+  if (props.size === 'lg') return { color: '#333333' }
+  if (props.size === 'md') return { color: '#666666' }
   return { color: '#777777' }
 })
 
@@ -71,8 +64,7 @@ const textStyle = computed(() => {
 // 表现为「要点好几次才生效」，故移除。
 let lastTapTime = 0
 function handleTap(_e?: Event) {
-  if (props.readonly)
-    return
+  if (props.readonly) return
   const now = Date.now()
   if (now - lastTapTime < 250) {
     return

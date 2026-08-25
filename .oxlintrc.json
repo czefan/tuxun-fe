@@ -28,5 +28,243 @@
     "unicorn/no-array-sort": "off",
     "unicorn/prefer-add-event-listener": "off",
     "unicorn/require-module-specifiers": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/pages/**", "src/subPages/**", "src/app/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/service/contract/schema", "@/service/contract/schema"],
+                "message": "严禁在 pages / subPages / app 中直接 import raw schema.d.ts！请通过业务域 View Model 引入。"
+              },
+              {
+                "group": ["@/service/contract/*", "**/service/contract/*"],
+                "message": "编排层（pages / subPages / app）严禁跨过 features 直接依赖底层 contract 原始定义。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/pages/**", "@/subPages/**", "@/app/**"],
+                "message": "业务域模块严禁反向依赖编排层（pages / subPages / app）。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/components/**",
+        "src/composables/**",
+        "src/utils/**",
+        "src/constants/**",
+        "src/styles/**",
+        "src/router/**",
+        "src/store/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/**"],
+                "message": "基础公共层（components / composables / utils / constants / styles / router / store）严禁反向依赖业务域 features。应用外壳请放 src/app。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/activity/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/activity/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/attempt/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/attempt/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/comment/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/comment/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/content/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/content/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/feedback/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/feedback/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/mall/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/mall/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/notification/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/notification/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/photo/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/photo/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/record/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/record/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/score/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/score/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/user/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*/**", "!@/features/user/**"],
+                "message": "业务域之间禁止互相依赖，请把公共部分下沉到 service 或 shared。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

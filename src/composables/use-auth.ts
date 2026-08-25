@@ -16,8 +16,7 @@ export function useAuth() {
    * 两者在登录成功后由 setUserId/setUserInfo 保持同步。
    */
   function isMe(authorId?: number | null): boolean {
-    if (!authStore.isLoggedIn || !authStore.userId || !authorId)
-      return false
+    if (!authStore.isLoggedIn || !authStore.userId || !authorId) return false
     return authStore.userId === authorId
   }
 

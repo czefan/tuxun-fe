@@ -58,7 +58,7 @@ function compressByCanvas(src: string, quality: number): Promise<string> {
       }
       ctx.drawImage(img, 0, 0)
       canvas.toBlob(
-        blob => settle(blob ? URL.createObjectURL(blob) : src),
+        (blob) => settle(blob ? URL.createObjectURL(blob) : src),
         'image/jpeg',
         quality / 100,
       )
@@ -74,7 +74,7 @@ function getFileSize(filePath: string): Promise<number> {
     if (typeof (uni as any).getFileInfo === 'function') {
       uni.getFileInfo({
         filePath,
-        success: res => resolve(res.size),
+        success: (res) => resolve(res.size),
         fail: () => resolve(0),
       })
       return
@@ -83,8 +83,8 @@ function getFileSize(filePath: string): Promise<number> {
     // H5 上 blob:/data: 路径可以直接量出体积
     if (typeof fetch === 'function' && /^(?:blob:|data:)/.test(filePath)) {
       fetch(filePath)
-        .then(res => res.blob())
-        .then(blob => resolve(blob.size))
+        .then((res) => res.blob())
+        .then((blob) => resolve(blob.size))
         .catch(() => resolve(0))
       return
     }
@@ -102,7 +102,7 @@ function compressWithQuality(filePath: string, quality: number): Promise<string>
     uni.compressImage({
       src: filePath,
       quality,
-      success: res => resolve(res.tempFilePath || filePath),
+      success: (res) => resolve(res.tempFilePath || filePath),
       fail: () => resolve(filePath),
     })
   })
@@ -147,15 +147,13 @@ export async function smartCompressImage(filePath: string): Promise<string> {
       if (candidateSize > 0 && candidateSize <= TARGET_COMPRESSED_SIZE) {
         bestPath = candidate
         low = mid + 1 // 还有余量，试更高画质
-      }
-      else {
+      } else {
         high = mid - 1 // 太大，降档
       }
     }
 
     return bestPath || smallestPath || filePath
-  }
-  finally {
+  } finally {
     uni.hideLoading()
   }
 }
@@ -170,7 +168,7 @@ export async function validateImageAspectRatio(
   filePath: string,
   minRatio = 0.285,
   maxRatio = 3.5,
-): Promise<{ valid: boolean, width?: number, height?: number, message?: string }> {
+): Promise<{ valid: boolean; width?: number; height?: number; message?: string }> {
   if (!filePath) {
     return { valid: true }
   }

@@ -76,17 +76,15 @@ function clearClientSessionState() {
 
   try {
     const { keys } = uni.getStorageInfoSync()
-    keysToRemove.push(...keys.filter(key => key.startsWith(SubmitDraftKeyPrefix)))
-  }
-  catch {
+    keysToRemove.push(...keys.filter((key) => key.startsWith(SubmitDraftKeyPrefix)))
+  } catch {
     // 拿不到 storage 列表时跳过，不影响其余清理
   }
 
   keysToRemove.forEach((key) => {
     try {
       uni.removeStorageSync(key)
-    }
-    catch {
+    } catch {
       // ignore storage cleanup failure
     }
   })
