@@ -47,10 +47,10 @@ export default defineConfig({
     setupFiles: ['src/test-setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'src/uni_modules/**'],
-    // 限制测试并发 worker 数量，避免多核环境下过度占用内存
+    // 严格使用单进程复用模式，消除多进程切换与内存峰值，确保低 CPU 负载与 WSL 稳定性
     pool: 'forks',
     poolOptions: {
-      forks: { minForks: 1, maxForks: 4 },
+      forks: { singleFork: true },
     },
   },
   resolve: {

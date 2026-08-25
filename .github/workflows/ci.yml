@@ -52,8 +52,6 @@ jobs:
 
       - name: Run quality checks
         run: |
-          pnpm check:contract
-          pnpm check:boundaries
           pnpm check
           pnpm build:h5
 

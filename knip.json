@@ -16,8 +16,8 @@
     "build/**/*.ts",
     "scripts/*.js"
   ],
-  "project": ["src/**/*.{ts,vue,scss,sass}", "build/**/*.ts"],
-  "ignore": ["src/env.d.ts", "src/uni.scss"],
+  "project": ["src/**/*.{ts,vue,css}", "build/**/*.ts"],
+  "ignore": ["src/env.d.ts"],
   "ignoreDependencies": ["@dcloudio/.*", "postcss", "@tanstack/query-core"],
   "vite": false,
   "ignoreBinaries": ["uv", "git-cliff"]

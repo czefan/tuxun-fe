@@ -1,5 +1,40 @@
 import { spawn } from 'node:child_process'
+import os from 'node:os'
 import process from 'node:process'
+
+/**
+ * 任务内存/负载权重画像（总预算 CAPACITY = 4 Tokens）
+ * LIGHT (1): 内存 < 150MB，毫秒/秒级低负载任务（静态检查、契约、knip、eslint）
+ * HEAVY (2): 内存 ~200-350MB，单进程复用编译/测试（支持 2 个中轻任务平滑重叠）
+ */
+const TASK_WEIGHTS = {
+  'check:contract': 1,
+  'check:boundaries': 1,
+  'check:assets': 1,
+  'lint:quick': 1,
+  'lint:eslint': 1,
+  knip: 1,
+  'type-check': 2,
+  'test:run': 2,
+  test: 2,
+}
+
+const DEFAULT_WEIGHT = 2
+
+function getTaskWeight(script) {
+  return TASK_WEIGHTS[script] ?? DEFAULT_WEIGHT
+}
+
+function getCapacity() {
+  if (process.env.CHECK_CAPACITY) {
+    return Number.parseInt(process.env.CHECK_CAPACITY, 10) || 4
+  }
+  const totalMemGb = os.totalmem() / (1024 * 1024 * 1024)
+  if (totalMemGb < 4) {
+    return 2 // 针对超小内存沙箱降级为 2
+  }
+  return 4
+}
 
 const scripts = process.argv.slice(2)
 
@@ -9,73 +44,162 @@ if (scripts.length === 0) {
 }
 
 const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
-const children = new Set()
-const results = []
+const activeProcesses = new Map()
+let isAborting = false
+const CAPACITY = getCapacity()
+let currentUsedTokens = 0
 
-function runScript(script) {
-  return new Promise((resolve) => {
-    console.log(`[${script}] started`)
-
-    const child = spawn(pnpm, ['run', script], {
-      stdio: 'inherit',
-    })
-
-    children.add(child)
-
-    child.on('error', (error) => {
-      children.delete(child)
-      resolve({ script, code: 1, error })
-    })
-
-    child.on('close', (code, signal) => {
-      children.delete(child)
-      console.log(`[${script}] ${code === 0 ? 'passed' : 'failed'}`)
-      resolve({ script, code: code ?? 1, signal })
-    })
-  })
-}
-
-function stopChildren(signal) {
-  for (const child of children) {
-    child.kill(signal)
+function stopAllProcesses() {
+  if (isAborting) return
+  isAborting = true
+  for (const [child, info] of activeProcesses.entries()) {
+    try {
+      console.log(`[abort] 🛑 终止任务: ${info.script}`)
+      child.kill('SIGTERM')
+    } catch {}
   }
 }
 
 process.on('SIGINT', () => {
-  stopChildren('SIGINT')
+  console.log('\n[SIGINT] 用户中断，正在清理子进程...')
+  stopAllProcesses()
   process.exit(130)
 })
 
 process.on('SIGTERM', () => {
-  stopChildren('SIGTERM')
+  stopAllProcesses()
   process.exit(143)
 })
 
-const CONCURRENCY = Number(process.env.CHECK_CONCURRENCY) || 2
-
-async function runAll(list) {
-  const queue = [...list]
-  const listResults = []
-  const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
-    while (queue.length > 0) {
-      const nextScript = queue.shift()
-      if (nextScript) {
-        listResults.push(await runScript(nextScript))
-      }
-    }
-  })
-  await Promise.all(workers)
-  return listResults
+function formatDuration(ms) {
+  return `${(ms / 1000).toFixed(2)}s`
 }
 
-results.push(...(await runAll(scripts)))
+function runScript(script) {
+  return new Promise((resolve) => {
+    const startTime = Date.now()
+    const weight = getTaskWeight(script)
 
-const failures = results.filter((result) => result.code !== 0)
+    console.log(`[start] ⏳ [${script}] 启动 (权重: ${weight} Tokens)`)
 
-if (failures.length > 0) {
-  for (const failure of failures) {
-    const reason = failure.error?.message ?? failure.signal ?? `exit ${failure.code}`
-    console.error(`[${failure.script}] failed: ${reason}`)
+    const child = spawn(pnpm, ['run', script], {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        FORCE_COLOR: '1',
+      },
+    })
+
+    activeProcesses.set(child, { script, startTime, weight })
+
+    child.on('error', (error) => {
+      activeProcesses.delete(child)
+      const duration = Date.now() - startTime
+      console.error(
+        `[error] ❌ [${script}] 执行出错 (${formatDuration(duration)}): ${error.message}`,
+      )
+      resolve({ script, code: 1, duration, error })
+    })
+
+    child.on('close', (code, signal) => {
+      activeProcesses.delete(child)
+      const duration = Date.now() - startTime
+      const isSuccess = code === 0
+
+      if (isSuccess) {
+        console.log(`[passed] ✅ [${script}] 通过 (${formatDuration(duration)})`)
+      } else {
+        console.error(
+          `[failed] ❌ [${script}] 失败 (退出码: ${code ?? signal}, 耗时: ${formatDuration(duration)})`,
+        )
+      }
+
+      resolve({ script, code: code ?? 1, duration, signal })
+    })
+  })
+}
+
+async function schedule(taskList) {
+  const globalStartTime = Date.now()
+  console.log(
+    `🚀 启动智能加权自检调度器 (总令牌预算: ${CAPACITY} Tokens, 待检任务: ${taskList.length} 个)\n`,
+  )
+
+  // 排序策略：长耗时/计算密集型任务优先启动，轻量任务并行填补剩余令牌间隙
+  const queue = [...taskList].sort((a, b) => getTaskWeight(b) - getTaskWeight(a))
+  const results = []
+  const runningPromises = new Set()
+
+  return new Promise((resolve) => {
+    function settleIfDone() {
+      if (queue.length === 0 && runningPromises.size === 0) {
+        const totalDuration = Date.now() - globalStartTime
+        console.log(`\n🏁 全部自检执行完毕，总耗时: ${formatDuration(totalDuration)}`)
+        resolve(results)
+      }
+    }
+
+    function tryLaunchNext() {
+      if (isAborting) {
+        settleIfDone()
+        return
+      }
+
+      // 动态装箱算法（消除 Head-of-Line 阻塞）：
+      // 当队头大任务放不下时，继续向后扫描并启动当前令牌预算允许容纳的最大/轻量任务
+      let launched = true
+      while (launched && queue.length > 0) {
+        launched = false
+        for (let i = 0; i < queue.length; i++) {
+          const nextScript = queue[i]
+          const weight = getTaskWeight(nextScript)
+
+          // 核心加权约束：当前占用 + 即将运行权重 <= 总预算（且空闲时允许超权任务独占启动）
+          if (currentUsedTokens === 0 || currentUsedTokens + weight <= CAPACITY) {
+            queue.splice(i, 1)
+            currentUsedTokens += weight
+            launched = true
+
+            const taskPromise = runScript(nextScript).then((result) => {
+              currentUsedTokens -= weight
+              runningPromises.delete(taskPromise)
+              results.push(result)
+
+              if (result.code !== 0) {
+                // 毫秒级 Fail-Fast：一旦任何检查失败，清空队列并终止其他任务
+                stopAllProcesses()
+                queue.length = 0
+                settleIfDone()
+              } else {
+                tryLaunchNext()
+              }
+              return result
+            })
+
+            runningPromises.add(taskPromise)
+            // 成功出队一个任务后，由于剩余令牌数改变，重新从头扫描队列寻找下一个可填充的任务
+            break
+          }
+        }
+      }
+
+      settleIfDone()
+    }
+
+    tryLaunchNext()
+  })
+}
+
+const allResults = await schedule(scripts)
+const failed = allResults.filter((r) => r.code !== 0)
+
+if (failed.length > 0) {
+  console.error(`\n❌ 检测到 ${failed.length} 个任务未通过:`)
+  for (const f of failed) {
+    console.error(`  - [${f.script}] (${formatDuration(f.duration)})`)
   }
   process.exit(1)
+} else {
+  console.log('\n🎉 所有代码质量与类型/测试检查 100% 全部通过！')
+  process.exit(0)
 }

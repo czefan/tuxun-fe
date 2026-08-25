@@ -21,16 +21,21 @@
   "description": "图寻 UniApp 前端项目",
   "author": "czefan",
   "license": "MIT",
-  "homepage": "",
-  "repository": {},
-  "bugs": {},
+  "homepage": "https://github.com/czefan/tuxun-fe#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/czefan/tuxun-fe.git"
+  },
+  "bugs": {
+    "url": "https://github.com/czefan/tuxun-fe/issues"
+  },
   "engines": {
     "node": ">=22.13.0",
     "pnpm": ">=11"
   },
   "scripts": {
     "prepare": "pnpm init-baseFiles",
-    "preinstall": "npx only-allow pnpm",
+    "preinstall": "pnpm dlx only-allow pnpm",
     "init-baseFiles": "node ./scripts/create-base-files.js",
     "gen:api-types": "openapi-typescript contract/apifox-import.json -o src/service/contract/schema.d.ts",
     "dev": "uni --mode dev",
@@ -51,17 +56,15 @@
     "analyze:h5": "cross-env VITE_BUNDLE_ANALYZE=true VITE_BUNDLE_ANALYZE_OPEN=true pnpm build:h5",
     "analyze:mp": "cross-env VITE_BUNDLE_ANALYZE=true SKIP_OPEN_DEVTOOLS=true pnpm build:mp && pnpm analyze:mp:size",
     "analyze:mp:size": "node ./scripts/analyze-weixin-package.js",
-    "check": "pnpm check:assets && pnpm lint:quick && pnpm lint:eslint:ci && pnpm knip && pnpm type-check && pnpm test:run",
-    "check:parallel": "node ./scripts/run-checks.js check:assets lint:quick lint:eslint:ci knip type-check test:run",
+    "check": "node ./scripts/run-checks.js check:contract check:boundaries check:assets lint:quick lint:eslint knip type-check test:run",
     "check:assets": "node ./scripts/check-static-assets.js",
     "check:contract": "uv run python ./scripts/check-contract.py",
     "check:boundaries": "uv run python ./scripts/check-boundaries.py",
     "type-check": "vue-tsc --noEmit",
     "knip": "knip",
     "lint": "node ./scripts/run-checks.js lint:quick lint:eslint",
-    "lint:quick": "oxlint",
-    "lint:eslint": "eslint --cache --cache-location .eslintcache --max-warnings=0",
-    "lint:eslint:ci": "eslint --max-warnings=0",
+    "lint:quick": "oxlint --threads 4",
+    "lint:eslint": "eslint --cache --max-warnings=0",
     "lint:fix": "oxlint --fix && eslint --fix",
     "fmt": "oxfmt --write . --no-error-on-unmatched-pattern",
     "fmt:check": "oxfmt --check . --no-error-on-unmatched-pattern",

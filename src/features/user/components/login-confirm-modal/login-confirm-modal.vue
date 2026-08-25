@@ -157,7 +157,7 @@ function handleClose() {
           />
           <wd-input
             v-model="testPassword"
-            type="password"
+            show-password
             placeholder="测试登录密码"
             no-border
             custom-class="!bg-white/80 !rounded-lg !px-2.5 !py-1 text-xs"

@@ -12,9 +12,6 @@
 # 运行完整校验
 pnpm check
 
-# 并行校验
-pnpm check:parallel
-
 # 单独校验
 pnpm lint:quick       # oxlint 极速自检
 pnpm lint             # oxlint 与 eslint
