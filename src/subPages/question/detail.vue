@@ -43,17 +43,18 @@ type CommentSortType = 'hottest' | 'latest'
 const commentSortType = ref<CommentSortType>('hottest') // 默认即最多点赞
 const showCommentSortPopover = ref(false)
 // 映射到后端接口 sort_by：默认即最多点赞 ('likes_count')
-const commentSortBy = computed(() => (commentSortType.value === 'latest' ? 'created_at' : 'likes_count'))
+const commentSortBy = computed(() =>
+  commentSortType.value === 'latest' ? 'created_at' : 'likes_count',
+)
 
 const detailTabsList = ['comments', 'solves', 'myAttempts'] as const
 const currentTabIndex = computed(() => detailTabsList.indexOf(activeTab.value))
 
 /** 点击包含评论和图标的整个 Tab 区域 */
-function handleTabClick(tab: typeof detailTabsList[number]) {
+function handleTabClick(tab: (typeof detailTabsList)[number]) {
   if (tab === 'comments' && activeTab.value === 'comments') {
     showCommentSortPopover.value = !showCommentSortPopover.value
-  }
-  else {
+  } else {
     activeTab.value = tab
     showCommentSortPopover.value = false
   }
@@ -63,7 +64,10 @@ const { isLoggedIn, isMe, loginDirectly, requireLogin } = useAuth()
 const { mutate: setLike } = useSetPhotoLike()
 
 const { data: question } = usePhotoDetail(computed(() => questionId.value))
-const { data: commentPagesData } = useInfiniteCommentList(computed(() => questionId.value), computed(() => ({ sort_by: commentSortBy.value })))
+const { data: commentPagesData } = useInfiniteCommentList(
+  computed(() => questionId.value),
+  computed(() => ({ sort_by: commentSortBy.value })),
+)
 const commentTotal = computed(() => commentPagesData.value?.pages[0]?.total ?? 0)
 
 const commentInputVisible = ref(false)
@@ -85,16 +89,13 @@ function handlePostComment() {
     uni.showToast({ title: '请输入评论内容', icon: 'none' })
     return
   }
-  postCommentMutation.mutate(
-    commentText.value.trim(),
-    {
-      onSuccess: () => {
-        commentText.value = ''
-        commentInputVisible.value = false
-        uni.showToast({ title: '评论成功，等待审核', icon: 'none' })
-      },
+  postCommentMutation.mutate(commentText.value.trim(), {
+    onSuccess: () => {
+      commentText.value = ''
+      commentInputVisible.value = false
+      uni.showToast({ title: '评论成功，等待审核', icon: 'none' })
     },
-  )
+  })
 }
 
 function handlePreviewImage() {
@@ -118,7 +119,10 @@ const {
   fetchNextPage: fetchNextSolves,
   hasNextPage: hasNextSolves,
   isFetchingNextPage: isFetchingSolves,
-} = useInfiniteSolvesList(computed(() => questionId.value), listParams)
+} = useInfiniteSolvesList(
+  computed(() => questionId.value),
+  listParams,
+)
 
 // 未登录时置 0 使 query 保持 disabled，避免打出必然 401 的请求
 const myAttemptsPhotoId = computed(() => (isLoggedIn() ? questionId.value : 0))
@@ -129,12 +133,15 @@ const {
   isFetchingNextPage: isFetchingMyAttempts,
 } = useInfiniteMyAttemptsList(myAttemptsPhotoId, listParams)
 
-const solves = computed<SolveRecordVM[]>(() => solvesPagesData.value?.pages.flatMap(page => page.list) ?? [])
-const myAttempts = computed<MyAttemptVM[]>(() => myAttemptsPagesData.value?.pages.flatMap(page => page.list) ?? [])
+const solves = computed<SolveRecordVM[]>(
+  () => solvesPagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
+const myAttempts = computed<MyAttemptVM[]>(
+  () => myAttemptsPagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 onLoad((query) => {
-  if (typeof query?.id === 'string')
-    questionId.value = Number(query.id)
+  if (typeof query?.id === 'string') questionId.value = Number(query.id)
 
   initSwitcherFromQuery(query)
 
@@ -145,27 +152,25 @@ onLoad((query) => {
 
 const isEnded = computed(() => {
   const endTime = question.value?.activity?.endTime
-  if (!endTime)
-    return false
+  if (!endTime) return false
   const end = new Date(endTime).getTime()
   return Number.isFinite(end) && serverNow() >= end
 })
 
 const buttonState = computed(() => {
-  if (!question.value)
-    return { text: '我要答题', disabled: false }
-  if (isEnded.value)
-    return { text: '答题已结束', disabled: false }
-  if (isMe(question.value.author?.id))
-    return { text: '作者不可答题', disabled: true }
-  if (question.value.userAttemptsCount >= 5)
-    return { text: '次数上限 (5/5)', disabled: true }
+  if (!question.value) return { text: '我要答题', disabled: false }
+  if (isEnded.value) return { text: '答题已结束', disabled: false }
+  if (isMe(question.value.author?.id)) return { text: '作者不可答题', disabled: true }
+  if (question.value.userAttemptsCount >= 5) return { text: '次数上限 (5/5)', disabled: true }
   return { text: '我要答题', disabled: false }
 })
 
 function handleBottomAction() {
   if (isEnded.value) {
-    uni.showToast({ title: question.value?.location ? '已定位到题目正确坐标' : '答题已结束，正确坐标整理中', icon: 'none' })
+    uni.showToast({
+      title: question.value?.location ? '已定位到题目正确坐标' : '答题已结束，正确坐标整理中',
+      icon: 'none',
+    })
     return
   }
   if (isMe(question.value?.author?.id)) {
@@ -182,8 +187,7 @@ function toggleLike() {
 }
 
 function goSubmit() {
-  if (!requireLogin() || !question.value)
-    return
+  if (!requireLogin() || !question.value) return
   if (question.value.userAttemptsCount >= 5) {
     uni.showToast({ title: '单题作答次数已达上限 (5/5)', icon: 'none' })
     return
@@ -228,7 +232,7 @@ function goSubmit() {
             custom-class="w-full cursor-pointer block overflow-hidden rounded-t-[18px]"
             :style="{
               'view-transition-name': `photo-cover-${question.id}`,
-              'aspectRatio': `${question.image.width} / ${question.image.height}`,
+              aspectRatio: `${question.image.width} / ${question.image.height}`,
             }"
             :src="question.image.originUrl"
             lazy-load
@@ -240,7 +244,9 @@ function goSubmit() {
 
         <view class="p-5 space-y-3.5">
           <text class="block u-title-page leading-snug">{{ question.title }}</text>
-          <text v-if="question.description" class="u-body-primary block">{{ question.description }}</text>
+          <text v-if="question.description" class="u-body-primary block">
+            {{ question.description }}
+          </text>
 
           <view v-if="question.activity?.title" class="pt-0.5">
             <text class="u-action-link text-base">#{{ question.activity.title }}</text>
@@ -260,12 +266,25 @@ function goSubmit() {
               <view class="flex flex-col">
                 <view class="min-w-0 flex items-center">
                   <text class="truncate u-user-name font-bold">{{ question.author.nickname }}</text>
-                  <text v-if="isMe(question.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
+                  <text
+                    v-if="isMe(question.author.id)"
+                    class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
+                  >
+                    我
+                  </text>
                 </view>
-                <text v-if="question.createdAt" class="mt-0.5 u-meta-time">{{ question.createdAt }}</text>
+                <text v-if="question.createdAt" class="mt-0.5 u-meta-time">
+                  {{ question.createdAt }}
+                </text>
               </view>
             </view>
-            <like-button :liked="question.liked" :count="question.likesCount" icon-size="20px" font-size="15px" @click="toggleLike" />
+            <like-button
+              :liked="question.liked"
+              :count="question.likesCount"
+              icon-size="20px"
+              font-size="15px"
+              @click="toggleLike"
+            />
           </view>
 
           <!-- 主答题行动入口 (CTA Button) -->
@@ -294,13 +313,21 @@ function goSubmit() {
       />
 
       <!-- 评论区、已破解与我的作答 3 合 1 可左右滑动相连卡片 -->
-      <view class="shadow-2xs relative overflow-visible border border-tx-border rounded-[18px] bg-white pb-2 pt-3">
+      <view
+        class="shadow-2xs relative overflow-visible border border-tx-border rounded-[18px] bg-white pb-2 pt-3"
+      >
         <!-- 融入卡片顶部的无缝 Tab 标头：指示线无留白紧贴浅分割线 -->
-        <view class="relative z-30 flex items-center justify-around px-4 pb-0 pt-1" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+        <view
+          class="relative z-30 flex items-center justify-around px-4 pb-0 pt-1"
+          style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
+        >
           <view
             v-for="tab in [
               { value: 'comments', label: `评论 ${formatCompactCount(commentTotal)}` },
-              { value: 'solves', label: `已破解 ${formatCompactCount(question?.solvedCount ?? 0)}` },
+              {
+                value: 'solves',
+                label: `已破解 ${formatCompactCount(question?.solvedCount ?? 0)}`,
+              },
               { value: 'myAttempts', label: `我的作答 ${question?.userAttemptsCount ?? 0}` },
             ]"
             :key="tab.value"
@@ -310,7 +337,10 @@ function goSubmit() {
           >
             <text>{{ tab.label }}</text>
             <!-- 评论右侧：上宽下窄 3 条横线图标 -->
-            <view v-if="tab.value === 'comments'" class="ml-0.5 w-3.5 flex flex-col items-start justify-center gap-0.75">
+            <view
+              v-if="tab.value === 'comments'"
+              class="ml-0.5 w-3.5 flex flex-col items-start justify-center gap-0.75"
+            >
               <view class="h-[2px] w-full rounded-full bg-tx-ink-2" />
               <view class="h-[2px] w-[70%] rounded-full bg-tx-ink-2" />
               <view class="h-[2px] w-[40%] rounded-full bg-tx-ink-2" />
@@ -331,14 +361,25 @@ function goSubmit() {
           @click.stop
         >
           <view
-            v-for="opt in [{ key: 'hottest', label: '最多点赞' }, { key: 'latest', label: '最新' }] as const"
+            v-for="opt in [
+              { key: 'hottest', label: '最多点赞' },
+              { key: 'latest', label: '最新' },
+            ] as const"
             :key="opt.key"
             class="flex cursor-pointer items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-colors active:bg-tx-surface"
             :class="commentSortType === opt.key ? 'font-bold text-tx-ink' : 'text-[#555555]'"
-            @click="() => { commentSortType = opt.key; showCommentSortPopover = false }"
+            @click="
+              () => {
+                commentSortType = opt.key
+                showCommentSortPopover = false
+              }
+            "
           >
             <text>{{ opt.label }}</text>
-            <text v-if="commentSortType === opt.key" class="i-carbon:checkmark text-base text-tx-brown font-bold" />
+            <text
+              v-if="commentSortType === opt.key"
+              class="i-carbon:checkmark text-base text-tx-brown font-bold"
+            />
           </view>
         </view>
 
@@ -347,7 +388,12 @@ function goSubmit() {
           class="h-[420px] w-full"
           :current="currentTabIndex"
           :duration="300"
-          @change="(e: any) => { activeTab = detailTabsList[e.detail.current] as any; showCommentSortPopover = false }"
+          @change="
+            (e: any) => {
+              activeTab = detailTabsList[e.detail.current] as any
+              showCommentSortPopover = false
+            }
+          "
         >
           <swiper-item class="box-border">
             <CommentList
@@ -359,7 +405,11 @@ function goSubmit() {
             />
           </swiper-item>
           <swiper-item class="box-border">
-            <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full">
+            <scroll-view
+              scroll-y
+              :show-scrollbar="false"
+              class="hide-scrollbar box-border h-full w-full"
+            >
               <SolveList
                 :list="solves"
                 :photo-id="questionId"
@@ -370,13 +420,27 @@ function goSubmit() {
             </scroll-view>
           </swiper-item>
           <swiper-item class="box-border">
-            <view v-if="!isLoggedIn()" class="h-full flex flex-col items-center justify-center -mt-6">
+            <view
+              v-if="!isLoggedIn()"
+              class="h-full flex flex-col items-center justify-center -mt-6"
+            >
               <wd-empty icon="no-result" tip="登录后查看我的作答" />
-              <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+              <wd-button
+                size="small"
+                round
+                type="warning"
+                custom-class="!mt-4 !font-bold shadow-md"
+                @click="loginDirectly"
+              >
                 去登录
               </wd-button>
             </view>
-            <scroll-view v-else scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full">
+            <scroll-view
+              v-else
+              scroll-y
+              :show-scrollbar="false"
+              class="hide-scrollbar box-border h-full w-full"
+            >
               <MyAttemptList
                 :list="myAttempts"
                 :has-next-page="hasNextMyAttempts"
@@ -395,7 +459,9 @@ function goSubmit() {
         @touchstart="handleTouchStart"
         @touchend="handleTouchEnd"
       >
-        <view class="h-6 w-6 flex items-center justify-center rounded-full bg-tx-brown/20 text-tx-brown">
+        <view
+          class="h-6 w-6 flex items-center justify-center rounded-full bg-tx-brown/20 text-tx-brown"
+        >
           <text class="i-carbon:arrow-up animate-bounce text-xs font-bold" />
         </view>
         <text class="text-xs font-bold">向上滑动或点击查看下一个题目</text>
@@ -414,18 +480,42 @@ function goSubmit() {
 
 <style lang="scss" scoped>
 @keyframes slideUpOut {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-40px); opacity: 0.15; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-40px);
+    opacity: 0.15;
+  }
 }
 @keyframes slideDownOut {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(40px); opacity: 0.15; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(40px);
+    opacity: 0.15;
+  }
 }
 @keyframes fadeInDown {
-  from { transform: translateY(-16px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
-.animate-slide-up-out { animation: slideUpOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.animate-slide-down-out { animation: slideDownOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.animate-fade-in-down { animation: fadeInDown 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.animate-slide-up-out {
+  animation: slideUpOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.animate-slide-down-out {
+  animation: slideDownOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.animate-fade-in-down {
+  animation: fadeInDown 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
 </style>

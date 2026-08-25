@@ -74,12 +74,23 @@ function handlePreviewImage(url: string) {
               />
               <view class="min-w-0 flex items-center">
                 <text class="truncate u-user-name">{{ item.author.nickname }}</text>
-                <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
+                <text
+                  v-if="isMe(item.author.id)"
+                  class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
+                >
+                  我
+                </text>
               </view>
             </view>
 
             <!-- 右侧点赞按钮 -->
-            <like-button :liked="item.liked" :count="item.likesCount" icon-size="15px" font-size="12px" @click="handleLike(item)" />
+            <like-button
+              :liked="item.liked"
+              :count="item.likesCount"
+              icon-size="15px"
+              font-size="12px"
+              @click="handleLike(item)"
+            />
           </view>
 
           <!-- 时间：靠左展示 (u-meta-time) -->
@@ -101,10 +112,7 @@ function handlePreviewImage(url: string) {
       >
         加载更多
       </wd-button>
-      <wd-loadmore
-        v-else-if="isFetchingNextPage"
-        state="loading"
-      />
+      <wd-loadmore v-else-if="isFetchingNextPage" state="loading" />
     </view>
 
     <view v-else class="h-full flex flex-col items-center justify-center">

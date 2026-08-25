@@ -34,7 +34,9 @@ const {
   refetch,
 } = useInfiniteScoreLogs()
 
-const logsList = computed<ScoreLogVM[]>(() => logsPagesData.value?.pages.flatMap(page => page.list) ?? [])
+const logsList = computed<ScoreLogVM[]>(
+  () => logsPagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 const totalIncome = computed(() => logsPagesData.value?.pages?.[0]?.totalIncome ?? 0)
 const totalExpense = computed(() => logsPagesData.value?.pages?.[0]?.totalExpense ?? 0)
@@ -60,7 +62,10 @@ function handleLogTap(item: ScoreLogVM) {
 <template>
   <view class="page-points swiper-page bg-tx-main px-3 pt-3">
     <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 (与全站完全统一的 16px 标头) -->
-    <view class="flex flex-shrink-0 items-end justify-between px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+    <view
+      class="flex flex-shrink-0 items-end justify-between px-1 pb-0"
+      style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
+    >
       <view class="flex items-center gap-6">
         <view
           v-for="opt in tabOptions"
@@ -107,26 +112,47 @@ function handleLogTap(item: ScoreLogVM) {
       class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
       :current="currentTabIndex"
       :duration="300"
-      @change="(e) => activeTab = tabOptions[e.detail.current]"
+      @change="(e) => (activeTab = tabOptions[e.detail.current])"
     >
       <!-- 滑块 1：积分明细 -->
       <swiper-item class="box-border">
-        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextPage()">
-          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
+        <scroll-view
+          scroll-y
+          :show-scrollbar="false"
+          class="hide-scrollbar box-border h-full w-full"
+          @scrolltolower="() => fetchNextPage()"
+        >
+          <view
+            v-if="!isLoggedIn()"
+            class="min-h-full flex flex-col items-center justify-center -mt-6"
+          >
             <wd-empty icon="no-result" tip="登录后查看积分明细" />
-            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+            <wd-button
+              size="small"
+              round
+              type="warning"
+              custom-class="!mt-4 !font-bold shadow-md"
+              @click="loginDirectly"
+            >
               去登录
             </wd-button>
           </view>
           <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
             <view v-if="logsLoading" class="space-y-3">
-              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '50px' }, { width: '100%', height: '50px' }]" />
+              <wd-skeleton
+                animation="gradient"
+                :row-col="[
+                  { width: '100%', height: '50px' },
+                  { width: '100%', height: '50px' },
+                ]"
+              />
             </view>
-            <view v-else-if="logsError" class="flex flex-col items-center justify-center gap-3 py-20">
+            <view
+              v-else-if="logsError"
+              class="flex flex-col items-center justify-center gap-3 py-20"
+            >
               <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-              <wd-button size="small" plain round @click="refetch">
-                重新加载
-              </wd-button>
+              <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
             </view>
             <view v-else-if="logsList.length">
               <view class="border-y border-tx-brown">
@@ -136,7 +162,9 @@ function handleLogTap(item: ScoreLogVM) {
                   class="flex items-center justify-between py-3.5 transition-colors"
                   :class="[
                     { 'border-t border-tx-brown': index > 0 },
-                    item.reason !== 'exchange' && item.relatedType === 'photo' && item.relatedId ? 'cursor-pointer active:opacity-75' : '',
+                    item.reason !== 'exchange' && item.relatedType === 'photo' && item.relatedId
+                      ? 'cursor-pointer active:opacity-75'
+                      : '',
                   ]"
                   @tap="handleLogTap(item)"
                 >
@@ -153,7 +181,13 @@ function handleLogTap(item: ScoreLogVM) {
                   </view>
                   <text
                     class="u-num-stat font-bold"
-                    :class="item.delta > 0 ? 'text-tx-brown' : item.delta < 0 ? 'text-tx-ink' : 'text-tx-ink-3'"
+                    :class="
+                      item.delta > 0
+                        ? 'text-tx-brown'
+                        : item.delta < 0
+                          ? 'text-tx-ink'
+                          : 'text-tx-ink-3'
+                    "
                   >
                     {{ item.delta > 0 ? `+${item.delta}` : item.delta }}
                   </text>
@@ -175,7 +209,11 @@ function handleLogTap(item: ScoreLogVM) {
 
       <!-- 滑块 2：积分规则 -->
       <swiper-item class="box-border">
-        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full">
+        <scroll-view
+          scroll-y
+          :show-scrollbar="false"
+          class="hide-scrollbar box-border h-full w-full"
+        >
           <view class="bottom-space px-3 pt-2.5">
             <view v-if="rulesData?.content" class="border-y border-tx-brown px-1 pb-3 pt-2">
               <!-- 不带字号/颜色 class（同 help/弹窗/通知详情）：H5 端 rich-text 内容继承容器样式会改字号，小程序端不继承，两端需一致 -->

@@ -1,6 +1,12 @@
 import { request, upload } from '@/service/request'
 import type { LoginResult, UserInfoResponse, UserSummary } from '@/service/contract/types'
-import type { LoginResultVM, UpdateAvatarResultVM, UpdateNicknameResultVM, UserInfo, UserSummaryVM } from './types'
+import type {
+  LoginResultVM,
+  UpdateAvatarResultVM,
+  UpdateNicknameResultVM,
+  UserInfo,
+  UserSummaryVM,
+} from './types'
 
 /**
  * 登录类接口返回的是 UserSummary（无积分、无修改次数余额），

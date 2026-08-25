@@ -12,8 +12,9 @@ import { nextTick } from 'vue'
 /** H5 且浏览器支持 View Transitions 时为 true */
 function isViewTransitionSupported(): boolean {
   // #ifdef H5
-  return typeof document !== 'undefined'
-    && typeof (document as any).startViewTransition === 'function'
+  return (
+    typeof document !== 'undefined' && typeof (document as any).startViewTransition === 'function'
+  )
   // #endif
 
   return false

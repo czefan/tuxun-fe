@@ -20,8 +20,7 @@ function collectSourceFiles(dir: string): string[] {
     const stat = fs.statSync(filePath)
     if (stat && stat.isDirectory()) {
       results.push(...collectSourceFiles(filePath))
-    }
-    else if (/\.(?:vue|ts|js)$/.test(file)) {
+    } else if (/\.(?:vue|ts|js)$/.test(file)) {
       results.push(filePath)
     }
   }
@@ -32,7 +31,12 @@ function makeList(count: number) {
   return Array.from({ length: count }, (_, i) => ({
     id: i + 1,
     title: `题目 ${i + 1}`,
-    image: { url: `https://example.com/${i + 1}.jpg`, originUrl: `https://example.com/${i + 1}.jpg`, width: 800, height: 600 },
+    image: {
+      url: `https://example.com/${i + 1}.jpg`,
+      originUrl: `https://example.com/${i + 1}.jpg`,
+      width: 800,
+      height: 600,
+    },
     cover: `https://example.com/${i + 1}.jpg`,
     author: { id: 1, nickname: 'tester', avatar: '' },
     liked: false,
@@ -69,8 +73,7 @@ describe('装配守卫', () => {
         rendered.length,
         `瀑布流只渲染了 ${rendered.length}/45 条：分批推进逻辑断了，超出首批的数据用户永远看不到`,
       ).toBe(45)
-    }
-    finally {
+    } finally {
       vi.useRealTimers()
     }
   })
@@ -97,8 +100,7 @@ describe('装配守卫', () => {
       await vi.advanceTimersByTimeAsync(200)
       await wrapper.vm.$nextTick()
       expect(wrapper.findAll('.photo-card').length).toBe(45)
-    }
-    finally {
+    } finally {
       vi.useRealTimers()
     }
   })
@@ -108,7 +110,7 @@ describe('装配守卫', () => {
     const order: string[] = []
 
     await startTransition(async () => {
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise((resolve) => setTimeout(resolve, 10))
       order.push('callback-done')
     })
     order.push('transition-returned')
@@ -133,10 +135,9 @@ describe('装配守卫', () => {
     const load = plugin.load as (id: string) => string | null
 
     const stubbed = load(path.join(process.cwd(), 'src/mocks/index.ts'))
-    expect(
-      stubbed,
-      'mock 入口没有被替换：msw 会整条进生产模块图（实测多打约 296 KB）',
-    ).toContain('enableMocking')
+    expect(stubbed, 'mock 入口没有被替换：msw 会整条进生产模块图（实测多打约 296 KB）').toContain(
+      'enableMocking',
+    )
     expect(stubbed).not.toContain('./browser')
 
     expect(load(path.join(process.cwd(), 'src/main.ts'))).toBeNull()
@@ -175,24 +176,25 @@ describe('装配守卫', () => {
       const source = fs.readFileSync(file, 'utf-8')
       expect(
         source,
-        `${path.relative(process.cwd(), file)} 里 queryKey 用 computed(...).value 取值，`
-        + '会在 setup 时冻成静态快照——参数变了不会重新请求，筛选/排序/搜索全部失效',
+        `${path.relative(process.cwd(), file)} 里 queryKey 用 computed(...).value 取值，` +
+          '会在 setup 时冻成静态快照——参数变了不会重新请求，筛选/排序/搜索全部失效',
       ).not.toMatch(/queryKey:\s*computed\([\s\S]*?\)\)\.value/)
     }
   })
 
   it('跳转详情页必须走带转场的导航', () => {
     for (const page of ['src/pages/index/index.vue', 'src/subPages/activity/index.vue']) {
-      expect(
-        read(page),
-        `${page} 没有使用 navigateWithTransition：转场工具做了但没接上`,
-      ).toContain('navigateWithTransition(')
+      expect(read(page), `${page} 没有使用 navigateWithTransition：转场工具做了但没接上`).toContain(
+        'navigateWithTransition(',
+      )
     }
   })
 
   it('题目详情页必须接上全屏大图预览', () => {
     const detail = read('src/subPages/question/detail.vue')
-    expect(detail, '题目详情页没有引入 previewImage：全屏大图预览功能漏接').toContain('previewImage')
+    expect(detail, '题目详情页没有引入 previewImage：全屏大图预览功能漏接').toContain(
+      'previewImage',
+    )
     // 不锁死事件名：主图从原生 <image> 换成 wd-img 后要绑 @click
     // （wd-img 只 emit error / click / load，不 emit tap）。
     // 这里要守的是「预览接上了没」，不是用哪个事件。
@@ -208,9 +210,13 @@ describe('装配守卫', () => {
     const offenders = collectSourceFiles(srcRoot)
       .filter((f) => {
         const normalized = f.replace(/\\/g, '/')
-        return !normalized.includes('constants/storage.ts') && !normalized.endsWith('.test.ts') && !normalized.includes('test-setup.ts')
+        return (
+          !normalized.includes('constants/storage.ts') &&
+          !normalized.endsWith('.test.ts') &&
+          !normalized.includes('test-setup.ts')
+        )
       })
-      .filter(f => /uni\.setStorageSync\(\s*['"`]/.test(fs.readFileSync(f, 'utf-8')))
+      .filter((f) => /uni\.setStorageSync\(\s*['"`]/.test(fs.readFileSync(f, 'utf-8')))
     expect(offenders, `以下文件直接用字面量做 storage key：\n${offenders.join('\n')}`).toEqual([])
   })
 })

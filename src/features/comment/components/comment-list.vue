@@ -43,15 +43,16 @@ const {
   computed(() => ({ sort_by: props.sortBy })),
 )
 
-const commentsList = computed<CommentVM[]>(() => commentPagesData.value?.pages.flatMap(page => page.list) ?? [])
+const commentsList = computed<CommentVM[]>(
+  () => commentPagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 const deleteMutation = useDeleteComment(() => props.photoId)
 const likeMutation = useSetCommentLike(() => props.photoId)
 
 /** DELETE /comments/{id} 只允许本人，别人的评论不该出现删除入口且长按不响应 */
 function canDelete(item: CommentVM) {
-  if (!isLoggedIn())
-    return false
+  if (!isLoggedIn()) return false
   return isMe(item.author?.id)
 }
 
@@ -68,8 +69,7 @@ function handleToggleLike(item: CommentVM) {
 const activeMenuCommentId = ref<number | null>(null)
 
 function handleLongPress(item: CommentVM) {
-  if (!canDelete(item))
-    return
+  if (!canDelete(item)) return
   activeMenuCommentId.value = item.id
 }
 
@@ -108,16 +108,18 @@ function confirmDelete(id: number) {
       </view>
       <view v-else-if="isError" class="flex flex-col items-center justify-center gap-3 py-16">
         <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-        <wd-button size="small" plain round @click="refetch">
-          重新加载
-        </wd-button>
+        <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
       </view>
       <view v-else-if="commentsList.length" class="px-4 pt-2.5 space-y-3.5">
         <view
           v-for="(item, index) in commentsList"
           :key="item.id"
           class="relative flex items-start gap-3 border-b border-tx-border/30 rounded-xl px-1.5 pb-3.5 pt-1 transition-colors"
-          :class="activeMenuCommentId === item.id ? 'z-30 bg-[#EFECE6] ring-1 ring-tx-brown/40 shadow-2xs' : 'active:bg-tx-surface'"
+          :class="
+            activeMenuCommentId === item.id
+              ? 'z-30 bg-[#EFECE6] ring-1 ring-tx-brown/40 shadow-2xs'
+              : 'active:bg-tx-surface'
+          "
           @longpress.stop="handleLongPress(item)"
         >
           <!-- 朋友圈式主流长按 Popover 顶部/底部气泡菜单 (首条评论向下弹避免被 scroll-view 裁剪) -->
@@ -152,10 +154,23 @@ function confirmDelete(id: number) {
             <!-- 第一行：评论者昵称（与下文时间字体风格一致），本人增加高亮「我」角标，点赞按钮在右 -->
             <view class="flex items-center justify-between gap-2">
               <view class="min-w-0 flex items-center">
-                <text class="truncate u-meta-time !text-tx-ink-3 !font-normal">{{ item.author.nickname }}</text>
-                <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
+                <text class="truncate u-meta-time !text-tx-ink-3 !font-normal">
+                  {{ item.author.nickname }}
+                </text>
+                <text
+                  v-if="isMe(item.author.id)"
+                  class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
+                >
+                  我
+                </text>
               </view>
-              <like-button :liked="item.liked" :count="item.likesCount" icon-size="15px" font-size="12px" @click="handleToggleLike(item)" />
+              <like-button
+                :liked="item.liked"
+                :count="item.likesCount"
+                icon-size="15px"
+                font-size="12px"
+                @click="handleToggleLike(item)"
+              />
             </view>
             <!-- 第二行：评论正文（主要内容，醒目高亮） -->
             <text class="block py-0.5 u-body-main text-tx-ink">{{ item.content }}</text>
@@ -175,10 +190,7 @@ function confirmDelete(id: number) {
         >
           加载更多
         </wd-button>
-        <wd-loadmore
-          v-else-if="isFetchingNextPage"
-          state="loading"
-        />
+        <wd-loadmore v-else-if="isFetchingNextPage" state="loading" />
       </view>
       <view v-else class="h-full flex flex-col items-center justify-center">
         <wd-empty icon="no-result" tip="暂无评论，快来抢沙发吧！" />
@@ -192,7 +204,9 @@ function confirmDelete(id: number) {
       @tap="handleOpenInput"
     >
       <view class="flex-1 cursor-pointer" hover-class="none">
-        <view class="box-border flex items-center border border-tx-border/60 rounded-xl bg-tx-surface p-2.5 text-base transition-colors active:bg-[#EFECE6]">
+        <view
+          class="box-border flex items-center border border-tx-border/60 rounded-xl bg-tx-surface p-2.5 text-base transition-colors active:bg-[#EFECE6]"
+        >
           <text v-if="commentText" class="truncate text-tx-ink">{{ commentText }}</text>
           <text v-else class="text-tx-ink-3">写下你的想法...</text>
         </view>

@@ -8,7 +8,7 @@ export const photoHandlers = [
   // CRITICAL: /photos/user/{id} 优先拦截，否则会被 /photos/:id 当成 id="user"
   http.get('*/api/photos/user/:id', ({ params }) => {
     const id = Number(params.id)
-    const item = db.myPhotos.find(p => p.id === id)
+    const item = db.myPhotos.find((p) => p.id === id)
     // 契约：该接口只服务作者本人的 pending / rejected 投稿（或者是作者视角查看）
     if (!item) {
       return notFound('操作错误: 投稿不存在')
@@ -28,18 +28,18 @@ export const photoHandlers = [
     let filtered = [...db.myPhotos]
 
     if (status) {
-      filtered = filtered.filter(p => p.status === status)
+      filtered = filtered.filter((p) => p.status === status)
     }
 
     if (activityId) {
-      filtered = filtered.filter(p => p.activity?.id === Number(activityId))
+      filtered = filtered.filter((p) => p.activity?.id === Number(activityId))
     }
 
     const paginated = paginateArray(filtered, page, pageSize)
 
     return ok({
       total: filtered.length,
-      list: paginated.map(p => ({
+      list: paginated.map((p) => ({
         id: p.id,
         title: p.title,
         image: toThumbMedia(p.image),
@@ -64,8 +64,7 @@ export const photoHandlers = [
     if (!activityId) {
       const now = Date.now()
       filtered = filtered.filter((p) => {
-        if (!p.activity)
-          return false
+        if (!p.activity) return false
         const start = new Date(p.activity.start_time).getTime()
         const end = new Date(p.activity.end_time).getTime()
         return now >= start && now <= end
@@ -73,23 +72,26 @@ export const photoHandlers = [
     }
 
     if (activityId) {
-      filtered = filtered.filter(p => p.activity?.id === Number(activityId))
+      filtered = filtered.filter((p) => p.activity?.id === Number(activityId))
     }
 
     if (solved !== null && solved !== undefined) {
       const isSolved = solved === 'true'
-      filtered = filtered.filter(p => p.solved === isSolved)
+      filtered = filtered.filter((p) => p.solved === isSolved)
     }
 
     if (keyword) {
       const kw = keyword.trim().toLowerCase()
-      filtered = filtered.filter(p => p.title.toLowerCase().includes(kw) || p.description.toLowerCase().includes(kw))
+      filtered = filtered.filter(
+        (p) => p.title.toLowerCase().includes(kw) || p.description.toLowerCase().includes(kw),
+      )
     }
 
     if (sortBy === 'hot') {
-      filtered.sort((a, b) => (b.likes_count * 2 + b.attempts_count) - (a.likes_count * 2 + a.attempts_count))
-    }
-    else if (sortBy === 'created_at') {
+      filtered.sort(
+        (a, b) => b.likes_count * 2 + b.attempts_count - (a.likes_count * 2 + a.attempts_count),
+      )
+    } else if (sortBy === 'created_at') {
       filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     }
 
@@ -97,7 +99,7 @@ export const photoHandlers = [
 
     return ok({
       total: filtered.length,
-      list: paginated.map(p => ({
+      list: paginated.map((p) => ({
         id: p.id,
         title: p.title,
         image: toThumbMedia(p.image),
@@ -111,13 +113,16 @@ export const photoHandlers = [
   }),
 
   http.post('*/api/photos', async ({ request }) => {
-    const body = (await request.json().catch(() => ({}))) as { title?: string, description?: string }
+    const body = (await request.json().catch(() => ({}))) as {
+      title?: string
+      description?: string
+    }
     return created(db.createPhoto(body.title || '投稿地标', body.description || '地标描述'))
   }),
 
   http.get('*/api/photos/:id', ({ params }) => {
     const id = Number(params.id)
-    const item = db.photos.find(p => p.id === id)
+    const item = db.photos.find((p) => p.id === id)
     if (!item) {
       return notFound('操作错误: 题目不存在')
     }
@@ -133,7 +138,7 @@ export const photoHandlers = [
     const id = Number(params.id)
     const body = (await request.json()) as { liked?: boolean }
     const liked = Boolean(body.liked)
-    const item = db.photos.find(p => p.id === id)
+    const item = db.photos.find((p) => p.id === id)
     if (item) {
       if (item.liked !== liked) {
         item.liked = liked

@@ -9,16 +9,18 @@ import { formatDate } from '@/utils/date'
 /** 题目列表 GET /photos（无需登录） */
 export async function getPhotos(params?: PhotoQueryParams): Promise<PageResult<PhotoCardVM>> {
   const { page, page_size } = clampPageParams(params)
-  const raw = await request<PageResult<{
-    id: number
-    title: string
-    image: Media
-    author: { id: number, nickname: string, avatar: string }
-    likes_count: number
-    liked: boolean
-    solved: boolean
-    created_at: string
-  }>>({
+  const raw = await request<
+    PageResult<{
+      id: number
+      title: string
+      image: Media
+      author: { id: number; nickname: string; avatar: string }
+      likes_count: number
+      liked: boolean
+      solved: boolean
+      created_at: string
+    }>
+  >({
     url: '/photos',
     method: 'GET',
     query: {
@@ -62,8 +64,8 @@ export async function getPhotoDetail(id: number): Promise<PhotoDetailVM> {
     title: string
     description: string
     image: Media
-    author: { id: number, nickname: string, avatar: string }
-    activity: { id: number, title: string, start_time: string, end_time: string }
+    author: { id: number; nickname: string; avatar: string }
+    activity: { id: number; title: string; start_time: string; end_time: string }
     location: Location | null
     attempts_count: number
     user_attempts_count: number
@@ -111,8 +113,10 @@ export async function getPhotoDetail(id: number): Promise<PhotoDetailVM> {
 }
 
 /** 投稿 POST /photos（权限：L1，multipart） */
-export function createPhoto(payload: CreatePhotoPayload): Promise<{ id: number, status: 'pending' }> {
-  return upload<{ id: number, status: 'pending' }>({
+export function createPhoto(
+  payload: CreatePhotoPayload,
+): Promise<{ id: number; status: 'pending' }> {
+  return upload<{ id: number; status: 'pending' }>({
     url: '/photos',
     filePath: payload.filePath,
     name: 'image_file',

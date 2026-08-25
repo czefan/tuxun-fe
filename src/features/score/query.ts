@@ -15,9 +15,13 @@ export function useInfiniteScoreLogs(
   const authStore = useAuthStore()
   return useInfiniteQuery<ScoreLogsResult>({
     queryKey: computed(() => [...qk.score.logs(toValue(params)), authStore.isLoggedIn]),
-    queryFn: ({ pageParam = 1 }) => getScoreLogs({ ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryFn: ({ pageParam = 1 }) =>
+      getScoreLogs({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(() => authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled))),
+    enabled: computed(
+      () =>
+        authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled)),
+    ),
   })
 }

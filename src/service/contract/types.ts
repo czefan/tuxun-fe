@@ -17,18 +17,23 @@ export interface PageResult<T> {
   total: number
 }
 
-export function clampPageParams(params?: PageParams): { page: number, page_size: number } {
+export function clampPageParams(params?: PageParams): { page: number; page_size: number } {
   const page = Math.max(1, params?.page || 1)
   const page_size = Math.min(Math.max(1, params?.page_size || DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE)
   return { page, page_size }
 }
 
 // 契约 Operations 强类型解包别名
-export type UserInfoResponse = O['getUserInfo']['responses'][200]['content']['application/json']['resp']
-export type PhotoUserDetail = O['getMyPhotoDetail']['responses'][200]['content']['application/json']['resp']
-export type ExchangeRecord = O['listExchanges']['responses'][200]['content']['application/json']['resp']['list'][number]
-export type ExchangeResult = O['claimExchange']['responses'][201]['content']['application/json']['resp']
-export type SubmitAttemptResult = O['submitAttempt']['responses'][201]['content']['application/json']['resp']
+export type UserInfoResponse =
+  O['getUserInfo']['responses'][200]['content']['application/json']['resp']
+export type PhotoUserDetail =
+  O['getMyPhotoDetail']['responses'][200]['content']['application/json']['resp']
+export type ExchangeRecord =
+  O['listExchanges']['responses'][200]['content']['application/json']['resp']['list'][number]
+export type ExchangeResult =
+  O['claimExchange']['responses'][201]['content']['application/json']['resp']
+export type SubmitAttemptResult =
+  O['submitAttempt']['responses'][201]['content']['application/json']['resp']
 
 // 契约 Schemas 基础类型
 export type UserSummary = S['UserSummary']

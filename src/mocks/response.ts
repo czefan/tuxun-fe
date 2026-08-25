@@ -36,21 +36,27 @@ export function ok<T>(resp: T): HttpResponse<any> {
 
 /** 契约中写操作（投稿 / 作答 / 评论 / 兑换 / 反馈）统一返回 201 */
 export function created<T>(resp: T): HttpResponse<any> {
-  return HttpResponse.json<ApiResponseEnvelope<T>>({
-    success: true,
-    message: '',
-    code: 0,
-    resp,
-  }, { status: 201 }) as HttpResponse<any>
+  return HttpResponse.json<ApiResponseEnvelope<T>>(
+    {
+      success: true,
+      message: '',
+      code: 0,
+      resp,
+    },
+    { status: 201 },
+  ) as HttpResponse<any>
 }
 
 function fail(message: string, code: number, status: number): HttpResponse<any> {
-  return HttpResponse.json<ApiResponseEnvelope<null>>({
-    success: false,
-    message,
-    code,
-    resp: null,
-  }, { status }) as HttpResponse<any>
+  return HttpResponse.json<ApiResponseEnvelope<null>>(
+    {
+      success: false,
+      message,
+      code,
+      resp: null,
+    },
+    { status },
+  ) as HttpResponse<any>
 }
 
 /** code=3 请求参数不合法 */

@@ -87,12 +87,14 @@ export function createVitePlugins(options: PluginConfigOptions): PluginOption[] 
           if (source.endsWith('pages.json.js')) {
             return source
           }
-          return (this as any).resolve(source, importer, { skipSelf: true }).then((resolved: any) => {
-            if (resolved) {
-              return `${resolved.id}.js`
-            }
-            return null
-          })
+          return (this as any)
+            .resolve(source, importer, { skipSelf: true })
+            .then((resolved: any) => {
+              if (resolved) {
+                return `${resolved.id}.js`
+              }
+              return null
+            })
         }
         return null
       },
@@ -126,20 +128,21 @@ export function createVitePlugins(options: PluginConfigOptions): PluginOption[] 
           .replace('%VITE_APP_TITLE%', viteAppTitle)
       },
     },
-    bundleAnalyze
-    && mode === 'production'
-    && visualizer({
-      filename: `./node_modules/.cache/visualizer/${bundleAnalyzePlatform}-stats.html`,
-      open: bundleAnalyzeOpen,
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    bundleAnalyze &&
+      mode === 'production' &&
+      visualizer({
+        filename: `./node_modules/.cache/visualizer/${bundleAnalyzePlatform}-stats.html`,
+        open: bundleAnalyzeOpen,
+        gzipSize: true,
+        brotliSize: true,
+      }),
     vitePluginEruda({
       open: uniPlatform === 'h5' && erudaEnabled,
     }),
-    skipOpenDevTools !== 'true' && openDevTools({
-      mode,
-      wechatDevtoolsCliPath: wechatDevtoolsCliPath || '',
-    }),
+    skipOpenDevTools !== 'true' &&
+      openDevTools({
+        mode,
+        wechatDevtoolsCliPath: wechatDevtoolsCliPath || '',
+      }),
   ].filter(Boolean) as PluginOption[]
 }

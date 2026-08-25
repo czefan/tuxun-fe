@@ -45,19 +45,24 @@ const {
 
 const { data: detailData } = useMyPhotoDetail(selectedId)
 
-const photoList = computed<UserPhotoVM[]>(() => photosPagesData.value?.pages.flatMap(page => page.list) ?? [])
+const photoList = computed<UserPhotoVM[]>(
+  () => photosPagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 function getFilteredList(opt: string) {
-  if (opt === '全部')
-    return photoList.value
+  if (opt === '全部') return photoList.value
   if (opt === '审核中') {
-    return photoList.value.filter(item => String(item.status).toLowerCase() === 'pending')
+    return photoList.value.filter((item) => String(item.status).toLowerCase() === 'pending')
   }
   if (opt === '已通过') {
-    return photoList.value.filter(item => String(item.status).toLowerCase() === 'approved' || String(item.status).toLowerCase() === 'published')
+    return photoList.value.filter(
+      (item) =>
+        String(item.status).toLowerCase() === 'approved' ||
+        String(item.status).toLowerCase() === 'published',
+    )
   }
   if (opt === '未通过') {
-    return photoList.value.filter(item => String(item.status).toLowerCase() === 'rejected')
+    return photoList.value.filter((item) => String(item.status).toLowerCase() === 'rejected')
   }
   return photoList.value
 }
@@ -65,8 +70,7 @@ function getFilteredList(opt: string) {
 const detailVisible = computed({
   get: () => Boolean(selectedId.value && detailData.value),
   set: (val) => {
-    if (!val)
-      selectedId.value = null
+    if (!val) selectedId.value = null
   },
 })
 
@@ -92,8 +96,7 @@ function closeDetail() {
 }
 
 function handleResubmit() {
-  if (!detailData.value)
-    return
+  if (!detailData.value) return
   const refillData = {
     title: detailData.value.title,
     description: detailData.value.description || '',
@@ -115,8 +118,7 @@ function handlePreviewDetailImage() {
 }
 
 function handleOpenLocation() {
-  if (!detailData.value?.location?.latitude)
-    return
+  if (!detailData.value?.location?.latitude) return
   const loc = detailData.value.location
   const gcj = normalizeToGcj02(loc.latitude, loc.longitude, loc.coord_type || 'gcj02')
   uni.openLocation({
@@ -132,7 +134,10 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
 <template>
   <view class="page-my-contributions swiper-page bg-tx-main px-3 pt-3">
     <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
-    <view class="flex flex-shrink-0 items-center gap-6 px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+    <view
+      class="flex flex-shrink-0 items-center gap-6 px-1 pb-0"
+      style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
+    >
       <view
         v-for="opt in statusOptions"
         :key="opt"
@@ -152,25 +157,43 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
       class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
       :current="currentTabIndex"
       :duration="300"
-      @change="(e) => activeStatusIndex = statusOptions[e.detail.current]"
+      @change="(e) => (activeStatusIndex = statusOptions[e.detail.current])"
     >
       <swiper-item v-for="opt in statusOptions" :key="opt" class="box-border">
-        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextPage()">
-          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
+        <scroll-view
+          scroll-y
+          :show-scrollbar="false"
+          class="hide-scrollbar box-border h-full w-full"
+          @scrolltolower="() => fetchNextPage()"
+        >
+          <view
+            v-if="!isLoggedIn()"
+            class="min-h-full flex flex-col items-center justify-center -mt-6"
+          >
             <wd-empty icon="no-result" tip="登录后查看投稿记录" />
-            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+            <wd-button
+              size="small"
+              round
+              type="warning"
+              custom-class="!mt-4 !font-bold shadow-md"
+              @click="loginDirectly"
+            >
               去登录
             </wd-button>
           </view>
           <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
             <view v-if="isLoading" class="space-y-3">
-              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
+              <wd-skeleton
+                animation="gradient"
+                :row-col="[
+                  { width: '100%', height: '70px' },
+                  { width: '100%', height: '70px' },
+                ]"
+              />
             </view>
             <view v-else-if="isError" class="flex flex-col items-center justify-center gap-3 py-20">
               <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-              <wd-button size="small" plain round @click="refetch">
-                重新加载
-              </wd-button>
+              <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
             </view>
             <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-tx-brown">
               <view
@@ -220,11 +243,21 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
       custom-style="background: transparent; width: 88vw; max-width: 640rpx;"
       @close="closeDetail"
     >
-      <view v-if="detailData" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-[24px] bg-tx-main shadow-2xl">
+      <view
+        v-if="detailData"
+        class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-[24px] bg-tx-main shadow-2xl"
+      >
         <!-- 头部固定标题 -->
-        <view class="flex flex-shrink-0 items-center justify-between border-b border-tx-border/40 px-5 pb-2.5 pt-4">
+        <view
+          class="flex flex-shrink-0 items-center justify-between border-b border-tx-border/40 px-5 pb-2.5 pt-4"
+        >
           <text class="u-title-lg">{{ detailData.title }}</text>
-          <wd-icon name="close" size="20px" custom-class="cursor-pointer text-tx-ink-2" @click="closeDetail" />
+          <wd-icon
+            name="close"
+            size="20px"
+            custom-class="cursor-pointer text-tx-ink-2"
+            @click="closeDetail"
+          />
         </view>
 
         <!-- 内容滚动区：图片 + 状态/描述/驳回原因 -->
@@ -232,7 +265,11 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
           <!-- 投稿图片区（点击放大预览，右下角悬浮【查看位置】胶囊按钮） -->
           <view
             class="relative w-full flex overflow-hidden border border-tx-border/50 rounded-xl bg-tx-brown/10"
-            :style="detailData.image?.width && detailData.image?.height ? { aspectRatio: `${detailData.image.width} / ${detailData.image.height}` } : {}"
+            :style="
+              detailData.image?.width && detailData.image?.height
+                ? { aspectRatio: `${detailData.image.width} / ${detailData.image.height}` }
+                : {}
+            "
           >
             <wd-img
               :key="`contrib-modal-${detailData.id}`"
@@ -269,7 +306,10 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
               <text class="block u-body-sub">{{ detailData.description }}</text>
             </view>
 
-            <view v-if="detailData.rejectReason" class="u-body-alert border border-red-200 rounded-xl bg-red-500/10 p-3">
+            <view
+              v-if="detailData.rejectReason"
+              class="u-body-alert border border-red-200 rounded-xl bg-red-500/10 p-3"
+            >
               <text class="font-bold">驳回原因：</text>
               {{ detailData.rejectReason }}
             </view>
@@ -277,8 +317,18 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
         </view>
 
         <!-- 底部固定操作栏（仅驳回状态展示） -->
-        <view v-if="detailData.status === 'rejected'" class="flex-shrink-0 border-t border-tx-border/30 p-4">
-          <wd-button round block type="warning" size="medium" custom-class="!font-bold !text-sm" @click="handleResubmit">
+        <view
+          v-if="detailData.status === 'rejected'"
+          class="flex-shrink-0 border-t border-tx-border/30 p-4"
+        >
+          <wd-button
+            round
+            block
+            type="warning"
+            size="medium"
+            custom-class="!font-bold !text-sm"
+            @click="handleResubmit"
+          >
             修改重新提交
           </wd-button>
         </view>

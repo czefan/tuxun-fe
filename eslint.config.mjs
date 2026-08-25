@@ -10,7 +10,7 @@ export default uniHelper({
     boundaries,
   },
   settings: {
-    'unocss': {
+    unocss: {
       configPath: path.resolve('./uno.config.ts'),
     },
     // boundaries 依赖 import 解析结果来判定被依赖方属于哪一层。
@@ -38,7 +38,11 @@ export default uniHelper({
       // 允许依赖 features；但同样不许越过 features 直接摸 contract。
       // 它必须单独分出来，否则会被下面的 shared 规则误伤。
       { type: 'app', pattern: 'src/app/**/*', mode: 'file' },
-      { type: 'shared', pattern: 'src/{components,composables,utils,constants,styles,router,store}/**/*', mode: 'file' },
+      {
+        type: 'shared',
+        pattern: 'src/{components,composables,utils,constants,styles,router,store}/**/*',
+        mode: 'file',
+      },
     ],
   },
   ignores: [
@@ -57,13 +61,16 @@ export default uniHelper({
     'no-console': 'off',
     'no-unused-vars': 'off',
     'vue/no-unused-refs': 'off',
-    'unused-imports/no-unused-vars': ['error', {
-      vars: 'all',
-      varsIgnorePattern: '^_',
-      args: 'after-used',
-      argsIgnorePattern: '^_',
-      caughtErrors: 'none',
-    }],
+    'unused-imports/no-unused-vars': [
+      'error',
+      {
+        vars: 'all',
+        varsIgnorePattern: '^_',
+        args: 'after-used',
+        argsIgnorePattern: '^_',
+        caughtErrors: 'none',
+      },
+    ],
     'eslint-comments/no-unlimited-disable': 'off',
     'jsdoc/check-param-names': 'off',
     'jsdoc/require-returns-description': 'off',
@@ -81,7 +88,8 @@ export default uniHelper({
         patterns: [
           {
             group: ['**/service/contract/schema', '@/service/contract/schema'],
-            message: '严禁在 pages / subPages 中直接 import raw schema.d.ts！请通过业务域 View Model 引入。',
+            message:
+              '严禁在 pages / subPages 中直接 import raw schema.d.ts！请通过业务域 View Model 引入。',
           },
         ],
       },
@@ -94,13 +102,22 @@ export default uniHelper({
         default: 'allow',
         policies: [
           {
-            from: [{ element: { type: 'pages' } }, { element: { type: 'subPages' } }, { element: { type: 'app' } }],
+            from: [
+              { element: { type: 'pages' } },
+              { element: { type: 'subPages' } },
+              { element: { type: 'app' } },
+            ],
             disallow: [{ element: { type: 'contract' } }],
-            message: '编排层（pages / subPages / app）严禁跨过 features 直接依赖底层 contract 原始定义。',
+            message:
+              '编排层（pages / subPages / app）严禁跨过 features 直接依赖底层 contract 原始定义。',
           },
           {
             from: [{ element: { type: 'features' } }],
-            disallow: [{ element: { type: 'pages' } }, { element: { type: 'subPages' } }, { element: { type: 'app' } }],
+            disallow: [
+              { element: { type: 'pages' } },
+              { element: { type: 'subPages' } },
+              { element: { type: 'app' } },
+            ],
             message: '业务域模块严禁反向依赖编排层（pages / subPages / app）。',
           },
           {
@@ -111,7 +128,8 @@ export default uniHelper({
           {
             from: [{ element: { type: 'shared' } }],
             disallow: [{ element: { type: 'features' } }],
-            message: '基础公共层（components / composables / utils / constants / styles / router / store）严禁反向依赖业务域 features。应用外壳请放 src/app。',
+            message:
+              '基础公共层（components / composables / utils / constants / styles / router / store）严禁反向依赖业务域 features。应用外壳请放 src/app。',
           },
         ],
       },
@@ -123,9 +141,12 @@ export default uniHelper({
         externalIgnores: ['text'],
       },
     ],
-    'vue/block-order': ['error', {
-      order: ['script', 'template', 'style'],
-    }],
+    'vue/block-order': [
+      'error',
+      {
+        order: ['script', 'template', 'style'],
+      },
+    ],
   },
   // css / scss / html / json / md 统一交给 oxfmt（见 package.json 的 fmt 脚本）。
   // 这里若也开 formatters，eslint 内嵌 prettier(printWidth 120) 会和

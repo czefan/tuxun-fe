@@ -40,8 +40,7 @@ function moveTo(lat: number, lng: number) {
   setTimeout(() => {
     try {
       getMapCtx()?.moveToLocation?.({ latitude: lat, longitude: lng })
-    }
-    catch {}
+    } catch {}
   }, 100)
 }
 
@@ -51,17 +50,13 @@ function moveTo(lat: number, lng: number) {
  * @param lng 经度
  * @param options.shouldMove 是否需要驱动地图平移（手势拖动时为 false，程序驱动定位/全屏选点时为 true）
  */
-function updateDraft(
-  lat: number,
-  lng: number,
-  options: { shouldMove?: boolean } = {},
-) {
+function updateDraft(lat: number, lng: number, options: { shouldMove?: boolean } = {}) {
   const nLat = Number(lat.toFixed(6))
   const nLng = Number(lng.toFixed(6))
-  if (!nLat || !nLng)
-    return
+  if (!nLat || !nLng) return
 
-  const isSameCoord = Math.abs(draftLat.value - nLat) < 1e-6 && Math.abs(draftLng.value - nLng) < 1e-6
+  const isSameCoord =
+    Math.abs(draftLat.value - nLat) < 1e-6 && Math.abs(draftLng.value - nLng) < 1e-6
   draftLat.value = nLat
   draftLng.value = nLng
 
@@ -79,8 +74,7 @@ watch(
     lastSavedLat.value = nLat
     lastSavedLng.value = nLng
 
-    if (!nLat || !nLng)
-      return
+    if (!nLat || !nLng) return
 
     // 如果与当前草稿一致（通常是内部 emit 引起的父组件回写），不重复平移地图
     if (Math.abs(draftLat.value - nLat) >= 1e-6 || Math.abs(draftLng.value - nLng) >= 1e-6) {
@@ -127,8 +121,7 @@ function handleMapTap(e: any) {
       },
       fail: () => syncFromCenter(mapCtx),
     })
-  }
-  else {
+  } else {
     syncFromCenter(mapCtx)
   }
 }
@@ -139,8 +132,7 @@ function handleMapTap(e: any) {
  */
 function handleRegionChange(e: any) {
   const d = e?.detail || {}
-  if (d.type && d.type !== 'end')
-    return
+  if (d.type && d.type !== 'end') return
 
   if (debounceTimer) {
     clearTimeout(debounceTimer)
@@ -158,7 +150,9 @@ function handleRegionChange(e: any) {
 
 /** 右下角对勾：保存确认 */
 function handleConfirm() {
-  const isSame = Math.abs(lastSavedLat.value - draftLat.value) < 1e-6 && Math.abs(lastSavedLng.value - draftLng.value) < 1e-6
+  const isSame =
+    Math.abs(lastSavedLat.value - draftLat.value) < 1e-6 &&
+    Math.abs(lastSavedLng.value - draftLng.value) < 1e-6
   if (!isSame) {
     lastSavedLat.value = draftLat.value
     lastSavedLng.value = draftLng.value
@@ -187,8 +181,7 @@ async function locate_() {
   const coords = await locate()
   if (coords) {
     updateDraft(coords.latitude, coords.longitude, { shouldMove: true })
-  }
-  else {
+  } else {
     uni.showToast({ title: '定位失败，请检查定位权限', icon: 'none' })
   }
 }
@@ -206,7 +199,8 @@ function chooseLocation_() {
         const nLng = Number(lng.toFixed(6))
         const addressName = res?.name || res?.address || props.selectedText
         updateDraft(nLat, nLng, { shouldMove: true })
-        const isSame = Math.abs(lastSavedLat.value - nLat) < 1e-6 && Math.abs(lastSavedLng.value - nLng) < 1e-6
+        const isSame =
+          Math.abs(lastSavedLat.value - nLat) < 1e-6 && Math.abs(lastSavedLng.value - nLng) < 1e-6
         if (!isSame) {
           lastSavedLat.value = nLat
           lastSavedLng.value = nLng
@@ -246,7 +240,9 @@ defineExpose({ locate: locate_, chooseLocation: chooseLocation_, isSubmittable }
       />
 
       <!-- 中心固定选点针 -->
-      <view class="pointer-events-none absolute left-1/2 top-1/2 z-10 transform -translate-x-1/2 -translate-y-full">
+      <view
+        class="pointer-events-none absolute left-1/2 top-1/2 z-10 transform -translate-x-1/2 -translate-y-full"
+      >
         <text class="i-carbon:location-filled block text-[24px] text-rose-500 drop-shadow-md" />
       </view>
 

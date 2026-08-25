@@ -56,7 +56,11 @@ function mountPicker(initial = { latitude: 0, longitude: 0 }) {
 }
 
 /** 触发全屏选点并模拟用户在全屏里确认某个坐标 */
-async function pickFromFullScreen(wrapper: ReturnType<typeof mountPicker>, lat: number, lng: number) {
+async function pickFromFullScreen(
+  wrapper: ReturnType<typeof mountPicker>,
+  lat: number,
+  lng: number,
+) {
   vi.mocked(uni.chooseLocation).mockImplementation((opts: any) => {
     opts.success?.({ name: '目标点', address: '测试地址', latitude: lat, longitude: lng })
     return undefined as any
@@ -70,15 +74,21 @@ describe('form-location-picker 选点同步', () => {
     const wrapper = mountPicker()
     await pickFromFullScreen(wrapper, 34.250001, 108.990001)
 
-    expect(wrapper.emitted('update:latitude')?.at(-1), '全屏选点必须 emit 坐标').toEqual([34.250001])
+    expect(wrapper.emitted('update:latitude')?.at(-1), '全屏选点必须 emit 坐标').toEqual([
+      34.250001,
+    ])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.990001])
-    expect(wrapper.emitted('update:address')?.at(-1), '优先使用全屏选点的真实地点名称').toEqual(['目标点'])
+    expect(wrapper.emitted('update:address')?.at(-1), '优先使用全屏选点的真实地点名称').toEqual([
+      '目标点',
+    ])
   })
 
   it('全屏初始中心等于卡片当前草稿坐标（先卡片选点再跳全屏）', async () => {
     const wrapper = mountPicker()
     // 卡片内先选一个点（H5 高德 tap 事件自带经纬度）
-    await wrapper.find('#locationPickerMap').trigger('tap', { detail: { latitude: 34.251, longitude: 108.991 } })
+    await wrapper
+      .find('#locationPickerMap')
+      .trigger('tap', { detail: { latitude: 34.251, longitude: 108.991 } })
     // 再触发全屏选点：传给 chooseLocation 的初始中心必须来自草稿
     vi.mocked(uni.chooseLocation).mockImplementation((opts: any) => {
       expect(opts.latitude, 'chooseLocation 初始中心 = 卡片草稿纬度').toBe(34.251)
@@ -92,7 +102,9 @@ describe('form-location-picker 选点同步', () => {
   it('h5 点选与拖动地图仅更新内部预览草稿，未点击保存时不 emit 给父组件', async () => {
     const wrapper = mountPicker()
     // 点选
-    await wrapper.find('#locationPickerMap').trigger('tap', { detail: { latitude: 34.26, longitude: 108.98 } })
+    await wrapper
+      .find('#locationPickerMap')
+      .trigger('tap', { detail: { latitude: 34.26, longitude: 108.98 } })
     await nextTick()
     expect(wrapper.emitted('update:latitude'), '未点击保存时不向父组件 emit 坐标').toBeUndefined()
 
@@ -111,7 +123,9 @@ describe('form-location-picker 选点同步', () => {
     await wrapper.find('#locationPickerMap').trigger('tap', { detail: { x: 100, y: 200 } })
     await nextTick()
 
-    expect(mapCtx.pixelToCoordinate, '小程序点选必须走 pixelToCoordinate').toHaveBeenCalledWith(expect.objectContaining({ x: 100, y: 200 }))
+    expect(mapCtx.pixelToCoordinate, '小程序点选必须走 pixelToCoordinate').toHaveBeenCalledWith(
+      expect.objectContaining({ x: 100, y: 200 }),
+    )
     expect(wrapper.emitted('update:latitude'), '未保存前不向父组件 emit').toBeUndefined()
 
     await wrapper.find('.absolute.bottom-3.right-3').trigger('click')
@@ -124,7 +138,11 @@ describe('form-location-picker 选点同步', () => {
     vi.useFakeTimers()
     const wrapper = mountPicker()
     await wrapper.find('#locationPickerMap').trigger('regionchange', {
-      detail: { type: 'end', causedBy: 'drag', centerLocation: { latitude: 34.28, longitude: 108.96 } },
+      detail: {
+        type: 'end',
+        causedBy: 'drag',
+        centerLocation: { latitude: 34.28, longitude: 108.96 },
+      },
     })
     vi.advanceTimersByTime(150)
     await nextTick()

@@ -68,9 +68,9 @@ async function runAll(list) {
   return listResults
 }
 
-results.push(...await runAll(scripts))
+results.push(...(await runAll(scripts)))
 
-const failures = results.filter(result => result.code !== 0)
+const failures = results.filter((result) => result.code !== 0)
 
 if (failures.length > 0) {
   for (const failure of failures) {

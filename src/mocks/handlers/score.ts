@@ -7,8 +7,10 @@ export const scoreHandlers = [
   http.get('*/api/score/logs', ({ request }) => {
     const { page, pageSize } = parsePaginationParams(request.url)
     const paginated = paginateArray(db.scoreLogs, page, pageSize)
-    const totalIncome = db.scoreLogs.filter(l => l.delta > 0).reduce((sum, l) => sum + l.delta, 0)
-    const totalExpense = db.scoreLogs.filter(l => l.delta < 0).reduce((sum, l) => sum + Math.abs(l.delta), 0)
+    const totalIncome = db.scoreLogs.filter((l) => l.delta > 0).reduce((sum, l) => sum + l.delta, 0)
+    const totalExpense = db.scoreLogs
+      .filter((l) => l.delta < 0)
+      .reduce((sum, l) => sum + Math.abs(l.delta), 0)
 
     return ok({
       total: db.scoreLogs.length,

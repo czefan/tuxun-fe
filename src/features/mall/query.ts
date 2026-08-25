@@ -11,11 +11,12 @@ import type { ExchangeRecordVM, GoodsQueryParams, GoodsVM } from './types'
 
 export function useInfiniteGoodsList(
   params?: MaybeRefOrGetter<GoodsQueryParams | undefined>,
-  options?: { refetchInterval?: number | false, enabled?: MaybeRefOrGetter<boolean> },
+  options?: { refetchInterval?: number | false; enabled?: MaybeRefOrGetter<boolean> },
 ) {
   return useInfiniteQuery<PageResult<GoodsVM>>({
     queryKey: computed(() => qk.mall.goods(toValue(params))),
-    queryFn: ({ pageParam = 1 }) => getGoods({ ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryFn: ({ pageParam = 1 }) =>
+      getGoods({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
     refetchInterval: options?.refetchInterval ?? 15000,
@@ -25,43 +26,53 @@ export function useInfiniteGoodsList(
 }
 
 export function useInfiniteExchangeList(
-  params?: MaybeRefOrGetter<PageParams & { status?: string } | undefined>,
+  params?: MaybeRefOrGetter<(PageParams & { status?: string }) | undefined>,
   options?: { enabled?: MaybeRefOrGetter<boolean> },
 ) {
   const authStore = useAuthStore()
   return useInfiniteQuery<PageResult<ExchangeRecordVM>>({
     queryKey: computed(() => qk.mall.exchanges(toValue(params))),
-    queryFn: ({ pageParam = 1 }) => getExchanges({ ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryFn: ({ pageParam = 1 }) =>
+      getExchanges({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(() => authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled))),
+    enabled: computed(
+      () =>
+        authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled)),
+    ),
   })
 }
 
 export function useExchangeGood() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ goodId, quantity, idempotencyKey }: { goodId: number, quantity?: number, idempotencyKey: string }) =>
-      exchangeGood({ good_id: goodId, quantity: quantity || 1 }, idempotencyKey),
+    mutationFn: ({
+      goodId,
+      quantity,
+      idempotencyKey,
+    }: {
+      goodId: number
+      quantity?: number
+      idempotencyKey: string
+    }) => exchangeGood({ good_id: goodId, quantity: quantity || 1 }, idempotencyKey),
     onMutate: async ({ goodId, quantity = 1 }) => {
       // 1. 取消正在进行的商品列表查询，避免覆盖乐观更新
       await queryClient.cancelQueries({ queryKey: ['mall', 'goods'] })
-      const prev = queryClient.getQueriesData<InfiniteData<PageResult<GoodsVM>>>({ queryKey: ['mall', 'goods'] })
+      const prev = queryClient.getQueriesData<InfiniteData<PageResult<GoodsVM>>>({
+        queryKey: ['mall', 'goods'],
+      })
 
       // 2. 乐观扣减所有商品列表缓存中的库存，实现 0 延迟即时反馈
       queryClient.setQueriesData<InfiniteData<PageResult<GoodsVM>>>(
         { queryKey: ['mall', 'goods'] },
         (oldData) => {
-          if (!oldData)
-            return oldData
+          if (!oldData) return oldData
           return {
             ...oldData,
-            pages: oldData.pages.map(page => ({
+            pages: oldData.pages.map((page) => ({
               ...page,
-              list: page.list.map(good =>
-                good.id === goodId
-                  ? { ...good, stock: Math.max(0, good.stock - quantity) }
-                  : good,
+              list: page.list.map((good) =>
+                good.id === goodId ? { ...good, stock: Math.max(0, good.stock - quantity) } : good,
               ),
             })),
           }

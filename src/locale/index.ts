@@ -8,22 +8,23 @@ export function initLocale() {
     const lang = navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'zh-Hans'
     try {
       if (typeof localStorage !== 'undefined') {
-        if (localStorage.getItem('UNI_LOCALE') !== lang)
-          localStorage.setItem('UNI_LOCALE', lang)
+        if (localStorage.getItem('UNI_LOCALE') !== lang) localStorage.setItem('UNI_LOCALE', lang)
         if (localStorage.getItem('uni-app-locale') !== lang)
           localStorage.setItem('uni-app-locale', lang)
       }
       if (typeof uni !== 'undefined' && uni.setLocale && uni.getLocale?.() !== lang)
         uni.setLocale(lang)
-    }
-    catch {}
+    } catch {}
   }
 }
 
 initLocale()
 
 export function t(key: string) {
-  const current = (typeof navigator !== 'undefined' && navigator.language) || (typeof uni !== 'undefined' && uni.getLocale?.()) || 'zh-Hans'
+  const current =
+    (typeof navigator !== 'undefined' && navigator.language) ||
+    (typeof uni !== 'undefined' && uni.getLocale?.()) ||
+    'zh-Hans'
   const lang = current.toLowerCase().startsWith('en') ? 'en' : 'zh-Hans'
   return messages[lang]?.[key] ?? zhHans[key as keyof typeof zhHans] ?? key
 }

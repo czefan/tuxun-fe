@@ -11,7 +11,12 @@ import {
   markAllInteractionsRead,
   markInteractionRead,
 } from './api'
-import type { AnnouncementQueryParams, AnnouncementVM, InteractionMessageVM, NotificationPageResult } from './types'
+import type {
+  AnnouncementQueryParams,
+  AnnouncementVM,
+  InteractionMessageVM,
+  NotificationPageResult,
+} from './types'
 
 export function useInfiniteAnnouncements(
   params?: MaybeRefOrGetter<AnnouncementQueryParams | undefined>,
@@ -19,7 +24,8 @@ export function useInfiniteAnnouncements(
 ) {
   return useInfiniteQuery<NotificationPageResult<AnnouncementVM>>({
     queryKey: computed(() => qk.notification.announcements(toValue(params))),
-    queryFn: ({ pageParam = 1 }) => getAnnouncements({ ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryFn: ({ pageParam = 1 }) =>
+      getAnnouncements({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
     enabled: computed(() => (options?.enabled !== undefined ? toValue(options.enabled) : true)),
@@ -34,10 +40,14 @@ export function useAnnouncementDetail(id: MaybeRefOrGetter<number>) {
   })
 }
 
-export function useInfiniteInteractions(params?: MaybeRefOrGetter<PageParams & { type?: ('like' | 'comment')[] } | undefined>, options?: { enabled?: MaybeRefOrGetter<boolean> }) {
+export function useInfiniteInteractions(
+  params?: MaybeRefOrGetter<(PageParams & { type?: ('like' | 'comment')[] }) | undefined>,
+  options?: { enabled?: MaybeRefOrGetter<boolean> },
+) {
   return useInfiniteQuery<NotificationPageResult<InteractionMessageVM>>({
     queryKey: computed(() => qk.notification.interactions(toValue(params))),
-    queryFn: ({ pageParam = 1 }) => getInteractions({ ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryFn: ({ pageParam = 1 }) =>
+      getInteractions({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
     enabled: computed(() => (options?.enabled !== undefined ? toValue(options.enabled) : true)),

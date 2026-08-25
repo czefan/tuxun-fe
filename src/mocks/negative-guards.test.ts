@@ -17,8 +17,7 @@ function collectSourceFiles(dir: string, acc: string[] = []): string[] {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       collectSourceFiles(full, acc)
-    }
-    else if ((full.endsWith('.ts') || full.endsWith('.vue')) && !full.endsWith('schema.d.ts')) {
+    } else if ((full.endsWith('.ts') || full.endsWith('.vue')) && !full.endsWith('schema.d.ts')) {
       acc.push(full)
     }
   }
@@ -40,23 +39,42 @@ function hasWriteOp(content: string): boolean {
   // 剩下 `ubmitAttempt` 里没有动词，useSubmitAttempt 照样漏检（曾真实漏过 submit.vue）。
   // 头尾段都用 (?:[A-Z][a-z]+)*：每次迭代至少消费 2 字符，无零宽自循环，规避
   // regexp/no-super-linear-backtracking 的指数回退告警。
-  return /\buse(?:[A-Z][a-z]+)*(?:Mutation|Like|Post|Delete|Submit|Update|Exchange|Create|Remove)(?:[A-Z][a-z]+)*\b/.test(content)
-    || /\.mutate(?:Async)?\(/.test(content)
+  return (
+    /\buse(?:[A-Z][a-z]+)*(?:Mutation|Like|Post|Delete|Submit|Update|Exchange|Create|Remove)(?:[A-Z][a-z]+)*\b/.test(
+      content,
+    ) || /\.mutate(?:Async)?\(/.test(content)
+  )
 }
 
 describe('契约变更负向守卫', () => {
   it('宽高防御：toImageVM 遇到 0 / 负数 / 缺失时降级到 4:3，绝不产出 NaN 或 Infinity', () => {
-    expect(toImageVM({ thumb_url: 'http://a.com/1.jpg', width: 0, height: 100 }))
-      .toEqual({ url: 'http://a.com/1.jpg', originUrl: 'http://a.com/1.jpg', width: 800, height: 600 })
-    expect(toImageVM({ origin_url: 'http://a.com/2.jpg', width: -100, height: -200 }))
-      .toEqual({ url: 'http://a.com/2.jpg', originUrl: 'http://a.com/2.jpg', width: 800, height: 600 })
+    expect(toImageVM({ thumb_url: 'http://a.com/1.jpg', width: 0, height: 100 })).toEqual({
+      url: 'http://a.com/1.jpg',
+      originUrl: 'http://a.com/1.jpg',
+      width: 800,
+      height: 600,
+    })
+    expect(toImageVM({ origin_url: 'http://a.com/2.jpg', width: -100, height: -200 })).toEqual({
+      url: 'http://a.com/2.jpg',
+      originUrl: 'http://a.com/2.jpg',
+      width: 800,
+      height: 600,
+    })
     expect(toImageVM(null)).toEqual({ url: '', originUrl: '', width: 800, height: 600 })
 
     // 互为兜底测试：只有 origin_url 时 url 退化为 origin_url，只有 thumb_url 时 originUrl 退化为 thumb_url
-    expect(toImageVM({ origin_url: 'http://a.com/origin.jpg', width: 800, height: 600 }))
-      .toEqual({ url: 'http://a.com/origin.jpg', originUrl: 'http://a.com/origin.jpg', width: 800, height: 600 })
-    expect(toImageVM({ thumb_url: 'http://a.com/thumb.jpg', width: 800, height: 600 }))
-      .toEqual({ url: 'http://a.com/thumb.jpg', originUrl: 'http://a.com/thumb.jpg', width: 800, height: 600 })
+    expect(toImageVM({ origin_url: 'http://a.com/origin.jpg', width: 800, height: 600 })).toEqual({
+      url: 'http://a.com/origin.jpg',
+      originUrl: 'http://a.com/origin.jpg',
+      width: 800,
+      height: 600,
+    })
+    expect(toImageVM({ thumb_url: 'http://a.com/thumb.jpg', width: 800, height: 600 })).toEqual({
+      url: 'http://a.com/thumb.jpg',
+      originUrl: 'http://a.com/thumb.jpg',
+      width: 800,
+      height: 600,
+    })
 
     // 真正要防的是下游除零：任何输入都必须能算出有限的宽高比
     for (const input of [
@@ -73,7 +91,14 @@ describe('契约变更负向守卫', () => {
     // 旧字段名一旦漏改，ajv 契约守卫只在 mock 走到那条路由时才报；
     // 这条是全量静态兜底，所以**不能**把 src/mocks 排除在外——
     // mock 数据恰恰是漏改率最高的地方。
-    const forbidden = ['thumb_image', 'origin_image', 'image_url', 'cover_url', 'avatar_url', 'guess_image_url']
+    const forbidden = [
+      'thumb_image',
+      'origin_image',
+      'image_url',
+      'cover_url',
+      'avatar_url',
+      'guess_image_url',
+    ]
     const violations: string[] = []
 
     for (const file of collectSourceFiles(SRC_ROOT)) {
@@ -97,26 +122,49 @@ describe('契约变更负向守卫', () => {
       path.join(PROJECT_ROOT, 'src/features/activity/derive-status.ts'),
       'utf-8',
     )
-    expect(content.includes('Date.now()'), 'derive-status.ts 直接调用了 Date.now()，改本地时间就能伪造活动状态').toBe(false)
+    expect(
+      content.includes('Date.now()'),
+      'derive-status.ts 直接调用了 Date.now()，改本地时间就能伪造活动状态',
+    ).toBe(false)
     expect(content.includes('serverNow()'), 'derive-status.ts 必须走 serverNow()').toBe(true)
   })
 
   it('新字段接线：新增字段必须真的被页面消费，而不是只映射到 VM 就算完', () => {
-    const cases: Array<{ file: string, needles: string[], why: string }> = [
+    const cases: Array<{ file: string; needles: string[]; why: string }> = [
       { file: 'src/pages/notice/index.vue', needles: ['photoId'], why: '互动消息要能跳到关联题目' },
-      { file: 'src/subPages/my/points.vue', needles: ['relatedTitle'], why: '积分明细要显示关联标题，否则 related_title 白加' },
+      {
+        file: 'src/subPages/my/points.vue',
+        needles: ['relatedTitle'],
+        why: '积分明细要显示关联标题，否则 related_title 白加',
+      },
       { file: 'src/subPages/mall/index.vue', needles: ['verifyCode'], why: '兑换记录要出核销码' },
-      { file: 'src/subPages/mall/index.vue', needles: ['originUrl'], why: '契约把高清图放进列表就是为了免详情请求，不消费等于白给' },
-      { file: 'src/features/photo/components/photo-card.vue', needles: ['solved'], why: '题目卡片要显示已破解角标' },
-      { file: 'src/subPages/notice/detail.vue', needles: ['originUrl'], why: '通知配图映射了就必须渲染' },
-      { file: 'src/features/attempt/components/my-attempt-list.vue', needles: ['originUrl'], why: '作答记录要能看高清原图' },
+      {
+        file: 'src/subPages/mall/index.vue',
+        needles: ['originUrl'],
+        why: '契约把高清图放进列表就是为了免详情请求，不消费等于白给',
+      },
+      {
+        file: 'src/features/photo/components/photo-card.vue',
+        needles: ['solved'],
+        why: '题目卡片要显示已破解角标',
+      },
+      {
+        file: 'src/subPages/notice/detail.vue',
+        needles: ['originUrl'],
+        why: '通知配图映射了就必须渲染',
+      },
+      {
+        file: 'src/features/attempt/components/my-attempt-list.vue',
+        needles: ['originUrl'],
+        why: '作答记录要能看高清原图',
+      },
       { file: 'src/pages/index/index.vue', needles: ['solved'], why: '首页要有「只看未破解」筛选' },
     ]
 
     const missing = cases
       .filter(({ file, needles }) => {
         const content = fs.readFileSync(path.join(PROJECT_ROOT, file), 'utf-8')
-        return !needles.every(n => content.includes(n))
+        return !needles.every((n) => content.includes(n))
       })
       .map(({ file, needles, why }) => `${file} 未接入 ${needles.join('/')}（${why}）`)
 
@@ -129,9 +177,11 @@ describe('契约变更负向守卫', () => {
     /** 从 `export interface XxxQueryParams ... {}` 里抠出字段名（忽略继承来的分页字段） */
     function extractFields(file: string, interfaceName: string): string[] {
       const content = fs.readFileSync(path.join(PROJECT_ROOT, file), 'utf-8')
-      const match = content.match(new RegExp(`interface\\s+${interfaceName}[^{]*\\{([\\s\\S]*?)\\n\\}`))
+      const match = content.match(
+        new RegExp(`interface\\s+${interfaceName}[^{]*\\{([\\s\\S]*?)\\n\\}`),
+      )
       expect(match, `${file} 中找不到 ${interfaceName}`).toBeTruthy()
-      return [...match![1].matchAll(/^\s*(\w+)\??\s*:/gm)].map(m => m[1])
+      return [...match![1].matchAll(/^\s*(\w+)\??\s*:/gm)].map((m) => m[1])
     }
 
     function specParams(pathKey: string, method: string): string[] {
@@ -141,12 +191,42 @@ describe('契约变更负向守卫', () => {
     }
 
     const targets = [
-      { file: 'src/features/photo/types.ts', name: 'PhotoQueryParams', path: '/photos', method: 'get' },
-      { file: 'src/features/activity/types.ts', name: 'ActivityQueryParams', path: '/activity', method: 'get' },
-      { file: 'src/features/mall/types.ts', name: 'GoodsQueryParams', path: '/goods', method: 'get' },
-      { file: 'src/features/record/types.ts', name: 'UserPhotoQueryParams', path: '/photos/user', method: 'get' },
-      { file: 'src/features/record/types.ts', name: 'UserAttemptQueryParams', path: '/attempts/user', method: 'get' },
-      { file: 'src/features/notification/types.ts', name: 'AnnouncementQueryParams', path: '/announcements', method: 'get' },
+      {
+        file: 'src/features/photo/types.ts',
+        name: 'PhotoQueryParams',
+        path: '/photos',
+        method: 'get',
+      },
+      {
+        file: 'src/features/activity/types.ts',
+        name: 'ActivityQueryParams',
+        path: '/activity',
+        method: 'get',
+      },
+      {
+        file: 'src/features/mall/types.ts',
+        name: 'GoodsQueryParams',
+        path: '/goods',
+        method: 'get',
+      },
+      {
+        file: 'src/features/record/types.ts',
+        name: 'UserPhotoQueryParams',
+        path: '/photos/user',
+        method: 'get',
+      },
+      {
+        file: 'src/features/record/types.ts',
+        name: 'UserAttemptQueryParams',
+        path: '/attempts/user',
+        method: 'get',
+      },
+      {
+        file: 'src/features/notification/types.ts',
+        name: 'AnnouncementQueryParams',
+        path: '/announcements',
+        method: 'get',
+      },
     ]
 
     const violations: string[] = []
@@ -154,7 +234,9 @@ describe('契约变更负向守卫', () => {
       const allowed = new Set([...specParams(t.path, t.method), 'page', 'page_size'])
       for (const field of extractFields(t.file, t.name)) {
         if (!allowed.has(field)) {
-          violations.push(`${t.name}.${field} 在契约 ${t.method.toUpperCase()} ${t.path} 的 parameters 中不存在`)
+          violations.push(
+            `${t.name}.${field} 在契约 ${t.method.toUpperCase()} ${t.path} 的 parameters 中不存在`,
+          )
         }
       }
     }
@@ -179,7 +261,9 @@ describe('契约变更负向守卫', () => {
       const fullPath = path.join(PROJECT_ROOT, relPath)
       const content = fs.readFileSync(fullPath, 'utf-8')
       if (content.includes('page: params?.page')) {
-        violations.push(`${relPath} 裸传了 params?.page，未走 clampPageParams 钳制（会导致后端报 参数错误: Page最小只能为一）`)
+        violations.push(
+          `${relPath} 裸传了 params?.page，未走 clampPageParams 钳制（会导致后端报 参数错误: Page最小只能为一）`,
+        )
       }
     }
 
@@ -188,15 +272,19 @@ describe('契约变更负向守卫', () => {
 
   it('查询参数对账：sort_by 的枚举值必须与契约一字不差', () => {
     const spec = readSpec()
-    const sortParam = spec.paths['/photos'].get.parameters.find((p: { name: string }) => p.name === 'sort_by')
+    const sortParam = spec.paths['/photos'].get.parameters.find(
+      (p: { name: string }) => p.name === 'sort_by',
+    )
     const specEnum: string[] = sortParam.schema.enum
 
     const content = fs.readFileSync(path.join(PROJECT_ROOT, 'src/features/photo/types.ts'), 'utf-8')
     const line = content.match(/sort_by\?:\s*([^\n]+)/)?.[1] ?? ''
-    const declared = [...line.matchAll(/'([^']+)'/g)].map(m => m[1])
+    const declared = [...line.matchAll(/'([^']+)'/g)].map((m) => m[1])
 
-    expect(declared.slice().sort(), `PhotoQueryParams.sort_by 与契约枚举不一致（契约：${specEnum.join(' / ')}）`)
-      .toEqual(specEnum.slice().sort())
+    expect(
+      declared.slice().sort(),
+      `PhotoQueryParams.sort_by 与契约枚举不一致（契约：${specEnum.join(' / ')}）`,
+    ).toEqual(specEnum.slice().sort())
   })
 
   it('vm 字段收敛：VM 接口中不得同时存在 xxxImage 和对应的冗余 xxxUrl / cover 属性，也不得残留旧的 thumbImage / originImage', () => {
@@ -209,7 +297,14 @@ describe('契约变更负向守卫', () => {
       'src/features/mall/types.ts',
     ]
 
-    const forbiddenPairPatterns = ['coverUrl:', 'imageUrl:', 'thumbUrl:', 'cover:', 'thumbImage', 'originImage']
+    const forbiddenPairPatterns = [
+      'coverUrl:',
+      'imageUrl:',
+      'thumbUrl:',
+      'cover:',
+      'thumbImage',
+      'originImage',
+    ]
     const violations: string[] = []
 
     for (const relPath of typeFiles) {
@@ -236,23 +331,26 @@ describe('契约变更负向守卫', () => {
         violations.push(`${path.relative(PROJECT_ROOT, file)} 仍包含手写全屏遮罩 fixed inset-0`)
       }
     }
-    expect(violations, `发现手写全屏遮罩，必须统一替换为 wd-popup：\n${violations.join('\n')}`).toEqual([])
+    expect(
+      violations,
+      `发现手写全屏遮罩，必须统一替换为 wd-popup：\n${violations.join('\n')}`,
+    ).toEqual([])
   })
 
   it('凡是发起写操作（mutation）的组件，都必须接入 requireLogin() 拦截', () => {
     // 豁免清单：仅在已登录状态下访问的整页视图（如个人中心、通知中心）
-    const allowlist = new Set([
-      'src/pages/my/index.vue',
-      'src/pages/notice/index.vue',
-    ])
+    const allowlist = new Set(['src/pages/my/index.vue', 'src/pages/notice/index.vue'])
 
     const offenders = collectSourceFiles(SRC_ROOT)
-      .filter(f => f.endsWith('.vue'))
-      .filter(f => !allowlist.has(path.relative(PROJECT_ROOT, f).replace(/\\/g, '/')))
-      .filter(f => hasWriteOp(fs.readFileSync(f, 'utf-8')))
-      .filter(f => !/requireLogin\s*\(/.test(fs.readFileSync(f, 'utf-8')))
+      .filter((f) => f.endsWith('.vue'))
+      .filter((f) => !allowlist.has(path.relative(PROJECT_ROOT, f).replace(/\\/g, '/')))
+      .filter((f) => hasWriteOp(fs.readFileSync(f, 'utf-8')))
+      .filter((f) => !/requireLogin\s*\(/.test(fs.readFileSync(f, 'utf-8')))
 
-    expect(offenders, `以下组件发起写操作但没有 requireLogin() 拦截：\n${offenders.map(f => path.relative(PROJECT_ROOT, f).replace(/\\/g, '/')).join('\n')}`).toEqual([])
+    expect(
+      offenders,
+      `以下组件发起写操作但没有 requireLogin() 拦截：\n${offenders.map((f) => path.relative(PROJECT_ROOT, f).replace(/\\/g, '/')).join('\n')}`,
+    ).toEqual([])
   })
 
   it('写操作检测器：必须能抓到 mutateAsync 与动词不在结尾的 hook（useSubmitAttempt 等）', () => {
@@ -323,11 +421,17 @@ describe('契约变更负向守卫', () => {
       const content = fs.readFileSync(path.join(PROJECT_ROOT, rel), 'utf-8')
       return !content.includes('加载更多')
     })
-    expect(missing, `以下页内列表没有可点击的加载更多入口，实际翻不了页：\n${missing.join('\n')}`).toEqual([])
+    expect(
+      missing,
+      `以下页内列表没有可点击的加载更多入口，实际翻不了页：\n${missing.join('\n')}`,
+    ).toEqual([])
   })
 
   it('组件库收敛：瀑布流卡片必须使用 wd-img 提供 loading/error 占位与图片模式封装', () => {
-    const cardContent = fs.readFileSync(path.join(PROJECT_ROOT, 'src/features/photo/components/photo-card.vue'), 'utf-8')
+    const cardContent = fs.readFileSync(
+      path.join(PROJECT_ROOT, 'src/features/photo/components/photo-card.vue'),
+      'utf-8',
+    )
     expect(cardContent.includes('<wd-img'), 'photo-card.vue 必须使用 wd-img 组件').toBe(true)
   })
 
@@ -345,7 +449,9 @@ describe('契约变更负向守卫', () => {
       const blocks = matchComponentBlocks(content, ['wd-img', 'WdImg'])
       blocks.forEach((block, i) => {
         if (!block.includes('lazy-load')) {
-          violations.push(`${path.relative(PROJECT_ROOT, file)} 第 ${i + 1} 个 wd-img 未开 lazy-load`)
+          violations.push(
+            `${path.relative(PROJECT_ROOT, file)} 第 ${i + 1} 个 wd-img 未开 lazy-load`,
+          )
         }
       })
     }
@@ -364,7 +470,9 @@ describe('契约变更负向守卫', () => {
       const blocks = matchComponentBlocks(fs.readFileSync(file, 'utf-8'), ['wd-img', 'WdImg'])
       blocks.forEach((block, i) => {
         if (block.includes('@tap=')) {
-          violations.push(`${path.relative(PROJECT_ROOT, file)} 第 ${i + 1} 个 wd-img 用了 @tap，应改为 @click`)
+          violations.push(
+            `${path.relative(PROJECT_ROOT, file)} 第 ${i + 1} 个 wd-img 用了 @tap，应改为 @click`,
+          )
         }
       })
     }
@@ -380,14 +488,22 @@ describe('契约变更负向守卫', () => {
       if (file.endsWith('negative-guards.test.ts')) {
         continue
       }
-      const blocks = matchComponentBlocks(fs.readFileSync(file, 'utf-8'), ['like-button', 'LikeButton'])
+      const blocks = matchComponentBlocks(fs.readFileSync(file, 'utf-8'), [
+        'like-button',
+        'LikeButton',
+      ])
       blocks.forEach((block, i) => {
         if (/@tap[.=]/.test(block)) {
-          violations.push(`${path.relative(PROJECT_ROOT, file)} 第 ${i + 1} 个 like-button 绑了 @tap，应只用 @click`)
+          violations.push(
+            `${path.relative(PROJECT_ROOT, file)} 第 ${i + 1} 个 like-button 绑了 @tap，应只用 @click`,
+          )
         }
       })
     }
-    expect(violations, `like-button 被 @tap 重复绑定，点击会触发两次：\n${violations.join('\n')}`).toEqual([])
+    expect(
+      violations,
+      `like-button 被 @tap 重复绑定，点击会触发两次：\n${violations.join('\n')}`,
+    ).toEqual([])
   })
 
   it('组件库收敛：列表/页面不能手写裸 <text>加载中...字符串', () => {
@@ -402,13 +518,24 @@ describe('契约变更负向守卫', () => {
         violations.push(path.relative(PROJECT_ROOT, file))
       }
     }
-    expect(violations, `以下 Vue 模板包含手写加载文本（应换成 wd-skeleton / wd-loading / wd-loadmore）：\n${violations.join('\n')}`).toEqual([])
+    expect(
+      violations,
+      `以下 Vue 模板包含手写加载文本（应换成 wd-skeleton / wd-loading / wd-loadmore）：\n${violations.join('\n')}`,
+    ).toEqual([])
   })
 
   it('组件库收敛：瀑布流与列表空态必须统一使用 wd-empty', () => {
-    const cardContent = fs.readFileSync(path.join(PROJECT_ROOT, 'src/features/photo/components/photo-waterfall.vue'), 'utf-8')
-    expect(cardContent.includes('<wd-empty'), 'photo-waterfall.vue 必须使用 wd-empty 组件').toBe(true)
-    expect(cardContent.includes('photo-waterfall__empty'), 'photo-waterfall.vue 不能保留手写空态类名').toBe(false)
+    const cardContent = fs.readFileSync(
+      path.join(PROJECT_ROOT, 'src/features/photo/components/photo-waterfall.vue'),
+      'utf-8',
+    )
+    expect(cardContent.includes('<wd-empty'), 'photo-waterfall.vue 必须使用 wd-empty 组件').toBe(
+      true,
+    )
+    expect(
+      cardContent.includes('photo-waterfall__empty'),
+      'photo-waterfall.vue 不能保留手写空态类名',
+    ).toBe(false)
   })
 
   it('组件库收敛：投稿、意见反馈与提交作答页面必须使用 wd-form 排版', () => {
@@ -451,8 +578,10 @@ describe('契约变更负向守卫', () => {
         return false
       }
       const isIfdef = m[1] === 'ifdef'
-      const parts = m[2].split('|').map(s => s.trim())
-      return isIfdef ? !parts.some(p => p.startsWith('MP')) : parts.some(p => p.startsWith('MP'))
+      const parts = m[2].split('|').map((s) => s.trim())
+      return isIfdef
+        ? !parts.some((p) => p.startsWith('MP'))
+        : parts.some((p) => p.startsWith('MP'))
     }
 
     for (const file of collectSourceFiles(SRC_ROOT)) {
@@ -497,21 +626,27 @@ describe('契约变更负向守卫', () => {
           const reg = new RegExp(`\\b${glob}\\.`, 'g')
           if (reg.test(codeLine)) {
             // 运行时环境判断检查：文件内包含 typeof window / typeof document 等守卫，或属于仅开发/Mock环境
-            const hasAnyTypeofCheck = /typeof\s+(?:window|document|navigator|localStorage)/.test(content)
+            const hasAnyTypeofCheck = /typeof\s+(?:window|document|navigator|localStorage)/.test(
+              content,
+            )
             if (!hasAnyTypeofCheck) {
-              violations.push(`${path.relative(PROJECT_ROOT, file)}:L${index + 1} 裸引用了浏览器全局变量 ${glob}，在非 H5 平台会抛错误`)
+              violations.push(
+                `${path.relative(PROJECT_ROOT, file)}:L${index + 1} 裸引用了浏览器全局变量 ${glob}，在非 H5 平台会抛错误`,
+              )
             }
           }
         }
       })
     }
 
-    expect(violations, `发现未作跨端防护的浏览器全局变量引用：\n${violations.join('\n')}`).toEqual([])
+    expect(violations, `发现未作跨端防护的浏览器全局变量引用：\n${violations.join('\n')}`).toEqual(
+      [],
+    )
   })
 
   it('环境变量有效性：env 文件夹中定义的环境变量必须在工程中有代码消费者', () => {
     const envDir = path.join(PROJECT_ROOT, 'env')
-    const envFiles = fs.readdirSync(envDir).filter(f => f.startsWith('.env'))
+    const envFiles = fs.readdirSync(envDir).filter((f) => f.startsWith('.env'))
 
     const declaredVars = new Set<string>()
     for (const envFile of envFiles) {
@@ -551,8 +686,10 @@ describe('契约变更负向守卫', () => {
           if (entry.name !== 'node_modules' && entry.name !== 'dist' && entry.name !== '.git') {
             collectAllSearchFiles(full)
           }
-        }
-        else if (/\.(?:ts|js|vue|mjs|cjs|json)$/.test(entry.name) && !entry.name.endsWith('apifox-import.json')) {
+        } else if (
+          /\.(?:ts|js|vue|mjs|cjs|json)$/.test(entry.name) &&
+          !entry.name.endsWith('apifox-import.json')
+        ) {
           searchTargets.push(full)
         }
       }
@@ -607,9 +744,9 @@ describe('契约变更负向守卫', () => {
     // 直连 api 会绕过 TanStack 的缓存失效声明：写操作成功后相关列表不会刷新。
     // 投稿页曾因此导致「投稿成功后我的投稿列表看不到新数据」。
     const offenders = collectSourceFiles(SRC_ROOT)
-      .filter(f => /[\\/](?:pages|subPages)[\\/]/.test(f))
-      .filter(f => /from ['"]@\/features\/[a-z]+\/api['"]/.test(fs.readFileSync(f, 'utf-8')))
-      .map(f => path.relative(PROJECT_ROOT, f).replace(/\\/g, '/'))
+      .filter((f) => /[\\/](?:pages|subPages)[\\/]/.test(f))
+      .filter((f) => /from ['"]@\/features\/[a-z]+\/api['"]/.test(fs.readFileSync(f, 'utf-8')))
+      .map((f) => path.relative(PROJECT_ROOT, f).replace(/\\/g, '/'))
     expect(offenders, `发现页面直连 features/*/api：\n${offenders.join('\n')}`).toEqual([])
   })
 
@@ -630,7 +767,9 @@ describe('契约变更负向守卫', () => {
       const content = fs.readFileSync(file, 'utf-8')
       for (const pattern of forbiddenPatterns) {
         if (pattern.test(content)) {
-          violations.push(`${path.relative(PROJECT_ROOT, file)} 误将 MODE 与 production/development 比对`)
+          violations.push(
+            `${path.relative(PROJECT_ROOT, file)} 误将 MODE 与 production/development 比对`,
+          )
         }
       }
     }
@@ -639,9 +778,7 @@ describe('契约变更负向守卫', () => {
   })
 
   it('vue 模板与样式中不得使用硬编码主题色类名，应统一使用 UnoCSS 设计令牌', () => {
-    const forbiddenPatterns = [
-      /\[#(?:B69171|D3BA9F|F9DF95|F1DFC5|1E1E1E|756C5E|8A7E70|F8F6F2)\]/i,
-    ]
+    const forbiddenPatterns = [/\[#(?:B69171|D3BA9F|F9DF95|F1DFC5|1E1E1E|756C5E|8A7E70|F8F6F2)\]/i]
     const violations: string[] = []
 
     for (const file of collectSourceFiles(SRC_ROOT)) {
@@ -651,7 +788,9 @@ describe('契约变更负向守卫', () => {
       const content = fs.readFileSync(file, 'utf-8')
       for (const pattern of forbiddenPatterns) {
         if (pattern.test(content)) {
-          violations.push(`${path.relative(PROJECT_ROOT, file)} 存在硬编码主题色类名，请改用 tx-* 令牌`)
+          violations.push(
+            `${path.relative(PROJECT_ROOT, file)} 存在硬编码主题色类名，请改用 tx-* 令牌`,
+          )
         }
       }
     }

@@ -18,7 +18,10 @@ const TRACKED_EXTENSIONS = new Set([
   '.webp',
 ])
 
-const staticDir = path.resolve(process.cwd(), process.argv[2] || process.env.STATIC_ASSET_DIR || DEFAULT_STATIC_DIR)
+const staticDir = path.resolve(
+  process.cwd(),
+  process.argv[2] || process.env.STATIC_ASSET_DIR || DEFAULT_STATIC_DIR,
+)
 const singleAssetLimit = readByteLimit('STATIC_ASSET_SINGLE_LIMIT', DEFAULT_SINGLE_ASSET_LIMIT)
 const totalAssetLimit = readByteLimit('STATIC_ASSET_TOTAL_LIMIT', DEFAULT_TOTAL_ASSET_LIMIT)
 const strict = process.env.STATIC_ASSET_STRICT !== 'false'
@@ -29,8 +32,8 @@ if (!fs.existsSync(staticDir)) {
 }
 
 const assets = walkFiles(staticDir)
-  .filter(filePath => TRACKED_EXTENSIONS.has(path.extname(filePath).toLowerCase()))
-  .map(filePath => ({
+  .filter((filePath) => TRACKED_EXTENSIONS.has(path.extname(filePath).toLowerCase()))
+  .map((filePath) => ({
     path: normalizePath(path.relative(staticDir, filePath)),
     size: fs.statSync(filePath).size,
   }))
@@ -64,8 +67,7 @@ function walkFiles(dir) {
 
     if (entry.isDirectory()) {
       result.push(...walkFiles(fullPath))
-    }
-    else if (entry.isFile()) {
+    } else if (entry.isFile()) {
       result.push(fullPath)
     }
   }
@@ -78,12 +80,16 @@ function createWarnings(assets, totalSize) {
 
   for (const asset of assets) {
     if (asset.size > singleAssetLimit) {
-      warnings.push(`${asset.path} size ${formatBytes(asset.size)} exceeds ${formatBytes(singleAssetLimit)}`)
+      warnings.push(
+        `${asset.path} size ${formatBytes(asset.size)} exceeds ${formatBytes(singleAssetLimit)}`,
+      )
     }
   }
 
   if (totalSize > totalAssetLimit) {
-    warnings.push(`static assets total ${formatBytes(totalSize)} exceeds ${formatBytes(totalAssetLimit)}`)
+    warnings.push(
+      `static assets total ${formatBytes(totalSize)} exceeds ${formatBytes(totalAssetLimit)}`,
+    )
   }
 
   return warnings
@@ -91,10 +97,12 @@ function createWarnings(assets, totalSize) {
 
 function printReport(rootDir, assets, totalSize, warnings) {
   const visibleAssets = assets.slice(0, 20)
-  const nameWidth = Math.max('Asset'.length, ...visibleAssets.map(asset => asset.path.length))
+  const nameWidth = Math.max('Asset'.length, ...visibleAssets.map((asset) => asset.path.length))
 
   console.log(`Static asset budget report: ${rootDir}`)
-  console.log(`Limits: single ${formatBytes(singleAssetLimit)}, total ${formatBytes(totalAssetLimit)}`)
+  console.log(
+    `Limits: single ${formatBytes(singleAssetLimit)}, total ${formatBytes(totalAssetLimit)}`,
+  )
   console.log(`${padEnd('Asset', nameWidth)}  Size`)
   console.log(`${padEnd('-'.repeat(nameWidth), nameWidth)}  ---------`)
 
@@ -103,7 +111,9 @@ function printReport(rootDir, assets, totalSize, warnings) {
   }
 
   if (assets.length > visibleAssets.length) {
-    console.log(`${padEnd(`... ${assets.length - visibleAssets.length} more`, nameWidth)}  ${padStart('', 9)}`)
+    console.log(
+      `${padEnd(`... ${assets.length - visibleAssets.length} more`, nameWidth)}  ${padStart('', 9)}`,
+    )
   }
 
   console.log(`${padEnd('total', nameWidth)}  ${padStart(formatBytes(totalSize), 9)}`)

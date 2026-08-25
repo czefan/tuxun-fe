@@ -26,31 +26,44 @@ const groupedInteractions = computed(() => groupItemsByTime(props.items))
 </script>
 
 <template>
-  <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => emit('loadMore')">
+  <scroll-view
+    scroll-y
+    :show-scrollbar="false"
+    class="hide-scrollbar box-border h-full w-full"
+    @scrolltolower="() => emit('loadMore')"
+  >
     <view v-if="!isLoggedIn" class="min-h-full flex flex-col items-center justify-center -mt-6">
       <wd-empty icon="no-result" tip="登录后查看互动消息" />
-      <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="emit('login')">
+      <wd-button
+        size="small"
+        round
+        type="warning"
+        custom-class="!mt-4 !font-bold shadow-md"
+        @click="emit('login')"
+      >
         去登录
       </wd-button>
     </view>
     <view v-else class="bottom-space--bar px-3 pt-2.5 space-y-4">
       <view v-if="loading" class="space-y-3">
-        <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
+        <wd-skeleton
+          animation="gradient"
+          :row-col="[
+            { width: '100%', height: '70px' },
+            { width: '100%', height: '70px' },
+          ]"
+        />
       </view>
       <view v-else-if="error" class="flex flex-col items-center justify-center gap-3 py-20">
         <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-        <wd-button size="small" plain round @click="emit('reload')">
-          重新加载
-        </wd-button>
+        <wd-button size="small" plain round @click="emit('reload')"> 重新加载 </wd-button>
       </view>
       <view v-else-if="items.length" class="space-y-4">
-        <view
-          v-for="group in groupedInteractions"
-          :key="group.title"
-          class="space-y-1.5"
-        >
+        <view v-for="group in groupedInteractions" :key="group.title" class="space-y-1.5">
           <!-- 时间分组小标题 (本周 / 本月 / 更早) -->
-          <text class="block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase font-numeric">
+          <text
+            class="block px-1 text-xs text-[#8c5f38] font-black tracking-widest uppercase font-numeric"
+          >
             {{ group.title }}
           </text>
 
@@ -59,7 +72,10 @@ const groupedInteractions = computed(() => groupItemsByTime(props.items))
               v-for="(item, index) in group.list"
               :key="item.id"
               class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-70"
-              :class="[{ 'border-t border-tx-brown': index > 0 }, !item.isRead ? 'bg-tx-accent/20 -mx-3 px-3' : '']"
+              :class="[
+                { 'border-t border-tx-brown': index > 0 },
+                !item.isRead ? 'bg-tx-accent/20 -mx-3 px-3' : '',
+              ]"
               @tap="emit('select', item)"
             >
               <view class="min-w-0 flex flex-1 items-center gap-3">
@@ -87,15 +103,24 @@ const groupedInteractions = computed(() => groupItemsByTime(props.items))
                       <text class="truncate text-sm text-tx-ink font-black tracking-tight">
                         {{ item.user.nickname }}
                       </text>
-                      <text v-if="isMe(item.user.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
+                      <text
+                        v-if="isMe(item.user.id)"
+                        class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
+                      >
+                        我
+                      </text>
                     </view>
                     <text class="flex-shrink-0 text-xs text-tx-ink-2 font-bold font-numeric">
-                      {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
+                      {{
+                        formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false })
+                      }}
                     </text>
                   </view>
 
                   <!-- 第二行：文字描述内容 (增加 break-all 允许自然断字填满行尾) -->
-                  <text class="line-clamp-2 block break-all text-sm text-tx-ink-2 font-medium leading-relaxed">
+                  <text
+                    class="line-clamp-2 block break-all text-sm text-tx-ink-2 font-medium leading-relaxed"
+                  >
                     {{ item.content }}
                   </text>
                 </view>

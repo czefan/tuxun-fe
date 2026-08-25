@@ -24,7 +24,8 @@ export default defineConfig(({ mode }) => {
   } = env
   const mockEnabled = env.VITE_ENABLE_MOCK === 'true'
   const bundleAnalyze = (process.env.VITE_BUNDLE_ANALYZE || env.VITE_BUNDLE_ANALYZE) === 'true'
-  const bundleAnalyzeOpen = (process.env.VITE_BUNDLE_ANALYZE_OPEN || env.VITE_BUNDLE_ANALYZE_OPEN) === 'true'
+  const bundleAnalyzeOpen =
+    (process.env.VITE_BUNDLE_ANALYZE_OPEN || env.VITE_BUNDLE_ANALYZE_OPEN) === 'true'
 
   warnMissingProductionBaseUrl(env, UNI_PLATFORM, mode)
   normalizeGeneratedPagesJson(process.cwd())
@@ -71,7 +72,7 @@ export default defineConfig(({ mode }) => {
               target: VITE_SERVER_BASEURL || 'http://localhost:8088',
               changeOrigin: true,
               secure: false,
-              rewrite: path => path.replace(new RegExp(`^${VITE_APP_PROXY_PREFIX}`), ''),
+              rewrite: (path) => path.replace(new RegExp(`^${VITE_APP_PROXY_PREFIX}`), ''),
               configure: (proxy) => {
                 proxy.on('proxyReq', (proxyReq) => {
                   if (!proxyReq.getHeader('host')) {
@@ -101,7 +102,7 @@ export default defineConfig(({ mode }) => {
       // 由 env 控制：VITE_SHOW_SOURCEMAP === 'true' 时产出 sourcemap，默认关闭
       sourcemap: VITE_SHOW_SOURCEMAP === 'true',
       target: 'es6',
-      minify: (mode === 'development' || mode === 'dev') ? false : 'esbuild',
+      minify: mode === 'development' || mode === 'dev' ? false : 'esbuild',
     },
   })
 })

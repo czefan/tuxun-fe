@@ -41,18 +41,15 @@ onLoad((query) => {
 })
 
 function isSubmitDraftMeaningful(data: any): boolean {
-  if (!data || typeof data !== 'object')
-    return false
+  if (!data || typeof data !== 'object') return false
   return Boolean(data.filePath || isSubmittableLocation(data.latitude, data.longitude))
 }
 
 function checkDraft() {
-  if (!photoId.value)
-    return
+  if (!photoId.value) return
   const key = `${DRAFT_KEY_PREFIX}${photoId.value}`
   const saved = uni.getStorageSync(key)
-  if (!saved)
-    return
+  if (!saved) return
 
   try {
     const parsed = JSON.parse(saved)
@@ -70,14 +67,12 @@ function checkDraft() {
         if (res.confirm) {
           Object.assign(formData, parsed)
           uni.showToast({ title: '已恢复草稿', icon: 'success' })
-        }
-        else {
+        } else {
           uni.removeStorageSync(key)
         }
       },
     })
-  }
-  catch {
+  } catch {
     uni.removeStorageSync(key)
   }
 }
@@ -85,13 +80,11 @@ function checkDraft() {
 watch(
   formData,
   (newVal) => {
-    if (!photoId.value)
-      return
+    if (!photoId.value) return
     const key = `${DRAFT_KEY_PREFIX}${photoId.value}`
     if (isSubmitDraftMeaningful(newVal)) {
       uni.setStorageSync(key, JSON.stringify(newVal))
-    }
-    else {
+    } else {
       uni.removeStorageSync(key)
     }
   },
@@ -124,8 +117,7 @@ function choosePhoto() {
  * wd-form / wd-form-item 在这里只负责标签与排版。
  */
 async function handleSubmit() {
-  if (!requireLogin())
-    return
+  if (!requireLogin()) return
   if (!formData.filePath) {
     uni.showToast({ title: '请先拍摄/选择实地拍照照片', icon: 'none' })
     return
@@ -161,16 +153,14 @@ async function handleSubmit() {
         })
       },
     })
-  }
-  catch {
+  } catch {
     // Handled by interceptor
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
 
-const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void } | null>(null)
+const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void } | null>(null)
 </script>
 
 <template>
@@ -197,14 +187,19 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
           width="100%"
         />
         <view v-else class="flex flex-col items-center p-3 text-center space-y-1.5">
-          <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink">
+          <view
+            class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink"
+          >
             <text class="i-carbon:camera text-2xl font-black" />
           </view>
           <text class="block text-sm text-tx-ink font-black">拍照或选取现场照片</text>
           <text class="block text-xs text-tx-ink-2 font-bold">需包含关键特征点以供判定</text>
         </view>
 
-        <view v-if="formData.filePath" class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md">
+        <view
+          v-if="formData.filePath"
+          class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md"
+        >
           <text class="i-carbon:renew text-xs" />
           <text class="text-xs font-bold">重新选择</text>
         </view>

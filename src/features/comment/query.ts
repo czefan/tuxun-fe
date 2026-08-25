@@ -15,8 +15,16 @@ export function useInfiniteCommentList(
 ) {
   const authStore = useAuthStore()
   return useInfiniteQuery<PageResult<CommentVM>>({
-    queryKey: computed(() => [...qk.comment.list(toValue(photoId), toValue(params)), authStore.isLoggedIn]),
-    queryFn: ({ pageParam = 1 }) => getComments(toValue(photoId), { ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryKey: computed(() => [
+      ...qk.comment.list(toValue(photoId), toValue(params)),
+      authStore.isLoggedIn,
+    ]),
+    queryFn: ({ pageParam = 1 }) =>
+      getComments(toValue(photoId), {
+        ...toValue(params),
+        page: pageParam as number,
+        page_size: 20,
+      }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
     enabled: computed(() => toValue(photoId) > 0),
@@ -31,12 +39,18 @@ export function usePostComment(photoId: MaybeRefOrGetter<number>) {
     onMutate: async (content: string) => {
       const pid = toValue(photoId)
       const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
-        Array.isArray(query.queryKey) && query.queryKey[0] === 'comment' && query.queryKey[2] === pid
+        Array.isArray(query.queryKey) &&
+        query.queryKey[0] === 'comment' &&
+        query.queryKey[2] === pid
 
       await queryClient.cancelQueries({ predicate: matchCommentQuery })
       const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
 
-      const currentUser = queryClient.getQueryData<{ id?: number, nickname?: string, avatar?: string }>(qk.user.info())
+      const currentUser = queryClient.getQueryData<{
+        id?: number
+        nickname?: string
+        avatar?: string
+      }>(qk.user.info())
       const optimisticComment: CommentVM = {
         id: -Date.now(),
         content,
@@ -53,8 +67,7 @@ export function usePostComment(photoId: MaybeRefOrGetter<number>) {
       queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
         (old) => {
-          if (!old)
-            return old
+          if (!old) return old
           if ('pages' in old && Array.isArray(old.pages)) {
             if (old.pages.length === 0) {
               return {
@@ -107,15 +120,14 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
       queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
         (old) => {
-          if (!old)
-            return old
+          if (!old) return old
           if ('pages' in old && Array.isArray(old.pages)) {
             return {
               ...old,
-              pages: old.pages.map(page => ({
+              pages: old.pages.map((page) => ({
                 ...page,
                 list: Array.isArray(page.list)
-                  ? page.list.filter(item => item.id !== commentId)
+                  ? page.list.filter((item) => item.id !== commentId)
                   : page.list,
                 total: Math.max(0, (page.total ?? 0) - 1),
               })),
@@ -142,7 +154,8 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
 export function useSetCommentLike(_photoId?: MaybeRefOrGetter<number>) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ commentId, liked }: { commentId: number, liked: boolean }) => setCommentLike(commentId, liked),
+    mutationFn: ({ commentId, liked }: { commentId: number; liked: boolean }) =>
+      setCommentLike(commentId, liked),
     // 乐观热更新：点击瞬间立即翻转按钮状态与点赞数字
     onMutate: async ({ commentId, liked }) => {
       const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
@@ -154,19 +167,21 @@ export function useSetCommentLike(_photoId?: MaybeRefOrGetter<number>) {
       queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
         (old) => {
-          if (!old)
-            return old
+          if (!old) return old
           if ('pages' in old && Array.isArray(old.pages)) {
             return {
               ...old,
-              pages: old.pages.map(page => ({
+              pages: old.pages.map((page) => ({
                 ...page,
                 list: Array.isArray(page.list)
                   ? page.list.map((item) => {
-                      if (item.id !== commentId)
-                        return item
-                      const delta = item.liked === liked ? 0 : (liked ? 1 : -1)
-                      return { ...item, liked, likesCount: Math.max(0, (item.likesCount ?? 0) + delta) }
+                      if (item.id !== commentId) return item
+                      const delta = item.liked === liked ? 0 : liked ? 1 : -1
+                      return {
+                        ...item,
+                        liked,
+                        likesCount: Math.max(0, (item.likesCount ?? 0) + delta),
+                      }
                     })
                   : page.list,
               })),

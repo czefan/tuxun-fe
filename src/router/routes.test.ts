@@ -31,9 +31,12 @@ describe('routes', () => {
     }
 
     const appRouteValues = new Set(Object.values(AppRoute))
-    const unmappedPages = allPages.filter(p => !appRouteValues.has(p as any))
+    const unmappedPages = allPages.filter((p) => !appRouteValues.has(p as any))
 
-    expect(unmappedPages, `以下 pages.json 页面未在 AppRoute 中定义常量：\n${unmappedPages.join('\n')}`).toEqual([])
+    expect(
+      unmappedPages,
+      `以下 pages.json 页面未在 AppRoute 中定义常量：\n${unmappedPages.join('\n')}`,
+    ).toEqual([])
   })
 
   it('页面跳转必须走 AppRoute 常量，不能硬编码路径字面量', () => {
@@ -45,8 +48,10 @@ describe('routes', () => {
         const full = path.join(dir, entry.name)
         if (entry.isDirectory()) {
           collectSourceFiles(full, acc)
-        }
-        else if ((full.endsWith('.ts') || full.endsWith('.vue')) && !full.endsWith('schema.d.ts')) {
+        } else if (
+          (full.endsWith('.ts') || full.endsWith('.vue')) &&
+          !full.endsWith('schema.d.ts')
+        ) {
           acc.push(full)
         }
       }
@@ -55,13 +60,16 @@ describe('routes', () => {
 
     const violations: string[] = []
     for (const file of collectSourceFiles(SRC_ROOT)) {
-      if (file.endsWith('routes.ts') || file.endsWith('.test.ts'))
-        continue
+      if (file.endsWith('routes.ts') || file.endsWith('.test.ts')) continue
       const content = fs.readFileSync(file, 'utf-8')
-      const hits = content.match(/(?:uni\.(?:navigateTo|redirectTo|reLaunch|switchTab)\s*\(\s*\{[^}]*url:|navigateWithTransition\s*\()\s*[`'"]\/(?:pages|subPages)\//g)
-      if (hits)
-        violations.push(`${path.relative(PROJECT_ROOT, file)}（${hits.length} 处）`)
+      const hits = content.match(
+        /(?:uni\.(?:navigateTo|redirectTo|reLaunch|switchTab)\s*\(\s*\{[^}]*url:|navigateWithTransition\s*\()\s*[`'"]\/(?:pages|subPages)\//g,
+      )
+      if (hits) violations.push(`${path.relative(PROJECT_ROOT, file)}（${hits.length} 处）`)
     }
-    expect(violations, `以下文件硬编码了页面路径，应改用 AppRoute + withQuery：\n${violations.join('\n')}`).toEqual([])
+    expect(
+      violations,
+      `以下文件硬编码了页面路径，应改用 AppRoute + withQuery：\n${violations.join('\n')}`,
+    ).toEqual([])
   })
 })

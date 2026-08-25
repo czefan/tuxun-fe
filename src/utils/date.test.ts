@@ -69,6 +69,8 @@ describe('formatRelativeTime & formatDate 日期时间格式化', () => {
 
   it('formatDate 传入自定义格式时按格式输出', () => {
     expect(formatDate('2026-08-15T14:00:00+08:00', 'YYYY/MM/DD')).toBe('2026/08/15')
-    expect(formatDate('2026-08-22T13:14:38+08:00', 'YYYY年MM月DD日 HH:mm')).toBe('2026年08月22日 13:14')
+    expect(formatDate('2026-08-22T13:14:38+08:00', 'YYYY年MM月DD日 HH:mm')).toBe(
+      '2026年08月22日 13:14',
+    )
   })
 })

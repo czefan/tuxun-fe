@@ -31,7 +31,9 @@ function scanPages() {
     }
   }
   // 首页必须排第一位；扫不到任何页面时兜底，避免生成空数组
-  pages.sort((a, b) => (a.path === 'pages/index/index' ? -1 : b.path === 'pages/index/index' ? 1 : 0))
+  pages.sort((a, b) =>
+    a.path === 'pages/index/index' ? -1 : b.path === 'pages/index/index' ? 1 : 0,
+  )
   return pages.length ? pages : [{ path: 'pages/index/index' }]
 }
 

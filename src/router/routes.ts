@@ -29,7 +29,9 @@ export type RouteQueryValue = string | number | boolean | null | undefined
 
 export function withQuery(path: AppRoutePath, query: Record<string, RouteQueryValue>) {
   const cleaned = Object.fromEntries(
-    Object.entries(query).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+    Object.entries(query).filter(
+      ([, value]) => value !== undefined && value !== null && value !== '',
+    ),
   )
   return ufoWithQuery(path, cleaned)
 }

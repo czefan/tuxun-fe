@@ -41,8 +41,7 @@ async function validateStoredSession() {
   try {
     const info = await getUserInfo({ silentAuth: true })
     userStore.setUserInfo(info)
-  }
-  catch (error) {
+  } catch (error) {
     if (isUnauthorizedSessionError(error)) {
       userStore.logout()
     }
@@ -51,8 +50,9 @@ async function validateStoredSession() {
 
 function isUnauthorizedSessionError(error: unknown) {
   return (
-    !!error
-    && typeof error === 'object'
-    && ((error as { statusCode?: number }).statusCode === 401 || (error as { code?: number }).code === 401)
+    !!error &&
+    typeof error === 'object' &&
+    ((error as { statusCode?: number }).statusCode === 401 ||
+      (error as { code?: number }).code === 401)
   )
 }

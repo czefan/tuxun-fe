@@ -46,7 +46,17 @@ describe('按需图片压缩', () => {
     const sizes: Record<string, number> = { '/tmp/25mb.jpg': 25 * MB }
     stubSizes(sizes)
     // 质量 ≤ 60 能压进 19MB，70 以上压不动
-    const sizeByQuality = { 10: 5 * MB, 20: 7 * MB, 30: 9 * MB, 40: 12 * MB, 50: 15 * MB, 60: 18 * MB, 70: 21 * MB, 80: 23 * MB, 90: 24 * MB }
+    const sizeByQuality = {
+      10: 5 * MB,
+      20: 7 * MB,
+      30: 9 * MB,
+      40: 12 * MB,
+      50: 15 * MB,
+      60: 18 * MB,
+      70: 21 * MB,
+      80: 23 * MB,
+      90: 24 * MB,
+    }
     ;(uni as any).compressImage = stubCompress(sizeByQuality, sizes)
 
     const result = await smartCompressImage('/tmp/25mb.jpg')
@@ -57,7 +67,17 @@ describe('按需图片压缩', () => {
     const sizes: Record<string, number> = { '/tmp/huge.jpg': 400 * MB }
     stubSizes(sizes)
     // 每一档都仍然超过 19MB
-    const sizeByQuality = { 10: 22 * MB, 20: 25 * MB, 30: 30 * MB, 40: 40 * MB, 50: 55 * MB, 60: 70 * MB, 70: 90 * MB, 80: 120 * MB, 90: 200 * MB }
+    const sizeByQuality = {
+      10: 22 * MB,
+      20: 25 * MB,
+      30: 30 * MB,
+      40: 40 * MB,
+      50: 55 * MB,
+      60: 70 * MB,
+      70: 90 * MB,
+      80: 120 * MB,
+      90: 200 * MB,
+    }
     ;(uni as any).compressImage = stubCompress(sizeByQuality, sizes)
 
     const result = await smartCompressImage('/tmp/huge.jpg')
@@ -87,8 +107,7 @@ describe('按需图片压缩', () => {
 
       await expect(pending).resolves.toBe('/tmp/h5.jpg')
       expect(uni.hideLoading, 'loading 遮罩没有关掉').toHaveBeenCalled()
-    }
-    finally {
+    } finally {
       vi.useRealTimers()
     }
   })

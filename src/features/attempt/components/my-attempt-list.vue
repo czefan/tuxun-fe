@@ -109,10 +109,7 @@ function handleOpenLocation(location?: Location | null) {
       >
         加载更多
       </wd-button>
-      <wd-loadmore
-        v-else-if="isFetchingNextPage"
-        state="loading"
-      />
+      <wd-loadmore v-else-if="isFetchingNextPage" state="loading" />
     </view>
 
     <view v-else class="h-full flex flex-col items-center justify-center">

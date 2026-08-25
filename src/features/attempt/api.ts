@@ -1,5 +1,12 @@
 import { request, upload } from '@/service/request'
-import type { LikeResult, Location, Media, PageParams, PageResult, SubmitAttemptResult } from '@/service/contract/types'
+import type {
+  LikeResult,
+  Location,
+  Media,
+  PageParams,
+  PageResult,
+  SubmitAttemptResult,
+} from '@/service/contract/types'
 import { clampPageParams, toImageVM } from '@/service/contract/types'
 import { useAuthStore } from '@/store/auth'
 import { formatDate } from '@/utils/date'
@@ -31,16 +38,21 @@ export async function submitAttempt(payload: SubmitAttemptPayload): Promise<Subm
 }
 
 /** 获取题目的成功作答列表 GET /photos/{id}/solves（权限：L1） */
-export async function getSolves(photoId: number, params?: PageParams): Promise<PageResult<SolveItemVM>> {
+export async function getSolves(
+  photoId: number,
+  params?: PageParams,
+): Promise<PageResult<SolveItemVM>> {
   const { page, page_size } = clampPageParams(params)
-  const raw = await request<PageResult<{
-    id: number
-    author: { id: number, nickname: string, avatar: string }
-    image: Media
-    likes_count: number
-    liked: boolean
-    created_at: string
-  }>>({
+  const raw = await request<
+    PageResult<{
+      id: number
+      author: { id: number; nickname: string; avatar: string }
+      image: Media
+      likes_count: number
+      liked: boolean
+      created_at: string
+    }>
+  >({
     url: `/photos/${photoId}/solves`,
     method: 'GET',
     query: {
@@ -73,16 +85,21 @@ export async function getSolves(photoId: number, params?: PageParams): Promise<P
 }
 
 /** 获取当前用户对特定题目的作答记录列表 GET /photos/{id}/attempts/user（权限：L1） */
-export async function getMyAttempts(photoId: number, params?: PageParams): Promise<PageResult<UserAttemptVM>> {
+export async function getMyAttempts(
+  photoId: number,
+  params?: PageParams,
+): Promise<PageResult<UserAttemptVM>> {
   const { page, page_size } = clampPageParams(params)
-  const raw = await request<PageResult<{
-    id: number
-    image: Media
-    location?: Location | null
-    created_at: string
-    status: 'pending' | 'solved' | 'unsolved'
-    reject_reason?: string | null
-  }>>({
+  const raw = await request<
+    PageResult<{
+      id: number
+      image: Media
+      location?: Location | null
+      created_at: string
+      status: 'pending' | 'solved' | 'unsolved'
+      reject_reason?: string | null
+    }>
+  >({
     url: `/photos/${photoId}/attempts/user`,
     method: 'GET',
     query: {

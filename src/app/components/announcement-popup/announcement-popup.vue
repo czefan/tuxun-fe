@@ -27,13 +27,11 @@ const hasRelated = computed(() => Boolean(popup.value?.relatedId) && isLoggedIn(
 watch(
   popup,
   (val) => {
-    if (!val || shownInThisSession)
-      return
+    if (!val || shownInThisSession) return
 
     // content 为空或只有空白文本，不弹出
     const text = val.content?.replace(/<[^>]*>/g, '').trim()
-    if (!text)
-      return
+    if (!text) return
 
     const lastSeen = uni.getStorageSync(StorageKey.AnnouncementLastSeenVersion)
     if (String(val.version) !== String(lastSeen)) {
@@ -73,7 +71,9 @@ function handleViewNotice() {
     custom-style="background: transparent; width: 85vw; max-width: 600rpx; margin: 0 auto;"
     @close="handleClose"
   >
-    <view class="relative mx-auto w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-white shadow-2xl">
+    <view
+      class="relative mx-auto w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-white shadow-2xl"
+    >
       <!-- 右上角关闭按钮 -->
       <view
         class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/10 text-tx-ink-2 backdrop-blur-md transition-transform active:scale-90"

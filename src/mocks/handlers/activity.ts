@@ -19,8 +19,7 @@ export const activityHandlers = [
       const end = new Date(a.end_time).getTime()
 
       // 客户端只展示进行中(active)和已结束(ended)，不包含未开始
-      if (now < start)
-        return false
+      if (now < start) return false
 
       const isEnded = now > end
       const isActive = !isEnded
@@ -36,7 +35,11 @@ export const activityHandlers = [
 
     if (keyword && keyword.trim()) {
       const k = keyword.trim().toLowerCase()
-      filtered = filtered.filter(a => a.title.toLowerCase().includes(k) || (a.description && a.description.toLowerCase().includes(k)))
+      filtered = filtered.filter(
+        (a) =>
+          a.title.toLowerCase().includes(k) ||
+          (a.description && a.description.toLowerCase().includes(k)),
+      )
     }
 
     const startIdx = (page - 1) * pageSize
@@ -44,7 +47,7 @@ export const activityHandlers = [
 
     return ok({
       total: filtered.length,
-      list: paginated.map(a => ({
+      list: paginated.map((a) => ({
         ...a,
         cover_image: toThumbMedia(a.cover_image),
       })),

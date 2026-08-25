@@ -16,8 +16,7 @@ onMounted(() => store.syncCurrentPagePathAsync())
 onShow(() => store.syncCurrentPagePathAsync())
 
 function isItemActive(item: CustomTabBarItem): boolean {
-  if (!item.pagePath)
-    return false
+  if (!item.pagePath) return false
   const path = item.pagePath.startsWith('/') ? item.pagePath : `/${item.pagePath}`
   return store.currentPagePath.value === path
 }
@@ -31,13 +30,14 @@ function switchTab(item: CustomTabBarItem) {
     const url = `/${item.pagePath.replace(/^\/+/, '')}`
     uni.switchTab({
       url,
-      fail: () => uni.reLaunch({
-        url,
-        fail: (err) => {
-          uni.showToast({ title: '页面切换失败', icon: 'none' })
-          console.error('[nav]', err)
-        },
-      }),
+      fail: () =>
+        uni.reLaunch({
+          url,
+          fail: (err) => {
+            uni.showToast({ title: '页面切换失败', icon: 'none' })
+            console.error('[nav]', err)
+          },
+        }),
     })
   }
 }
@@ -55,7 +55,9 @@ function publish() {
     <template v-for="(item, i) in list" :key="item.pagePath || item.type || i">
       <!-- 中间 投稿加号按键 (由数据项 item.type === 'publish' 驱动) -->
       <view v-if="item.type === 'publish'" class="tab-item tab-center" @tap.stop="publish">
-        <view class="h-9 w-12 flex items-center justify-center rounded-2xl bg-tx-accent shadow-sm transition-transform -translate-y-1 active:scale-90">
+        <view
+          class="h-9 w-12 flex items-center justify-center rounded-2xl bg-tx-accent shadow-sm transition-transform -translate-y-1 active:scale-90"
+        >
           <text class="i-carbon-add text-22px text-tx-ink font-black" />
         </view>
       </view>
@@ -70,17 +72,22 @@ function publish() {
           <wd-icon
             v-if="item.iconType === 'wd'"
             class="tab-icon-wd"
-            :name="isItemActive(item) ? (item.iconActive || item.icon) : item.icon"
+            :name="isItemActive(item) ? item.iconActive || item.icon : item.icon"
             :color="isItemActive(item) ? TX_BG_ACCENT : TX_TAB_INACTIVE"
             size="52rpx"
           />
           <text
             v-else
             class="tab-icon"
-            :class="[isItemActive(item) ? (item.iconActive || item.icon) : item.icon]"
+            :class="[isItemActive(item) ? item.iconActive || item.icon : item.icon]"
             :style="{ color: isItemActive(item) ? TX_BG_ACCENT : TX_TAB_INACTIVE }"
           />
-          <text class="tab-text" :style="{ color: isItemActive(item) ? TX_BG_ACCENT : TX_TAB_INACTIVE }">{{ item.text }}</text>
+          <text
+            class="tab-text"
+            :style="{ color: isItemActive(item) ? TX_BG_ACCENT : TX_TAB_INACTIVE }"
+          >
+            {{ item.text }}
+          </text>
         </view>
       </view>
     </template>

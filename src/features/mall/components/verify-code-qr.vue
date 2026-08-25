@@ -13,8 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const pureQrUrl = computed(() => {
-  if (!props.verifyCode)
-    return ''
+  if (!props.verifyCode) return ''
   const qr = qrcode(0, 'H')
   qr.addData(props.verifyCode)
   qr.make()
@@ -24,12 +23,10 @@ const pureQrUrl = computed(() => {
 const compositeUrl = ref('')
 
 watchEffect(() => {
-  if (!props.verifyCode)
-    return
+  if (!props.verifyCode) return
 
   // 合成图依赖 canvas 2D API，只有 H5 有 document
-  if (typeof document === 'undefined')
-    return
+  if (typeof document === 'undefined') return
 
   const qr = qrcode(0, 'H')
   qr.addData(props.verifyCode)
@@ -40,8 +37,7 @@ watchEffect(() => {
   cvs.width = 480
   cvs.height = 560
   const ctx = cvs.getContext('2d')
-  if (!ctx)
-    return
+  if (!ctx) return
 
   // 绘制背景与标题
   ctx.fillStyle = '#FFF'
@@ -63,7 +59,12 @@ watchEffect(() => {
   for (let r = 0; r < count; r++) {
     for (let c = 0; c < count; c++) {
       if (qr.isDark(r, c)) {
-        ctx.fillRect(Math.floor(startX + c * cell), Math.floor(startY + r * cell), Math.ceil(cell), Math.ceil(cell))
+        ctx.fillRect(
+          Math.floor(startX + c * cell),
+          Math.floor(startY + r * cell),
+          Math.ceil(cell),
+          Math.ceil(cell),
+        )
       }
     }
   }
@@ -90,9 +91,14 @@ function copyCode() {
 </script>
 
 <template>
-  <view class="relative mx-auto box-border w-full flex flex-col items-center gap-2.5 overflow-hidden border border-tx-border rounded-2xl bg-white p-5 shadow-2xl">
+  <view
+    class="relative mx-auto box-border w-full flex flex-col items-center gap-2.5 overflow-hidden border border-tx-border rounded-2xl bg-white p-5 shadow-2xl"
+  >
     <!-- 关闭按钮 -->
-    <view class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-stone-100 text-stone-500 active:scale-90" @tap="emit('close')">
+    <view
+      class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-stone-100 text-stone-500 active:scale-90"
+      @tap="emit('close')"
+    >
       <wd-icon name="close" size="14px" />
     </view>
 
@@ -102,17 +108,38 @@ function copyCode() {
 
     <!-- 二维码展现区 (展示纯黑白，长按保存合成全套图) -->
     <view class="my-1 flex flex-col items-center">
-      <view class="relative overflow-hidden border-4 border-white rounded-xl bg-white p-1 shadow-sm">
-        <image v-if="pureQrUrl" :src="pureQrUrl" mode="aspectFit" class="pointer-events-none block h-44 w-44" />
-        <image v-if="compositeUrl" :src="compositeUrl" show-menu-by-longpress mode="aspectFill" class="absolute inset-0 h-full w-full opacity-0" />
+      <view
+        class="relative overflow-hidden border-4 border-white rounded-xl bg-white p-1 shadow-sm"
+      >
+        <image
+          v-if="pureQrUrl"
+          :src="pureQrUrl"
+          mode="aspectFit"
+          class="pointer-events-none block h-44 w-44"
+        />
+        <image
+          v-if="compositeUrl"
+          :src="compositeUrl"
+          show-menu-by-longpress
+          mode="aspectFill"
+          class="absolute inset-0 h-full w-full opacity-0"
+        />
       </view>
     </view>
 
     <!-- 核销防伪码 -->
-    <view class="relative box-border w-full cursor-pointer rounded-xl bg-stone-100 px-8 py-2.5 text-center active:opacity-85" @tap="copyCode">
+    <view
+      class="relative box-border w-full cursor-pointer rounded-xl bg-stone-100 px-8 py-2.5 text-center active:opacity-85"
+      @tap="copyCode"
+    >
       <text class="block text-xs text-stone-400 font-medium">核销防伪码</text>
-      <text class="mt-0.5 block text-base text-stone-900 font-bold tracking-widest font-mono">{{ verifyCode }}</text>
-      <view class="absolute right-3 top-1/2 h-8 w-8 flex items-center justify-center rounded-lg bg-tx-brown/10 text-tx-brown -translate-y-1/2 active:scale-90" @tap.stop="copyCode">
+      <text class="mt-0.5 block text-base text-stone-900 font-bold tracking-widest font-mono">
+        {{ verifyCode }}
+      </text>
+      <view
+        class="absolute right-3 top-1/2 h-8 w-8 flex items-center justify-center rounded-lg bg-tx-brown/10 text-tx-brown -translate-y-1/2 active:scale-90"
+        @tap.stop="copyCode"
+      >
         <text class="i-carbon:copy text-base" />
       </view>
     </view>

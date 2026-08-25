@@ -13,7 +13,9 @@ export interface ScoreLogsResult extends PageResult<ScoreLogVM> {
 /** 积分变动明细 GET /score/logs（权限：L1） */
 export async function getScoreLogs(params?: PageParams): Promise<ScoreLogsResult> {
   const { page, page_size } = clampPageParams(params)
-  const raw = await request<PageResult<ScoreLog> & { total_income?: number, total_expense?: number }>({
+  const raw = await request<
+    PageResult<ScoreLog> & { total_income?: number; total_expense?: number }
+  >({
     url: '/score/logs',
     method: 'GET',
     query: {
@@ -23,7 +25,7 @@ export async function getScoreLogs(params?: PageParams): Promise<ScoreLogsResult
   })
 
   const rawList = Array.isArray(raw?.list) ? raw.list : []
-  const list = rawList.map(item => ({
+  const list = rawList.map((item) => ({
     id: item.id,
     delta: item.delta,
     balance: item.balance,

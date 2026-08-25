@@ -12,9 +12,7 @@ export function useStickyTop(offsetPx = 0) {
       : { top: 'var(--window-top, 0px)' }
     // #endif
     // #ifndef H5
-    return offsetPx > 0
-      ? { top: `${offsetPx}px` }
-      : { top: '0px' }
+    return offsetPx > 0 ? { top: `${offsetPx}px` } : { top: '0px' }
     // #endif
   })
 }

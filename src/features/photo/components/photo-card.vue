@@ -75,7 +75,12 @@ function handleLikeTap(e?: Event) {
           class="pointer-events-none absolute right-2 top-2 z-1 h-6 w-6 flex items-center justify-center"
         >
           <view class="absolute h-4 w-4 rounded-full bg-white" />
-          <wd-icon name="check-circle-fill" size="24px" color="#34D399" custom-class="relative z-1 !leading-none block drop-shadow-2xs" />
+          <wd-icon
+            name="check-circle-fill"
+            size="24px"
+            color="#34D399"
+            custom-class="relative z-1 !leading-none block drop-shadow-2xs"
+          />
         </view>
       </view>
 
@@ -100,7 +105,12 @@ function handleLikeTap(e?: Event) {
               <text class="truncate text-xs text-tx-ink-2 font-medium">
                 {{ item.author.nickname }}
               </text>
-              <text v-if="isMe(item.author.id)" class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none">我</text>
+              <text
+                v-if="isMe(item.author.id)"
+                class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
+              >
+                我
+              </text>
             </view>
           </view>
           <like-button :liked="item.liked" :count="item.likesCount" @click="handleLikeTap" />

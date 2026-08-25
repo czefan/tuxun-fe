@@ -6,8 +6,12 @@ import { ApiRequestError, request, upload, uploadFile } from './index'
 const uniEnvState = vi.hoisted(() => ({ isH5: false, isMpWeixin: false }))
 
 vi.mock('@uni-helper/uni-env', () => ({
-  get isH5() { return uniEnvState.isH5 },
-  get isMpWeixin() { return uniEnvState.isMpWeixin },
+  get isH5() {
+    return uniEnvState.isH5
+  },
+  get isMpWeixin() {
+    return uniEnvState.isMpWeixin
+  },
 }))
 
 // Mock 模式的用例会 stub VITE_ENABLE_MOCK=true，此时 http.ts 会动态 import('@/mocks')
@@ -45,28 +49,36 @@ describe('request URL resolution', () => {
   it('keeps absolute HTTP URLs unchanged', async () => {
     mockRequestSuccess()
     await request({ url: 'http://external.com/api/test' })
-    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: 'http://external.com/api/test',
-    }))
+    expect(uni.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://external.com/api/test',
+      }),
+    )
   })
 
   it('appends /api prefix to relative path if not present', async () => {
     mockRequestSuccess()
     await request({ url: '/photos' })
-    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringMatching(/\/api\/photos$/),
-    }))
+    expect(uni.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringMatching(/\/api\/photos$/),
+      }),
+    )
   })
 
   it('does not duplicate /api prefix when already present', async () => {
     mockRequestSuccess()
     await request({ url: '/api/photos' })
-    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringMatching(/\/api\/photos$/),
-    }))
-    expect(uni.request).not.toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringMatching(/\/api\/api\/photos$/),
-    }))
+    expect(uni.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringMatching(/\/api\/photos$/),
+      }),
+    )
+    expect(uni.request).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringMatching(/\/api\/api\/photos$/),
+      }),
+    )
   })
 
   it('h5 平台开启代理时走 /fg-api 前缀', async () => {
@@ -76,9 +88,11 @@ describe('request URL resolution', () => {
     vi.stubEnv('VITE_APP_PROXY_PREFIX', '/fg-api')
     mockRequestSuccess()
     await request({ url: '/photos' })
-    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: '/fg-api/api/photos',
-    }))
+    expect(uni.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/fg-api/api/photos',
+      }),
+    )
   })
 
   it('h5 平台关闭代理时走 baseUrl 直连', async () => {
@@ -88,9 +102,11 @@ describe('request URL resolution', () => {
     vi.stubEnv('VITE_SERVER_BASEURL', 'http://backend.test')
     mockRequestSuccess()
     await request({ url: '/photos' })
-    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: 'http://backend.test/api/photos',
-    }))
+    expect(uni.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://backend.test/api/photos',
+      }),
+    )
   })
 
   it('非 H5（小程序）即使代理开启也绝不能加 /fg-api 前缀（相对路径在 uni.request 下非法）', async () => {
@@ -101,12 +117,16 @@ describe('request URL resolution', () => {
     vi.stubEnv('VITE_SERVER_BASEURL', 'https://mp-backend.test')
     mockRequestSuccess()
     await request({ url: '/photos' })
-    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: 'https://mp-backend.test/api/photos',
-    }))
-    expect(uni.request).not.toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringContaining('/fg-api'),
-    }))
+    expect(uni.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://mp-backend.test/api/photos',
+      }),
+    )
+    expect(uni.request).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining('/fg-api'),
+      }),
+    )
   })
 
   it('mock 模式即使代理开启也不加前缀', async () => {
@@ -116,12 +136,16 @@ describe('request URL resolution', () => {
     vi.stubEnv('VITE_APP_PROXY_PREFIX', '/fg-api')
     mockRequestSuccess()
     await request({ url: '/photos' })
-    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringMatching(/\/api\/photos$/),
-    }))
-    expect(uni.request).not.toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringContaining('/fg-api'),
-    }))
+    expect(uni.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringMatching(/\/api\/photos$/),
+      }),
+    )
+    expect(uni.request).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining('/fg-api'),
+      }),
+    )
   })
 })
 
@@ -149,9 +173,11 @@ describe('upload URL resolution and execution', () => {
       filePath: '/tmp/avatar.png',
     })
 
-    expect(uni.uploadFile).toHaveBeenCalledWith(expect.objectContaining({
-      url: '/fg-api/api/upload/avatar',
-    }))
+    expect(uni.uploadFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/fg-api/api/upload/avatar',
+      }),
+    )
   })
 
   it('unwraps successful response envelope data', async () => {
@@ -160,10 +186,12 @@ describe('upload URL resolution and execution', () => {
       data: JSON.stringify({ code: 0, data: { url: '/avatar.png' } }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(upload<{ url: string }>({
-      url: '/api/upload/avatar',
-      filePath: '/tmp/avatar.png',
-    })).resolves.toEqual({ url: '/avatar.png' })
+    await expect(
+      upload<{ url: string }>({
+        url: '/api/upload/avatar',
+        filePath: '/tmp/avatar.png',
+      }),
+    ).resolves.toEqual({ url: '/avatar.png' })
   })
 
   it('resolves raw upload response when no business code exists', async () => {
@@ -172,10 +200,12 @@ describe('upload URL resolution and execution', () => {
       data: JSON.stringify({ url: '/raw.png' }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(upload<{ url: string }>({
-      url: '/api/upload/avatar',
-      filePath: '/tmp/avatar.png',
-    })).resolves.toEqual({ url: '/raw.png' })
+    await expect(
+      upload<{ url: string }>({
+        url: '/api/upload/avatar',
+        filePath: '/tmp/avatar.png',
+      }),
+    ).resolves.toEqual({ url: '/raw.png' })
   })
 
   it('rejects business errors and respects hideErrorToast', async () => {
@@ -184,11 +214,13 @@ describe('upload URL resolution and execution', () => {
       data: JSON.stringify({ code: 500, message: '上传失败，请重试' }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(upload({
-      url: '/api/upload/avatar',
-      filePath: '/tmp/avatar.png',
-      hideErrorToast: true,
-    })).rejects.toBeInstanceOf(ApiRequestError)
+    await expect(
+      upload({
+        url: '/api/upload/avatar',
+        filePath: '/tmp/avatar.png',
+        hideErrorToast: true,
+      }),
+    ).rejects.toBeInstanceOf(ApiRequestError)
     expect(uni.showToast).not.toHaveBeenCalled()
   })
 
@@ -198,31 +230,37 @@ describe('upload URL resolution and execution', () => {
       data: JSON.stringify({ success: true, resp: { id: 1 } }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(upload<{ id: number }>({
-      url: '/api/feedback',
-      files: [
-        { name: 'image_file1', uri: '/tmp/1.png' },
-        { name: 'image_file2', uri: '/tmp/2.png' },
-      ],
-      formData: {
-        title: '反馈',
-        content: '内容',
-        type: 1,
-      },
-    })).resolves.toEqual({ id: 1 })
+    await expect(
+      upload<{ id: number }>({
+        url: '/api/feedback',
+        files: [
+          { name: 'image_file1', uri: '/tmp/1.png' },
+          { name: 'image_file2', uri: '/tmp/2.png' },
+        ],
+        formData: {
+          title: '反馈',
+          content: '内容',
+          type: 1,
+        },
+      }),
+    ).resolves.toEqual({ id: 1 })
 
-    expect(uni.uploadFile).toHaveBeenCalledWith(expect.objectContaining({
-      files: [
-        { name: 'image_file1', uri: '/tmp/1.png' },
-        { name: 'image_file2', uri: '/tmp/2.png' },
-      ],
-    }))
+    expect(uni.uploadFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        files: [
+          { name: 'image_file1', uri: '/tmp/1.png' },
+          { name: 'image_file2', uri: '/tmp/2.png' },
+        ],
+      }),
+    )
   })
 
   it('rejects when no upload file is provided', async () => {
-    await expect(upload({
-      url: '/api/feedback',
-    })).rejects.toBeInstanceOf(ApiRequestError)
+    await expect(
+      upload({
+        url: '/api/feedback',
+      }),
+    ).rejects.toBeInstanceOf(ApiRequestError)
     expect(uni.uploadFile).not.toHaveBeenCalled()
   })
 
@@ -232,9 +270,11 @@ describe('upload URL resolution and execution', () => {
       data: JSON.stringify({ code: 0, data: { ok: true } }),
     } as UniApp.UploadFileSuccessCallbackResult)
 
-    await expect(uploadFile<{ ok: boolean }>({
-      url: '/api/test',
-      filePath: '/tmp/test.png',
-    })).resolves.toEqual({ ok: true })
+    await expect(
+      uploadFile<{ ok: boolean }>({
+        url: '/api/test',
+        filePath: '/tmp/test.png',
+      }),
+    ).resolves.toEqual({ ok: true })
   })
 })

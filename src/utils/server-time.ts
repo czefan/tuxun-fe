@@ -10,7 +10,9 @@ export function updateServerTimeOffset(headerDate?: string | null) {
     if (import.meta.env.DEV && import.meta.env.MODE !== 'test' && !hasWarnedMissingDate) {
       // #ifdef H5
       hasWarnedMissingDate = true
-      console.warn('[ServerTime] 未从响应头读到 Date，请检查后端 Access-Control-Expose-Headers 是否配置 Date')
+      console.warn(
+        '[ServerTime] 未从响应头读到 Date，请检查后端 Access-Control-Expose-Headers 是否配置 Date',
+      )
       // #endif
     }
     return

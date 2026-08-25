@@ -37,7 +37,10 @@ export function mockMedia(
   kind: 'thumb' | 'origin' | 'both' = 'both',
 ): MockMediaObj {
   const origin_url = kind === 'thumb' ? undefined : mockImageString(seed, width, height)
-  const thumb_url = kind === 'origin' ? undefined : mockImageString(seed, Math.round(width / 2), Math.round(height / 2))
+  const thumb_url =
+    kind === 'origin'
+      ? undefined
+      : mockImageString(seed, Math.round(width / 2), Math.round(height / 2))
   const res: MockMediaObj = { width, height }
   if (origin_url) {
     res.origin_url = origin_url

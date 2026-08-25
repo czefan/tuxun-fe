@@ -14,13 +14,15 @@ import { formatDate } from '@/utils/date'
 /** 获取我的投稿记录列表 GET /photos/user（权限：L1） */
 export async function getMyPhotos(params?: UserPhotoQueryParams): Promise<PageResult<UserPhotoVM>> {
   const { page, page_size } = clampPageParams(params)
-  const raw = await request<PageResult<{
-    id: number
-    title: string
-    image: Media
-    created_at: string
-    status: 'pending' | 'approved' | 'rejected'
-  }>>({
+  const raw = await request<
+    PageResult<{
+      id: number
+      title: string
+      image: Media
+      created_at: string
+      status: 'pending' | 'approved' | 'rejected'
+    }>
+  >({
     url: '/photos/user',
     method: 'GET',
     query: {
@@ -68,19 +70,23 @@ export async function getMyPhotoDetail(id: number): Promise<UserPhotoDetailVM> {
 }
 
 /** 获取我的作答记录列表 GET /attempts/user（权限：L1） */
-export async function getMyAttemptRecords(params?: UserAttemptQueryParams): Promise<PageResult<UserAttemptRecordVM>> {
+export async function getMyAttemptRecords(
+  params?: UserAttemptQueryParams,
+): Promise<PageResult<UserAttemptRecordVM>> {
   const { page, page_size } = clampPageParams(params)
-  const raw = await request<PageResult<{
-    id: number
-    user_attempts_count: number
-    status: 'pending' | 'solved' | 'unsolved'
-    created_at: string
-    photo: {
+  const raw = await request<
+    PageResult<{
       id: number
-      title: string
-      image: Media
-    }
-  }>>({
+      user_attempts_count: number
+      status: 'pending' | 'solved' | 'unsolved'
+      created_at: string
+      photo: {
+        id: number
+        title: string
+        image: Media
+      }
+    }>
+  >({
     url: '/attempts/user',
     method: 'GET',
     query: {

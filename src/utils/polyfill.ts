@@ -10,12 +10,18 @@ if (typeof AbortController === 'undefined') {
   class MiniAbortSignal {
     aborted = false
     reason: unknown = undefined
-    onabort: ((this: MiniAbortSignal, ev: { type: string, target: MiniAbortSignal }) => void) | null = null
-    private listeners: Array<{ fn: (evt: { type: string, target: MiniAbortSignal }) => void, once: boolean }> = []
+    onabort:
+      | ((this: MiniAbortSignal, ev: { type: string; target: MiniAbortSignal }) => void)
+      | null = null
+
+    private listeners: Array<{
+      fn: (evt: { type: string; target: MiniAbortSignal }) => void
+      once: boolean
+    }> = []
 
     addEventListener(
       event: string,
-      fn: (evt: { type: string, target: MiniAbortSignal }) => void,
+      fn: (evt: { type: string; target: MiniAbortSignal }) => void,
       options?: { once?: boolean },
     ) {
       if (event !== 'abort' || typeof fn !== 'function') {
@@ -24,20 +30,23 @@ if (typeof AbortController === 'undefined') {
       this.listeners.push({ fn, once: Boolean(options?.once) })
     }
 
-    removeEventListener(event: string, fn: (evt: { type: string, target: MiniAbortSignal }) => void) {
+    removeEventListener(
+      event: string,
+      fn: (evt: { type: string; target: MiniAbortSignal }) => void,
+    ) {
       if (event !== 'abort') {
         return
       }
-      this.listeners = this.listeners.filter(item => item.fn !== fn)
+      this.listeners = this.listeners.filter((item) => item.fn !== fn)
     }
 
-    dispatchEvent(evt?: { type: string, target: MiniAbortSignal }) {
+    dispatchEvent(evt?: { type: string; target: MiniAbortSignal }) {
       const event = evt || { type: 'abort', target: this }
       if (typeof this.onabort === 'function') {
         this.onabort(event)
       }
       const toExecute = [...this.listeners]
-      this.listeners = this.listeners.filter(item => !item.once)
+      this.listeners = this.listeners.filter((item) => !item.once)
       toExecute.forEach((item) => {
         item.fn(event)
       })
@@ -82,8 +91,8 @@ if (typeof AbortController === 'undefined') {
     }
   }
 
-  const globalScope: Record<string, unknown>
-    = typeof globalThis !== 'undefined'
+  const globalScope: Record<string, unknown> =
+    typeof globalThis !== 'undefined'
       ? (globalThis as unknown as Record<string, unknown>)
       : typeof window !== 'undefined'
         ? (window as unknown as Record<string, unknown>)

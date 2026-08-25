@@ -18,8 +18,8 @@ describe('groupItemsByTime 时间分组', () => {
 
     const groups = groupItemsByTime(items)
     expect(groups.length).toBeGreaterThanOrEqual(1)
-    expect(groups.some(g => g.title === '本周' && g.list.some(i => i.id === 1))).toBe(true)
-    expect(groups.some(g => g.title === '更早' && g.list.some(i => i.id === 2))).toBe(true)
+    expect(groups.some((g) => g.title === '本周' && g.list.some((i) => i.id === 1))).toBe(true)
+    expect(groups.some((g) => g.title === '更早' && g.list.some((i) => i.id === 2))).toBe(true)
   })
 
   it('相对时间文本（刚刚/今天/昨天）归入本周', () => {
@@ -36,9 +36,7 @@ describe('groupItemsByTime 时间分组', () => {
   })
 
   it('缺少年份的 "MM-DD HH:mm" 格式不会被误解析为 2001 年导致错判', () => {
-    const items = [
-      { id: 1, title: '相对时间', createdAt: '08-21 10:52' },
-    ]
+    const items = [{ id: 1, title: '相对时间', createdAt: '08-21 10:52' }]
 
     const groups = groupItemsByTime(items)
     // 无法精准推定年份时兜底归入「更早」，但不会产生 NaN 崩溃

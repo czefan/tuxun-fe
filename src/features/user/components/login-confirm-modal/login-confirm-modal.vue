@@ -11,7 +11,9 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>({ default: false })
 
-const isMock = ref(import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.VITE_ENABLE_MOCK === 'Y')
+const isMock = ref(
+  import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.VITE_ENABLE_MOCK === 'Y',
+)
 const isAudit = ref(import.meta.env.VITE_SHOW_AUDIT_LOGIN === 'true')
 const showTestLogin = ref(import.meta.env.DEV || isMock.value || isAudit.value)
 
@@ -26,8 +28,7 @@ onMounted(async () => {
       const { getCurrentMockScenario } = await import('@/mocks')
       const sc = await getCurrentMockScenario()
       currentScenario.value = sc === 'empty' ? 'empty' : 'data'
-    }
-    catch {
+    } catch {
       // 场景状态读取异常时默认使用 data 档
     }
   }
@@ -42,7 +43,7 @@ async function handleSwitchScenario(val: 'data' | 'empty') {
 
 async function handleTestLogin() {
   const netid = isMock.value
-    ? (String(testNetid.value || '').trim() || '20260001')
+    ? String(testNetid.value || '').trim() || '20260001'
     : String(testNetid.value || '').trim()
   if (!isMock.value && !netid) {
     uni.showToast({ title: '请输入要登录用户的 NetID', icon: 'none' })
@@ -61,12 +62,10 @@ async function handleTestLogin() {
     uni.showToast({ title: '测试登录成功', icon: 'success' })
     visible.value = false
     emit('success')
-  }
-  catch (err) {
+  } catch (err) {
     console.error('Test login failed:', err)
     uni.showToast({ title: '登录失败', icon: 'none' })
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -90,19 +89,30 @@ function handleClose() {
     custom-style="background: transparent; width: 84vw; max-width: 600rpx;"
     @close="handleClose"
   >
-    <view class="box-border w-full border border-tx-border rounded-[24px] bg-tx-main p-6 shadow-2xl space-y-4" @touchmove.stop.prevent>
+    <view
+      class="box-border w-full border border-tx-border rounded-[24px] bg-tx-main p-6 shadow-2xl space-y-4"
+      @touchmove.stop.prevent
+    >
       <view class="flex items-center justify-between border-b border-tx-border/40 pb-3">
-        <text class="u-title-lg">{{ showTestLogin ? '开发调试与登录确认' : '统一身份认证登录' }}</text>
-        <wd-icon name="close" size="20px" custom-class="cursor-pointer text-tx-ink-2" @click="handleClose" />
+        <text class="u-title-lg">
+          {{ showTestLogin ? '开发调试与登录确认' : '统一身份认证登录' }}
+        </text>
+        <wd-icon
+          name="close"
+          size="20px"
+          custom-class="cursor-pointer text-tx-ink-2"
+          @click="handleClose"
+        />
       </view>
 
-      <view v-if="isMock || !showTestLogin" class="text-sm text-tx-ink-2 font-medium leading-relaxed">
+      <view
+        v-if="isMock || !showTestLogin"
+        class="text-sm text-tx-ink-2 font-medium leading-relaxed"
+      >
         <template v-if="isMock">
           当前处于 Mock 测试模式，您可进行快捷一键登录或选择 Mock 切档。
         </template>
-        <template v-else>
-          您即将前往学校统一身份认证系统进行身份绑定与登录，是否继续？
-        </template>
+        <template v-else> 您即将前往学校统一身份认证系统进行身份绑定与登录，是否继续？ </template>
       </view>
 
       <!-- Mock 模式专属切档选项卡组 -->
@@ -111,14 +121,22 @@ function handleClose() {
         <view class="flex items-center justify-center gap-2">
           <view
             class="flex-1 cursor-pointer border rounded-lg py-1.5 text-center text-xs transition-all active:scale-95"
-            :class="currentScenario === 'data' ? 'bg-tx-brown text-white font-bold border-tx-brown shadow-xs' : 'bg-white/60 text-tx-ink-2 border-tx-border'"
+            :class="
+              currentScenario === 'data'
+                ? 'bg-tx-brown text-white font-bold border-tx-brown shadow-xs'
+                : 'bg-white/60 text-tx-ink-2 border-tx-border'
+            "
             @click="handleSwitchScenario('data')"
           >
             有数据 (35+条)
           </view>
           <view
             class="flex-1 cursor-pointer border rounded-lg py-1.5 text-center text-xs transition-all active:scale-95"
-            :class="currentScenario === 'empty' ? 'bg-tx-brown text-white font-bold border-tx-brown shadow-xs' : 'bg-white/60 text-tx-ink-2 border-tx-border'"
+            :class="
+              currentScenario === 'empty'
+                ? 'bg-tx-brown text-white font-bold border-tx-brown shadow-xs'
+                : 'bg-white/60 text-tx-ink-2 border-tx-border'
+            "
             @click="handleSwitchScenario('empty')"
           >
             无数据 (0条)

@@ -6,12 +6,7 @@ import { FileSystemIconLoader } from '@iconify/utils/lib/loader/node-loaders'
 import { presetUni } from '@uni-helper/unocss-preset-uni'
 // @see https://unocss.dev/presets/legacy-compat
 import { presetLegacyCompat } from '@unocss/preset-legacy-compat'
-import {
-  defineConfig,
-  presetIcons,
-  transformerDirectives,
-  transformerVariantGroup,
-} from 'unocss'
+import { defineConfig, presetIcons, transformerDirectives, transformerVariantGroup } from 'unocss'
 
 import { rules, shortcuts, theme, transitions } from './src/styles/uno'
 
@@ -32,11 +27,11 @@ export default defineConfig({
       scale: 1.2,
       warn: true,
       extraProperties: {
-        'display': 'inline-block',
+        display: 'inline-block',
         'vertical-align': 'middle',
       },
       collections: {
-        'carbon': () => carbonIcons,
+        carbon: () => carbonIcons,
         // 注册本地 SVG 图标集合, 从本地文件系统加载图标
         // 在 './src/static/my-icons' 目录下的所有 svg 文件将被注册为图标，
         // my-icons 是图标集合名称，使用 `i-my-icons-图标名` 调用
@@ -78,10 +73,7 @@ export default defineConfig({
     // 启用 () 分组功能
     transformerVariantGroup(),
   ],
-  shortcuts: [
-    ...shortcuts,
-    ...transitions,
-  ],
+  shortcuts: [...shortcuts, ...transitions],
   // 动态图标需要在这里配置，或者写在vue页面中注释掉
   safelist: [
     'i-carbon-home',

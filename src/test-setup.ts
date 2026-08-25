@@ -45,7 +45,8 @@ async function uniRequestPolyfill(options: any) {
     }
 
     if (options.data && options.method && options.method !== 'GET') {
-      fetchOptions.body = typeof options.data === 'string' ? options.data : JSON.stringify(options.data)
+      fetchOptions.body =
+        typeof options.data === 'string' ? options.data : JSON.stringify(options.data)
     }
 
     const response = await fetch(fullUrl, fetchOptions)
@@ -57,17 +58,12 @@ async function uniRequestPolyfill(options: any) {
       header: Object.fromEntries(response.headers.entries()),
     }
 
-    if (options.success)
-      options.success(res)
-    if (options.complete)
-      options.complete(res)
+    if (options.success) options.success(res)
+    if (options.complete) options.complete(res)
     return res
-  }
-  catch (err) {
-    if (options.fail)
-      options.fail(err)
-    if (options.complete)
-      options.complete(err)
+  } catch (err) {
+    if (options.fail) options.fail(err)
+    if (options.complete) options.complete(err)
     throw err
   }
 }
@@ -106,17 +102,12 @@ async function uniUploadPolyfill(options: any) {
       header: Object.fromEntries(response.headers.entries()),
     }
 
-    if (options.success)
-      options.success(res)
-    if (options.complete)
-      options.complete(res)
+    if (options.success) options.success(res)
+    if (options.complete) options.complete(res)
     return res
-  }
-  catch (err) {
-    if (options.fail)
-      options.fail(err)
-    if (options.complete)
-      options.complete(err)
+  } catch (err) {
+    if (options.fail) options.fail(err)
+    if (options.complete) options.complete(err)
     throw err
   }
 }

@@ -6,7 +6,12 @@ import * as userApi from '@/features/user/api'
 import { useAuth as useUserAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
 import { useAuthStore } from '@/store/auth'
-import { clearReturnPath, getLogoutUrl, takeReturnPath, validateAndClearState } from '@/service/auth/login'
+import {
+  clearReturnPath,
+  getLogoutUrl,
+  takeReturnPath,
+  validateAndClearState,
+} from '@/service/auth/login'
 
 const PROFILE = {
   id: 1,
@@ -188,10 +193,12 @@ describe('getLogoutUrl 登出地址构建与降级', () => {
 
     const redirectUri = 'https://tuxun.tiaozhan.com/'
     const logoutUrl = getLogoutUrl(redirectUri)
-    expect(logoutUrl).toBe(withQuery('https://oauth.tiaozhan.com/oauth2/logout', {
-      client_id: 'test_client',
-      post_logout_redirect_uri: redirectUri,
-    }))
+    expect(logoutUrl).toBe(
+      withQuery('https://oauth.tiaozhan.com/oauth2/logout', {
+        client_id: 'test_client',
+        post_logout_redirect_uri: redirectUri,
+      }),
+    )
 
     vi.unstubAllEnvs()
   })

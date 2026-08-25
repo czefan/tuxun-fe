@@ -8,9 +8,10 @@ export function buildFullUrl(url: string): string {
   if (url.startsWith('http')) {
     return url
   }
-  const apiPath = url.startsWith(`${API_BASE_PATH}/`) || url === API_BASE_PATH
-    ? url
-    : `${API_BASE_PATH}${url.startsWith('/') ? '' : '/'}${url}`
+  const apiPath =
+    url.startsWith(`${API_BASE_PATH}/`) || url === API_BASE_PATH
+      ? url
+      : `${API_BASE_PATH}${url.startsWith('/') ? '' : '/'}${url}`
 
   const isMock = import.meta.env.VITE_ENABLE_MOCK === 'true'
   const isProxyEnabled = !isMock && import.meta.env.VITE_APP_PROXY_ENABLE === 'true'

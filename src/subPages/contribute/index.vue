@@ -39,8 +39,7 @@ const { data: activityData } = useActiveActivities()
 const isRemoteImage = computed(() => /^https?:\/\//i.test(form.filePath))
 
 onLoad((options) => {
-  if (!isLoggedIn())
-    return
+  if (!isLoggedIn()) return
   // 不默认选中第一个活动：onLoad 时活动列表请求通常未返回，仅当查询已被缓存
   // （如投稿后 redirectTo 刷新自己）才会「碰巧」选中第一个——行为随缓存时序漂移。
   // 统一不选：首次进入与刷新后都是空白态「点击选择活动」，由用户显式选择。
@@ -49,27 +48,24 @@ onLoad((options) => {
       const refillData = JSON.parse(decodeURIComponent(options.refill))
       Object.assign(form, refillData)
       return
-    }
-    catch {}
+    } catch {}
   }
   checkDraft()
 })
 
 function isDraftMeaningful(data: any): boolean {
-  if (!data || typeof data !== 'object')
-    return false
+  if (!data || typeof data !== 'object') return false
   return Boolean(
-    data.title?.trim()
-    || data.description?.trim()
-    || data.filePath
-    || isSubmittableLocation(data.latitude, data.longitude),
+    data.title?.trim() ||
+    data.description?.trim() ||
+    data.filePath ||
+    isSubmittableLocation(data.latitude, data.longitude),
   )
 }
 
 function checkDraft() {
   const saved = uni.getStorageSync(DRAFT_KEY)
-  if (!saved)
-    return
+  if (!saved) return
 
   try {
     const parsed = JSON.parse(saved)
@@ -87,14 +83,12 @@ function checkDraft() {
         if (res.confirm) {
           Object.assign(form, parsed)
           uni.showToast({ title: '已恢复草稿', icon: 'success' })
-        }
-        else {
+        } else {
           uni.removeStorageSync(DRAFT_KEY)
         }
       },
     })
-  }
-  catch {
+  } catch {
     uni.removeStorageSync(DRAFT_KEY)
   }
 }
@@ -104,8 +98,7 @@ watch(
   (newVal) => {
     if (isDraftMeaningful(newVal)) {
       uni.setStorageSync(DRAFT_KEY, JSON.stringify(newVal))
-    }
-    else {
+    } else {
       uni.removeStorageSync(DRAFT_KEY)
     }
   },
@@ -146,8 +139,7 @@ function handleFileDrop(e: any) {
         }
         form.filePath = await smartCompressImage(url)
       })
-    }
-    else {
+    } else {
       uni.showToast({ title: '请拖拽图片文件', icon: 'none' })
     }
   }
@@ -155,8 +147,7 @@ function handleFileDrop(e: any) {
 }
 
 async function handleSubmit() {
-  if (!requireLogin())
-    return
+  if (!requireLogin()) return
   if (!form.activityId) {
     uni.showToast({ title: '请选择关联活动', icon: 'none' })
     return
@@ -205,21 +196,29 @@ async function handleSubmit() {
         })
       },
     })
-  }
-  catch {
+  } catch {
     // Handled by request error interceptor
   }
 }
 
-const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void } | null>(null)
+const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void } | null>(null)
 </script>
 
 <template>
   <view class="page-contribute safe-bottom-page box-border min-h-screen bg-tx-main px-4 pt-4">
     <!-- 未登录页面级提示卡片（与意见反馈/通知界面保持 100% 统一样式） -->
-    <view v-if="!isLoggedIn()" class="min-h-[calc(100vh-120rpx)] flex flex-col items-center justify-center pb-12 -mt-12">
+    <view
+      v-if="!isLoggedIn()"
+      class="min-h-[calc(100vh-120rpx)] flex flex-col items-center justify-center pb-12 -mt-12"
+    >
       <wd-empty icon="no-result" tip="登录后提交题目投稿" />
-      <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+      <wd-button
+        size="small"
+        round
+        type="warning"
+        custom-class="!mt-4 !font-bold shadow-md"
+        @click="loginDirectly"
+      >
         去登录
       </wd-button>
     </view>
@@ -243,10 +242,17 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
             <picker
               :range="activityData?.list || []"
               range-key="title"
-              @change="(e: any) => form.activityId = activityData?.list[e.detail.value]?.id || 0"
+              @change="(e: any) => (form.activityId = activityData?.list[e.detail.value]?.id || 0)"
             >
-              <view class="flex items-center justify-between border border-tx-border/60 rounded-xl bg-tx-surface p-3 text-sm text-tx-ink font-bold transition-colors active:bg-[#EFECE6]">
-                <text>{{ activityData?.list?.find(a => a.id === form.activityId)?.title || '点击选择活动' }}</text>
+              <view
+                class="flex items-center justify-between border border-tx-border/60 rounded-xl bg-tx-surface p-3 text-sm text-tx-ink font-bold transition-colors active:bg-[#EFECE6]"
+              >
+                <text>
+                  {{
+                    activityData?.list?.find((a) => a.id === form.activityId)?.title ||
+                    '点击选择活动'
+                  }}
+                </text>
                 <text class="i-carbon:chevron-down text-tx-brown" />
               </view>
             </picker>
@@ -308,18 +314,21 @@ const locationPickerRef = ref<{ locate: () => void, chooseLocation: () => void }
             width="100%"
           />
           <view v-else class="flex flex-col items-center p-3 text-center space-y-1.5">
-            <view class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink">
+            <view
+              class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink"
+            >
               <text class="i-carbon:cloud-upload text-2xl font-black" />
             </view>
-            <text class="block text-sm text-tx-ink font-black">
-              点击选择 或 拖拽上传图片
-            </text>
+            <text class="block text-sm text-tx-ink font-black"> 点击选择 或 拖拽上传图片 </text>
             <text class="block text-xs text-tx-ink-2 font-bold">
               支持 JPG / PNG 原图（建议清晰无遮挡）
             </text>
           </view>
 
-          <view v-if="form.filePath" class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md">
+          <view
+            v-if="form.filePath"
+            class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md"
+          >
             <text class="i-carbon:renew text-xs" />
             <text class="text-xs font-bold">重新选择</text>
           </view>

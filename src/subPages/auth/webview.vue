@@ -32,8 +32,7 @@ onLoad((query) => {
       return
     }
     url = `${origin}/static/mp-logout-relay.html?target=${encodeURIComponent(target)}`
-  }
-  else {
+  } else {
     url = getAuthorizeUrl()
   }
 
@@ -41,7 +40,8 @@ onLoad((query) => {
   if ((!url.startsWith('http://') && !url.startsWith('https://')) || (!isLogout && !callbackUrl)) {
     uni.showModal({
       title: '登录服务未配置',
-      content: '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL、VITE_OAUTH_CLIENT_ID 与 VITE_MP_AUTH_ORIGIN。',
+      content:
+        '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL、VITE_OAUTH_CLIENT_ID 与 VITE_MP_AUTH_ORIGIN。',
       showCancel: false,
     })
     return

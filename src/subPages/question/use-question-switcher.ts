@@ -10,7 +10,9 @@ const ACTIVITY_STATUS = ['active', 'ended'] as const
 const SORT_BY = ['created_at', 'hot'] as const
 
 function pick<T extends readonly string[]>(v: unknown, allow: T): T[number] | undefined {
-  return typeof v === 'string' && (allow as readonly string[]).includes(v) ? v as T[number] : undefined
+  return typeof v === 'string' && (allow as readonly string[]).includes(v)
+    ? (v as T[number])
+    : undefined
 }
 
 /**
@@ -29,13 +31,18 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
   const listContext = ref<PhotoFilterParams | null>(null)
 
   function initSwitcherFromQuery(query?: Record<string, any>) {
-    if (query?.activity_id || query?.activity_status || query?.sort_by || query?.solved !== undefined || query?.keyword) {
+    if (
+      query?.activity_id ||
+      query?.activity_status ||
+      query?.sort_by ||
+      query?.solved !== undefined ||
+      query?.keyword
+    ) {
       let keyword: string | undefined
       if (query.keyword) {
         try {
           keyword = decodeURIComponent(query.keyword)
-        }
-        catch {
+        } catch {
           keyword = query.keyword
         }
       }
@@ -74,15 +81,13 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
 
   /** 统一切题处理（offset: 1 为下一题，-1 为上一题） */
   function switchQuestion(offset: 1 | -1) {
-    if (isSlideUping.value || isSlideDowning.value)
-      return
+    if (isSlideUping.value || isSlideDowning.value) return
     const targetId = getAdjacentPhotoId(offset)
     if (!targetId) {
       uni.showToast({ title: offset === 1 ? '已是最后一题了' : '已是第一题了', icon: 'none' })
       return
     }
-    if (offset === -1)
-      showUndoBanner.value = false
+    if (offset === -1) showUndoBanner.value = false
     const isUp = offset === 1
     isUp ? (isSlideUping.value = true) : (isSlideDowning.value = true)
     setTimeout(() => {
@@ -101,8 +106,7 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
   }
 
   function handleTouchStart(e: TouchEvent) {
-    if (e.touches?.[0])
-      touchStartY.value = e.touches[0].clientY
+    if (e.touches?.[0]) touchStartY.value = e.touches[0].clientY
   }
 
   function handleTouchEnd(e: TouchEvent) {

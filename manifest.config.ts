@@ -7,8 +7,12 @@ import { loadEnv } from 'vite'
 // 手动解析命令行参数获取 mode
 function getMode() {
   const args = process.argv.slice(2)
-  const modeFlagIndex = args.findIndex(arg => arg === '--mode')
-  return modeFlagIndex !== -1 ? args[modeFlagIndex + 1] : args[0] === 'build' ? 'production' : 'development' // 默认 development
+  const modeFlagIndex = args.findIndex((arg) => arg === '--mode')
+  return modeFlagIndex !== -1
+    ? args[modeFlagIndex + 1]
+    : args[0] === 'build'
+      ? 'production'
+      : 'development' // 默认 development
 }
 // 获取环境变量的范例
 const env = loadEnv(getMode(), path.resolve(process.cwd(), 'env'))
@@ -26,18 +30,18 @@ const isProduction = getMode() === 'production'
 // console.log('manifest.config.ts env:', env)
 
 export default defineManifestConfig({
-  'name': VITE_APP_TITLE,
-  'appid': VITE_UNI_APPID,
-  'description': '',
-  'versionName': '1.0.0',
-  'versionCode': '100',
-  'transformPx': false,
-  'locale': '',
-  'fallbackLocale': VITE_FALLBACK_LOCALE || 'zh-Hans',
-  'uniStatistics': {
+  name: VITE_APP_TITLE,
+  appid: VITE_UNI_APPID,
+  description: '',
+  versionName: '1.0.0',
+  versionCode: '100',
+  transformPx: false,
+  locale: '',
+  fallbackLocale: VITE_FALLBACK_LOCALE || 'zh-Hans',
+  uniStatistics: {
     enable: false,
   },
-  'h5': {
+  h5: {
     uniStatistics: {
       enable: false,
     },
@@ -82,5 +86,5 @@ export default defineManifestConfig({
     },
     requiredPrivateInfos: ['getLocation', 'chooseLocation'],
   },
-  'vueVersion': '3',
+  vueVersion: '3',
 })

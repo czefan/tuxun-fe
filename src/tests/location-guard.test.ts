@@ -2,7 +2,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_COORD_TYPE, isSubmittableLocation, locate, normalizeToGcj02 } from '@/composables/use-map'
+import {
+  DEFAULT_COORD_TYPE,
+  isSubmittableLocation,
+  locate,
+  normalizeToGcj02,
+} from '@/composables/use-map'
 
 function read(relative: string) {
   return fs.readFileSync(path.join(process.cwd(), relative), 'utf-8')
@@ -26,7 +31,9 @@ describe('坐标提交守卫', () => {
   })
 
   it('locate() 必须显式要 gcj02（uni.getLocation 默认给的是 wgs84）', async () => {
-    const getLocation = vi.fn((options: any) => options.success?.({ latitude: 30.1, longitude: 120.2 }))
+    const getLocation = vi.fn((options: any) =>
+      options.success?.({ latitude: 30.1, longitude: 120.2 }),
+    )
     vi.stubGlobal('uni', { getLocation })
 
     await expect(locate()).resolves.toEqual({ latitude: 30.1, longitude: 120.2 })
@@ -87,7 +94,11 @@ describe('坐标提交守卫', () => {
   it('提交表单不得依赖 wd-form 的 rules —— 这个版本的 wd-form 没有该 prop', () => {
     // wd-form 只认 schema（{ validate(model) => Issue[] }，配 zod 适配器），
     // 传 :rules 会被当普通属性丢掉，validate() 恒返回 valid: true。
-    for (const file of ['src/subPages/contribute/index.vue', 'src/subPages/question/submit.vue', 'src/subPages/my/feedback.vue']) {
+    for (const file of [
+      'src/subPages/contribute/index.vue',
+      'src/subPages/question/submit.vue',
+      'src/subPages/my/feedback.vue',
+    ]) {
       expect(
         read(file).includes(':rules='),
         `${file} 给 wd-form 传了 :rules，但这个版本没有该 prop，校验会静默失效`,

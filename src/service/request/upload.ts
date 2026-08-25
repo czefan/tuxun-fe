@@ -5,7 +5,7 @@ import { handleResponseError, showToastDeduplicated } from './error-code'
 export interface UploadOptions {
   url: string
   filePath?: string
-  files?: Array<{ name?: string, uri?: string }>
+  files?: Array<{ name?: string; uri?: string }>
   name?: string
   header?: Record<string, string>
   formData?: Record<string, unknown>
@@ -20,7 +20,16 @@ export interface UploadOptions {
  * 避免原生 XHR 旁路绕过 uni.addInterceptor('uploadFile')。
  */
 export function upload<T>(options: UploadOptions): Promise<T> {
-  const { url, filePath, files, name = 'file', header, formData, method = 'POST', hideErrorToast } = options
+  const {
+    url,
+    filePath,
+    files,
+    name = 'file',
+    header,
+    formData,
+    method = 'POST',
+    hideErrorToast,
+  } = options
 
   if (!filePath && (!files || files.length === 0)) {
     return Promise.reject(new ApiRequestError('缺少上传文件路径'))
@@ -44,8 +53,7 @@ export function upload<T>(options: UploadOptions): Promise<T> {
         if (typeof res.data === 'string') {
           try {
             data = JSON.parse(res.data)
-          }
-          catch {
+          } catch {
             // raw string
           }
         }
@@ -58,14 +66,16 @@ export function upload<T>(options: UploadOptions): Promise<T> {
 
             // 契约或旧逻辑成功校验
             if (resObj.success === false || (code !== undefined && code !== 0)) {
-              const { message, code: errCode } = handleResponseError(statusCode, resObj, hideErrorToast)
+              const { message, code: errCode } = handleResponseError(
+                statusCode,
+                resObj,
+                hideErrorToast,
+              )
               return reject(new ApiRequestError(message, { code: errCode, statusCode, data }))
             }
 
-            if (resObj.resp !== undefined)
-              return resolve(resObj.resp as T)
-            if (resObj.data !== undefined)
-              return resolve(resObj.data as T)
+            if (resObj.resp !== undefined) return resolve(resObj.resp as T)
+            if (resObj.data !== undefined) return resolve(resObj.data as T)
             return resolve(data as T)
           }
           return resolve(data as T)
@@ -76,16 +86,14 @@ export function upload<T>(options: UploadOptions): Promise<T> {
       },
       fail: (err) => {
         const message = '文件上传失败，请稍后再试'
-        if (!hideErrorToast)
-          showToastDeduplicated(message)
+        if (!hideErrorToast) showToastDeduplicated(message)
         reject(new ApiRequestError(message, { data: err }))
       },
     }
 
     if (files && files.length > 0) {
       uploadOptions.files = files
-    }
-    else {
+    } else {
       uploadOptions.filePath = filePath
       uploadOptions.name = name
     }

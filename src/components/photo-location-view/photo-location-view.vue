@@ -51,7 +51,9 @@ function openFullScreenMap() {
 </script>
 
 <template>
-  <view class="photo-location-view shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3">
+  <view
+    class="photo-location-view shadow-2xs border border-tx-border rounded-[18px] bg-white p-4 space-y-3"
+  >
     <!-- 头部区：地标标题与右侧融入背景的全屏入口 -->
     <view class="flex items-center justify-between">
       <view class="flex items-center gap-1.5 u-title-base font-bold">
@@ -86,7 +88,9 @@ function openFullScreenMap() {
       </view>
 
       <!-- 答案中心定位针：与选点卡片完全一致的实心填充图标 i-carbon:location-filled -->
-      <view class="pointer-events-none absolute left-1/2 top-1/2 z-10 transform -translate-x-1/2 -translate-y-full">
+      <view
+        class="pointer-events-none absolute left-1/2 top-1/2 z-10 transform -translate-x-1/2 -translate-y-full"
+      >
         <text class="i-carbon:location-filled block text-[24px] text-rose-500 drop-shadow-md" />
       </view>
     </view>

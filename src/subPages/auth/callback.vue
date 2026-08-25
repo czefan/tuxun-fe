@@ -3,7 +3,12 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
-import { getCallbackUrl, redirectToOAuth, takeReturnPath, validateAndClearState } from '@/service/auth/login'
+import {
+  getCallbackUrl,
+  redirectToOAuth,
+  takeReturnPath,
+  validateAndClearState,
+} from '@/service/auth/login'
 import { AppRoute } from '@/router/routes'
 import { TX_BG_BROWN } from '@/styles/constants'
 import { ApiRequestError } from '@/service/request/error'
@@ -37,8 +42,7 @@ function extractParam(query: Record<string, any>, keys: string[]): string {
     const searchParams = new URLSearchParams(window.location.search)
     for (const k of keys) {
       const val = searchParams.get(k)
-      if (val)
-        return val
+      if (val) return val
     }
   }
   return ''
@@ -79,8 +83,7 @@ onLoad(async (query: Record<string, any> = {}) => {
       const target = takeReturnPath() || AppRoute.Home
       if (typeof window !== 'undefined') {
         window.location.replace(target)
-      }
-      else {
+      } else {
         uni.reLaunch({ url: target })
       }
     }, 300)
@@ -93,16 +96,14 @@ onLoad(async (query: Record<string, any> = {}) => {
       })
     }, 500)
     // #endif
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     userStore.logout()
     isError.value = true
     // ApiRequestError.code 是契约业务码，判 HTTP 400 看 statusCode。
     // OAuth code 一次性且 ≤5 分钟有效，过期/重放都是 400。
     if (err instanceof ApiRequestError && err.statusCode === 400) {
       statusText.value = '登录链接已失效，请重新登录'
-    }
-    else {
+    } else {
       statusText.value = '登录失败，请稍后重试'
     }
   }
@@ -110,7 +111,9 @@ onLoad(async (query: Record<string, any> = {}) => {
 </script>
 
 <template>
-  <view class="page-auth-callback min-h-100vh flex flex-col items-center justify-center gap-24rpx bg-white p-32rpx">
+  <view
+    class="page-auth-callback min-h-100vh flex flex-col items-center justify-center gap-24rpx bg-white p-32rpx"
+  >
     <wd-loading v-if="!isError" type="circular" :color="TX_BG_BROWN" size="44rpx" />
     <text class="block text-center text-28rpx text-tx-ink-3 font-800">{{ statusText }}</text>
     <wd-button

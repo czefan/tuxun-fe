@@ -16,11 +16,20 @@ export const qk = {
     detail: (id: number) => ['photo', 'detail', id] as const,
   },
   attempt: {
-    solves: (photoId: number, params?: unknown) => params !== undefined ? (['attempt', 'solves', photoId, params] as const) : (['attempt', 'solves', photoId] as const),
-    userAttempts: (photoId: number, params?: unknown) => params !== undefined ? (['attempt', 'userAttempts', photoId, params] as const) : (['attempt', 'userAttempts', photoId] as const),
+    solves: (photoId: number, params?: unknown) =>
+      params !== undefined
+        ? (['attempt', 'solves', photoId, params] as const)
+        : (['attempt', 'solves', photoId] as const),
+    userAttempts: (photoId: number, params?: unknown) =>
+      params !== undefined
+        ? (['attempt', 'userAttempts', photoId, params] as const)
+        : (['attempt', 'userAttempts', photoId] as const),
   },
   comment: {
-    list: (photoId: number, params?: unknown) => params !== undefined ? (['comment', 'list', photoId, params] as const) : (['comment', 'list', photoId] as const),
+    list: (photoId: number, params?: unknown) =>
+      params !== undefined
+        ? (['comment', 'list', photoId, params] as const)
+        : (['comment', 'list', photoId] as const),
   },
   record: {
     photos: (params?: unknown) => ['record', 'photos', params] as const,

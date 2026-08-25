@@ -93,8 +93,7 @@ const splitColumns = computed(() => {
     if (leftHeight <= rightHeight) {
       left.push(item)
       leftHeight += itemEstimateHeight
-    }
-    else {
+    } else {
       right.push(item)
       rightHeight += itemEstimateHeight
     }
@@ -130,19 +129,32 @@ const splitColumns = computed(() => {
     <!-- 首屏加载骨架屏 -->
     <view v-else-if="loading" class="photo-waterfall__grid">
       <view class="photo-waterfall__col space-y-3">
-        <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '220px' }, { width: '100%', height: '180px' }]" />
+        <wd-skeleton
+          animation="gradient"
+          :row-col="[
+            { width: '100%', height: '220px' },
+            { width: '100%', height: '180px' },
+          ]"
+        />
       </view>
       <view class="photo-waterfall__col space-y-3">
-        <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '180px' }, { width: '100%', height: '220px' }]" />
+        <wd-skeleton
+          animation="gradient"
+          :row-col="[
+            { width: '100%', height: '180px' },
+            { width: '100%', height: '220px' },
+          ]"
+        />
       </view>
     </view>
 
     <!-- 失败态视图 -->
-    <view v-else-if="error" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12">
+    <view
+      v-else-if="error"
+      class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12"
+    >
       <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-      <wd-button size="small" plain round @click="emit('retry')">
-        重新加载
-      </wd-button>
+      <wd-button size="small" plain round @click="emit('retry')"> 重新加载 </wd-button>
     </view>
 
     <!-- 空态视图 -->

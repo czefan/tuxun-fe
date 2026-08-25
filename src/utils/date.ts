@@ -119,10 +119,7 @@ export function formatRelativeTime(
  * - 不传 format 时，默认使用主流人性化时间显示
  * - 传 format 字符串时（如 'YYYY-MM-DD'），显式使用 dayjs 格式输出
  */
-export function formatDate(
-  dateInput?: string | Date | number | null,
-  format?: string,
-): string {
+export function formatDate(dateInput?: string | Date | number | null, format?: string): string {
   if (!dateInput) {
     return ''
   }

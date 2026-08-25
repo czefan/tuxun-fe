@@ -27,8 +27,7 @@ const statusOptions = ['全部', '未破解', '已破解']
 const searchKeyword = ref('')
 
 const sortType = computed(() => {
-  if (sortCurrent.value === '最热')
-    return 'hot'
+  if (sortCurrent.value === '最热') return 'hot'
   return 'created_at'
 })
 const pageStyle = computed(() => ({
@@ -59,23 +58,20 @@ const solvedParam = computed(() => {
   return undefined
 })
 
-const {
-  data,
-  isLoading,
-  isError,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
-  refetch,
-} = useInfinitePhotoList(computed(() => ({
-  activity_status: 'active',
-  keyword: searchKeyword.value || undefined,
-  sort_by: sortType.value,
-  solved: solvedParam.value,
-  page_size: 20,
-})))
+const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+  useInfinitePhotoList(
+    computed(() => ({
+      activity_status: 'active',
+      keyword: searchKeyword.value || undefined,
+      sort_by: sortType.value,
+      solved: solvedParam.value,
+      page_size: 20,
+    })),
+  )
 
-const photoList = computed<PhotoCardVM[]>(() => data.value?.pages.flatMap(page => page.list) ?? [])
+const photoList = computed<PhotoCardVM[]>(
+  () => data.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 useInfiniteListPage({
   hasNextPage,
@@ -121,7 +117,10 @@ function handleStatusSelect(st: string) {
 <template>
   <view class="safe-bottom-page--fixed-bar box-border w-full" :style="pageStyle">
     <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
-    <view class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
+    <view
+      class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5"
+      :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]"
+    >
       <view class="flex items-center gap-2">
         <view class="min-w-0 flex-1">
           <wd-search
@@ -135,10 +134,17 @@ function handleStatusSelect(st: string) {
         </view>
         <view
           class="shadow-2xs h-9 w-9 flex flex-shrink-0 cursor-pointer items-center justify-center border border-tx-border rounded-full transition-transform active:scale-95"
-          :class="filterVisible ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
+          :class="
+            filterVisible
+              ? 'border-tx-brown bg-tx-brown text-white shadow-xs'
+              : 'border-tx-border bg-white text-tx-ink'
+          "
           @click="filterVisible = !filterVisible"
         >
-          <text class="i-carbon:filter text-base" :class="filterVisible ? 'text-white' : 'text-tx-brown'" />
+          <text
+            class="i-carbon:filter text-base"
+            :class="filterVisible ? 'text-white' : 'text-tx-brown'"
+          />
         </view>
       </view>
     </view>
@@ -190,7 +196,11 @@ function handleStatusSelect(st: string) {
               v-for="opt in sortOptions"
               :key="opt"
               class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
-              :class="sortCurrent === opt ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
+              :class="
+                sortCurrent === opt
+                  ? 'border-tx-brown bg-tx-brown text-white shadow-xs'
+                  : 'border-tx-border bg-white text-tx-ink'
+              "
               @click="handleSortSelect(opt)"
             >
               {{ opt }}
@@ -206,7 +216,11 @@ function handleStatusSelect(st: string) {
               v-for="st in statusOptions"
               :key="st"
               class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
-              :class="statusCurrent === st ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
+              :class="
+                statusCurrent === st
+                  ? 'border-tx-brown bg-tx-brown text-white shadow-xs'
+                  : 'border-tx-border bg-white text-tx-ink'
+              "
               @click="handleStatusSelect(st)"
             >
               {{ st }}

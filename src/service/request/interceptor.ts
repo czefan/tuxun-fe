@@ -20,7 +20,8 @@ const httpInterceptor = {
     }
     options.header = headers
     // 3. Session/Cookie 鉴权。H5 跨域调试时需要携带 Cookie。
-    ;(options as CustomRequestOptions & { withCredentials?: boolean }).withCredentials = options.auth !== false
+    ;(options as CustomRequestOptions & { withCredentials?: boolean }).withCredentials =
+      options.auth !== false
     return options
   },
 }

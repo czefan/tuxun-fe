@@ -39,8 +39,7 @@ function chooseMedia() {
   input.accept = 'image/*,video/*'
   input.onchange = async () => {
     const file = input.files?.[0]
-    if (!file)
-      return
+    if (!file) return
     const sizeMB = file.size / (1024 * 1024)
     if (file.type.startsWith('video/')) {
       if (sizeMB > 50) {
@@ -49,8 +48,7 @@ function chooseMedia() {
       }
       mediaPath.value = URL.createObjectURL(file)
       mediaType.value = 'video'
-    }
-    else if (file.type.startsWith('image/')) {
+    } else if (file.type.startsWith('image/')) {
       if (sizeMB > 20) {
         uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
         return
@@ -63,8 +61,7 @@ function chooseMedia() {
       }
       mediaPath.value = await smartCompressImage(rawUrl)
       mediaType.value = 'image'
-    }
-    else {
+    } else {
       // accept 是软限制，用户可切到「所有文件」选任意类型，兜底拦截非图片/视频
       uni.showToast({ title: '请选择图片或视频文件', icon: 'none' })
     }
@@ -77,8 +74,7 @@ function chooseMedia() {
     mediaType: ['image', 'video'],
     success: async (res) => {
       const file = res.tempFiles[0]
-      if (!file)
-        return
+      if (!file) return
       const type = res.type as 'image' | 'video'
       const sizeMB = file.size / (1024 * 1024)
       if (type === 'image') {
@@ -93,8 +89,7 @@ function chooseMedia() {
         }
         mediaPath.value = await smartCompressImage(file.tempFilePath)
         mediaType.value = 'image'
-      }
-      else if (type === 'video') {
+      } else if (type === 'video') {
         if (sizeMB > 50) {
           uni.showToast({ title: '视频大小不能超过 50MB', icon: 'none' })
           return
@@ -126,7 +121,8 @@ function getEnvironmentDiagnosticString(): string {
     if (os) {
       parts.push(`系统: ${os}`)
     }
-    const device = `${info.deviceBrand || info.brand || ''} ${info.deviceModel || info.model || ''}`.trim()
+    const device =
+      `${info.deviceBrand || info.brand || ''} ${info.deviceModel || info.model || ''}`.trim()
     if (device) {
       parts.push(`设备: ${device}`)
     }
@@ -149,8 +145,7 @@ function getEnvironmentDiagnosticString(): string {
     // #endif
 
     return parts.length ? `\n\n--- [环境信息 自动生成] ---\n${parts.join('\n')}` : ''
-  }
-  catch {
+  } catch {
     return ''
   }
 }
@@ -200,9 +195,18 @@ function handleSubmit() {
 <template>
   <view class="safe-bottom-page box-border min-h-screen bg-tx-main px-4 pt-4">
     <!-- 未登录页面级提示卡片（与通知界面保持100%样式一致） -->
-    <view v-if="!isLoggedIn()" class="min-h-[calc(100vh-120rpx)] flex flex-col items-center justify-center pb-12 -mt-12">
+    <view
+      v-if="!isLoggedIn()"
+      class="min-h-[calc(100vh-120rpx)] flex flex-col items-center justify-center pb-12 -mt-12"
+    >
       <wd-empty icon="no-result" tip="登录后提交意见反馈" />
-      <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+      <wd-button
+        size="small"
+        round
+        type="warning"
+        custom-class="!mt-4 !font-bold shadow-md"
+        @click="loginDirectly"
+      >
         去登录
       </wd-button>
     </view>
@@ -293,7 +297,8 @@ function handleSubmit() {
           <view class="flex items-center gap-2">
             <view class="h-4 w-1.5 rounded-full bg-tx-brown" />
             <text class="text-base text-tx-ink font-black tracking-tight">
-              附件（图片/视频） <text class="text-xs text-tx-ink-3 font-normal">(选填，最多 1 个)</text>
+              附件（图片/视频）
+              <text class="text-xs text-tx-ink-3 font-normal">(选填，最多 1 个)</text>
             </text>
           </view>
         </view>

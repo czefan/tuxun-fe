@@ -8,7 +8,10 @@ const DEFAULT_DIST_DIR = 'dist/build/mp-weixin'
 const SINGLE_PACKAGE_LIMIT = Number(process.env.MP_SINGLE_PACKAGE_LIMIT || 2 * 1024 * 1024)
 const TOTAL_PACKAGE_LIMIT = Number(process.env.MP_TOTAL_PACKAGE_LIMIT || 20 * 1024 * 1024)
 
-const distDir = path.resolve(process.cwd(), process.argv[2] || process.env.MP_DIST_DIR || DEFAULT_DIST_DIR)
+const distDir = path.resolve(
+  process.cwd(),
+  process.argv[2] || process.env.MP_DIST_DIR || DEFAULT_DIST_DIR,
+)
 
 if (!fs.existsSync(distDir)) {
   console.error(`Weixin package output not found: ${distDir}`)
@@ -20,7 +23,7 @@ const appJsonPath = path.join(distDir, 'app.json')
 const appJson = fs.existsSync(appJsonPath) ? readJson(appJsonPath) : {}
 const subPackageRoots = normalizeSubPackageRoots(appJson.subPackages || appJson.subpackages)
 const files = walkFiles(distDir)
-const fileStats = files.map(filePath => createFileStat(distDir, filePath))
+const fileStats = files.map((filePath) => createFileStat(distDir, filePath))
 const rows = createRows(fileStats, subPackageRoots)
 const total = sumStats(fileStats)
 const warnings = createWarnings(rows, total)
@@ -34,9 +37,8 @@ if (warnings.length > 0 && process.env.MP_SIZE_STRICT === 'true') {
 function readJson(filePath) {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
-  }
-  catch (error) {
-    console.error(`Failed to parse ${filePath}: ${(error).message}`)
+  } catch (error) {
+    console.error(`Failed to parse ${filePath}: ${error.message}`)
     process.exit(1)
   }
 }
@@ -47,7 +49,7 @@ function normalizeSubPackageRoots(subPackages) {
   }
 
   return subPackages
-    .map(item => typeof item?.root === 'string' ? normalizePath(item.root) : '')
+    .map((item) => (typeof item?.root === 'string' ? normalizePath(item.root) : ''))
     .filter(Boolean)
 }
 
@@ -60,8 +62,7 @@ function walkFiles(dir) {
 
     if (entry.isDirectory()) {
       result.push(...walkFiles(fullPath))
-    }
-    else if (entry.isFile()) {
+    } else if (entry.isFile()) {
       result.push(fullPath)
     }
   }
@@ -81,7 +82,7 @@ function createFileStat(rootDir, filePath) {
 
 function createRows(stats, subPackageRoots) {
   const subPackageRows = subPackageRoots.map((root) => {
-    const files = stats.filter(file => isInRoot(file.path, root))
+    const files = stats.filter((file) => isInRoot(file.path, root))
 
     return {
       name: root,
@@ -90,8 +91,8 @@ function createRows(stats, subPackageRoots) {
     }
   })
 
-  const mainFiles = stats.filter(file =>
-    !subPackageRoots.some(root => isInRoot(file.path, root)),
+  const mainFiles = stats.filter(
+    (file) => !subPackageRoots.some((root) => isInRoot(file.path, root)),
   )
 
   return [
@@ -120,29 +121,37 @@ function createWarnings(rows, total) {
 
   for (const row of rows) {
     if (row.raw > SINGLE_PACKAGE_LIMIT) {
-      warnings.push(`${row.name} raw size ${formatBytes(row.raw)} exceeds ${formatBytes(SINGLE_PACKAGE_LIMIT)}`)
+      warnings.push(
+        `${row.name} raw size ${formatBytes(row.raw)} exceeds ${formatBytes(SINGLE_PACKAGE_LIMIT)}`,
+      )
     }
   }
 
   if (total.raw > TOTAL_PACKAGE_LIMIT) {
-    warnings.push(`total raw size ${formatBytes(total.raw)} exceeds ${formatBytes(TOTAL_PACKAGE_LIMIT)}`)
+    warnings.push(
+      `total raw size ${formatBytes(total.raw)} exceeds ${formatBytes(TOTAL_PACKAGE_LIMIT)}`,
+    )
   }
 
   return warnings
 }
 
 function printReport(rootDir, rows, total, warnings) {
-  const nameWidth = Math.max('Package'.length, ...rows.map(row => row.name.length))
+  const nameWidth = Math.max('Package'.length, ...rows.map((row) => row.name.length))
 
   console.log(`Weixin package size report: ${rootDir}`)
   console.log(`${padEnd('Package', nameWidth)}  Raw        Gzip       Files`)
   console.log(`${padEnd('-'.repeat(nameWidth), nameWidth)}  ---------  ---------  -----`)
 
   for (const row of rows) {
-    console.log(`${padEnd(row.name, nameWidth)}  ${padStart(formatBytes(row.raw), 9)}  ${padStart(formatBytes(row.gzip), 9)}  ${padStart(String(row.files), 5)}`)
+    console.log(
+      `${padEnd(row.name, nameWidth)}  ${padStart(formatBytes(row.raw), 9)}  ${padStart(formatBytes(row.gzip), 9)}  ${padStart(String(row.files), 5)}`,
+    )
   }
 
-  console.log(`${padEnd('total', nameWidth)}  ${padStart(formatBytes(total.raw), 9)}  ${padStart(formatBytes(total.gzip), 9)}  ${padStart(String(total.files), 5)}`)
+  console.log(
+    `${padEnd('total', nameWidth)}  ${padStart(formatBytes(total.raw), 9)}  ${padStart(formatBytes(total.gzip), 9)}  ${padStart(String(total.files), 5)}`,
+  )
 
   if (warnings.length > 0) {
     console.log('\nWarnings:')

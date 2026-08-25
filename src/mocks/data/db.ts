@@ -26,7 +26,8 @@ const ACTIVITY_2 = {
 const EXTREME_ACTIVITY = {
   id: 3,
   title: '老校区全域历史保护遗址深度发现极限大奖赛', // 刚好 20 字
-  description: '【极限50字活动描述说明】根据校园历史文化遗产保护委员会公布的调查档案，老校区西北角望远镜塔建于民国', // 刚好 50 字
+  description:
+    '【极限50字活动描述说明】根据校园历史文化遗产保护委员会公布的调查档案，老校区西北角望远镜塔建于民国', // 刚好 50 字
   cover_image: mockMedia(1099, 1200, 400, 'thumb'),
   photo_count: 9999,
   start_time: '2026-01-01T00:00:00+08:00',
@@ -50,8 +51,7 @@ export function getActiveScenario(): MockScenario {
       if (storedScenario && ['data', 'empty', 'default'].includes(storedScenario)) {
         return storedScenario === 'default' ? 'data' : storedScenario
       }
-    }
-    catch {
+    } catch {
       // 忽略非浏览器环境解析异常
     }
   }
@@ -99,7 +99,8 @@ function generateRichPhotos() {
     {
       id: 901,
       title: '一二三四五六七八九十一二三四五六七八九十', // 刚好 20 字
-      description: '【极限50字描述说明】根据校园历史文化遗产保护委员会2026年最新公布的调查档案物理楼天台望远镜塔。', // 刚好 50 字
+      description:
+        '【极限50字描述说明】根据校园历史文化遗产保护委员会2026年最新公布的调查档案物理楼天台望远镜塔。', // 刚好 50 字
       image: mockDiverseMedia(1090),
       author: { id: 99, nickname: '十位极限字符昵称', avatar: mockImageString(99, 200, 200) },
       activity: EXTREME_ACTIVITY,
@@ -140,9 +141,17 @@ function generateRichPhotos() {
       title: `地标记录 #${i}`,
       description: `这是用于测试无限滚动和分页加载的第 ${i} 条模拟地标题目。`,
       image: mockDiverseMedia(1000 + i),
-      author: { id: (i % 5) + 1, nickname: `玩家_${i % 100}`, avatar: mockImageString(1000 + i, 200, 200) },
+      author: {
+        id: (i % 5) + 1,
+        nickname: `玩家_${i % 100}`,
+        avatar: mockImageString(1000 + i, 200, 200),
+      },
       activity: isOdd ? ACTIVITY_1 : EXTREME_ACTIVITY,
-      location: { latitude: 30.120 + (i * 0.001), longitude: 120.450 + (i * 0.001), coord_type: 'gcj02' as const },
+      location: {
+        latitude: 30.12 + i * 0.001,
+        longitude: 120.45 + i * 0.001,
+        coord_type: 'gcj02' as const,
+      },
       attempts_count: i * 3,
       user_attempts_count: (i % 5) + 1, // 保证 <= 5
       solved_count: Math.floor(i / 2),
@@ -179,7 +188,8 @@ function generateRichMyPhotos() {
       location: { latitude: 30.123, longitude: 120.456, coord_type: 'gcj02' as const },
       activity: ACTIVITY_1,
       status: 'rejected' as const,
-      reject_reason: '【极限50字驳回原因】经审核复核，画面偏色光线不足且关键铭牌隐没在阴影中无法辨认，定位偏差大于50米',
+      reject_reason:
+        '【极限50字驳回原因】经审核复核，画面偏色光线不足且关键铭牌隐没在阴影中无法辨认，定位偏差大于50米',
       created_at: new Date(Date.now() - 35 * 86400000).toISOString(),
     },
     // 审核中
@@ -205,16 +215,23 @@ function generateRichMyPhotos() {
       title: `我的投稿记录 #${i} (${st === 'approved' ? '已通过' : st === 'pending' ? '审核中' : '未通过'})`,
       description: `第 ${i} 条投稿的详细描述，包含地理坐标定位与现场拍摄说明。`,
       image: mockDiverseMedia(1020 + i),
-      location: { latitude: 30.12 + i * 0.001, longitude: 120.45 + i * 0.001, coord_type: 'gcj02' as const },
+      location: {
+        latitude: 30.12 + i * 0.001,
+        longitude: 120.45 + i * 0.001,
+        coord_type: 'gcj02' as const,
+      },
       activity: i % 2 === 0 ? ACTIVITY_1 : ACTIVITY_2,
       created_at: new Date(Date.now() - i * 7200000).toISOString(),
     }
     // 按状态收窄为单一字面量，保证与 list 的判别联合类型兼容
     if (st === 'approved' || st === 'pending') {
       list.push({ ...base, status: st, reject_reason: null })
-    }
-    else {
-      list.push({ ...base, status: 'rejected', reject_reason: `驳回原因通知 #${i}：照片主体遮挡严重，定位偏差大于 50 米，请重新在阳光充足时拍摄。` })
+    } else {
+      list.push({
+        ...base,
+        status: 'rejected',
+        reject_reason: `驳回原因通知 #${i}：照片主体遮挡严重，定位偏差大于 50 米，请重新在阳光充足时拍摄。`,
+      })
     }
   }
   return list
@@ -248,7 +265,10 @@ class MockDatabase {
   attempts: any[] = []
   scoreLogs: any[] = []
   exchanges: any[] = []
-  contents = {} as Record<string, { key: string, content: string, related_id: number | null, version: number, updated_at: string }>
+  contents = {} as Record<
+    string,
+    { key: string; content: string; related_id: number | null; version: number; updated_at: string }
+  >
 
   meta = {
     nextPhotoId: 1000,
@@ -283,9 +303,27 @@ class MockDatabase {
       this.scoreLogs = []
       this.exchanges = []
       this.contents = {
-        popup: { key: 'popup', content: '<p>暂无弹窗通知</p>', related_id: null, version: 1, updated_at: '2026-07-31T00:00:00+08:00' },
-        help: { key: 'help', content: '<p>暂无帮助文档</p>', related_id: null, version: 1, updated_at: '2026-07-31T00:00:00+08:00' },
-        score_rules: { key: 'score_rules', content: '<p>暂无规则文档</p>', related_id: null, version: 1, updated_at: '2026-07-31T00:00:00+08:00' },
+        popup: {
+          key: 'popup',
+          content: '<p>暂无弹窗通知</p>',
+          related_id: null,
+          version: 1,
+          updated_at: '2026-07-31T00:00:00+08:00',
+        },
+        help: {
+          key: 'help',
+          content: '<p>暂无帮助文档</p>',
+          related_id: null,
+          version: 1,
+          updated_at: '2026-07-31T00:00:00+08:00',
+        },
+        score_rules: {
+          key: 'score_rules',
+          content: '<p>暂无规则文档</p>',
+          related_id: null,
+          version: 1,
+          updated_at: '2026-07-31T00:00:00+08:00',
+        },
       }
       return
     }
@@ -334,7 +372,8 @@ class MockDatabase {
       {
         id: 301,
         title: '图寻前端契约升级公告',
-        content: '<p>为了提供更流畅的探秘寻宝体验，图寻前端平台现已全面完成接口契约与域驱动架构的重构升级。</p><p>1. 提升了跨端移动设备与 H5 的地图选点交互兼容性；</p><p>2. 优化了离线状态恢复与离线草稿箱体验，探秘打卡更安心；</p><p>3. 感谢广大探秘者对图寻平台一贯的支持与厚爱。</p>',
+        content:
+          '<p>为了提供更流畅的探秘寻宝体验，图寻前端平台现已全面完成接口契约与域驱动架构的重构升级。</p><p>1. 提升了跨端移动设备与 H5 的地图选点交互兼容性；</p><p>2. 优化了离线状态恢复与离线草稿箱体验，探秘打卡更安心；</p><p>3. 感谢广大探秘者对图寻平台一贯的支持与厚爱。</p>',
         get content_preview() {
           return generateContentPreview(this.content)
         },
@@ -347,7 +386,8 @@ class MockDatabase {
       {
         id: 302,
         title: '关于防范暑期作弊与虚拟定位的通知',
-        content: '<p>随着暑期探秘活动的火热开展，为保障竞赛公平公正，平台已正式上线全新精确定位比对与防作弊校验算法。</p><p>特别提醒：</p><p>1. 请广大探秘者前往真实地点完成打卡选点；</p><p>2. 严禁使用任何形式的模拟器、虚拟定位软件或抓包篡改坐标；</p><p>3. 一经查实违规行为，系统将自动取消参赛成绩并封禁账号。</p>',
+        content:
+          '<p>随着暑期探秘活动的火热开展，为保障竞赛公平公正，平台已正式上线全新精确定位比对与防作弊校验算法。</p><p>特别提醒：</p><p>1. 请广大探秘者前往真实地点完成打卡选点；</p><p>2. 严禁使用任何形式的模拟器、虚拟定位软件或抓包篡改坐标；</p><p>3. 一经查实违规行为，系统将自动取消参赛成绩并封禁账号。</p>',
         get content_preview() {
           return generateContentPreview(this.content)
         },
@@ -360,7 +400,8 @@ class MockDatabase {
       {
         id: 303,
         title: '新一期校园地标打卡挑战赛开启通知',
-        content: '<p>全新一期的校园风光与地标建筑打卡挑战赛现已正式上线！</p><p>本次赛事涵盖了多处特色历史建筑与风景名胜：</p><p>1. 参赛者可通过上传打卡图片与精准定位参与比赛；</p><p>2. 答对得分最高与用时最短的选手将获得精美礼品；</p><p>3. 详情请点击下方关联活动按钮查看细则。</p>',
+        content:
+          '<p>全新一期的校园风光与地标建筑打卡挑战赛现已正式上线！</p><p>本次赛事涵盖了多处特色历史建筑与风景名胜：</p><p>1. 参赛者可通过上传打卡图片与精准定位参与比赛；</p><p>2. 答对得分最高与用时最短的选手将获得精美礼品；</p><p>3. 详情请点击下方关联活动按钮查看细则。</p>',
         get content_preview() {
           return generateContentPreview(this.content)
         },
@@ -373,7 +414,8 @@ class MockDatabase {
       {
         id: 304,
         title: '平台服务器例行维护与性能优化完成通知',
-        content: '<p>尊贵的探秘者们，平台服务器已于今晨完成例行架构维护与高并发节点扩容。</p><p>维护优化事项如下：</p><p>1. 提升了图片上传与定位校验接口的回包响应速度；</p><p>2. 修复了部分机型地图选点卡顿与平移延迟问题；</p><p>3. 如在探秘过程中遇到任何异常，欢迎在「意见反馈」中提交意见。</p>',
+        content:
+          '<p>尊贵的探秘者们，平台服务器已于今晨完成例行架构维护与高并发节点扩容。</p><p>维护优化事项如下：</p><p>1. 提升了图片上传与定位校验接口的回包响应速度；</p><p>2. 修复了部分机型地图选点卡顿与平移延迟问题；</p><p>3. 如在探秘过程中遇到任何异常，欢迎在「意见反馈」中提交意见。</p>',
         get content_preview() {
           return generateContentPreview(this.content)
         },
@@ -394,7 +436,9 @@ class MockDatabase {
         related_type: i % 2 === 0 ? ('activity' as const) : null,
         related_id: i % 2 === 0 ? 1 : null,
         is_read: i > 3,
-        created_at: new Date(Date.now() - [4, 6, 9, 13, 18, 30, 365, 400][i] * 86400000).toISOString(),
+        created_at: new Date(
+          Date.now() - [4, 6, 9, 13, 18, 30, 365, 400][i] * 86400000,
+        ).toISOString(),
       })),
     ]
     this.notifications = [
@@ -412,7 +456,11 @@ class MockDatabase {
       ...Array.from({ length: 13 }, (_, i) => ({
         id: 202 + i,
         type: i % 2 === 0 ? ('like' as const) : ('comment' as const),
-        user: { id: i + 1, nickname: `互动用户_${i + 1}`, avatar: mockImageString(1000 + i, 200, 200) },
+        user: {
+          id: i + 1,
+          nickname: `互动用户_${i + 1}`,
+          avatar: mockImageString(1000 + i, 200, 200),
+        },
         related_type: 'photo' as const,
         related_id: 101,
         photo_id: 101,
@@ -420,7 +468,11 @@ class MockDatabase {
         is_read: i > 5,
         // 日期按 本周 / 本月 / 更早 三档分布，以当前时间为基准生成；
         // 最后两档（365 / 400 天前）落在去年，用于验证“今年不显示年份、往年显示年份”的展示规则
-        created_at: new Date(Date.now() - [0, 0, 0, 0, 4, 6, 9, 14, 20, 35, 50, 365, 400][i] * 86400000 - (i % 4) * 3600000).toISOString(),
+        created_at: new Date(
+          Date.now() -
+            [0, 0, 0, 0, 4, 6, 9, 14, 20, 35, 50, 365, 400][i] * 86400000 -
+            (i % 4) * 3600000,
+        ).toISOString(),
       })),
       // 覆盖契约其余 related_type 取值：赞了评论 → 评论区 Tab、赞了破解记录 → 已破解 Tab（前端据此跳转）
       {
@@ -460,7 +512,11 @@ class MockDatabase {
       ...Array.from({ length: 19 }, (_, i) => ({
         id: 500 + i,
         photo_id: 101,
-        author: { id: i + 1, nickname: `评论者_${i + 1}`, avatar: mockImageString(1000 + i, 200, 200) },
+        author: {
+          id: i + 1,
+          nickname: `评论者_${i + 1}`,
+          avatar: mockImageString(1000 + i, 200, 200),
+        },
         content: `这是在题目 #101 下发布的第 ${i + 1} 条评论讨论内容 (契约 140 字限制内)。`,
         liked: i % 2 === 0,
         likes_count: i * 3,
@@ -481,7 +537,11 @@ class MockDatabase {
       ...Array.from({ length: 14 }, (_, i) => ({
         id: 100 + i,
         photo_id: 101,
-        author: { id: i + 1, nickname: `破解达人_${i + 1}`, avatar: mockImageString(1000 + i, 200, 200) },
+        author: {
+          id: i + 1,
+          nickname: `破解达人_${i + 1}`,
+          avatar: mockImageString(1000 + i, 200, 200),
+        },
         image: mockDiverseMedia(1060 + i),
         likes_count: i * 5,
         liked: i % 2 === 0,
@@ -510,7 +570,12 @@ class MockDatabase {
         user_attempts_count: (i % 5) + 1,
         image: mockDiverseMedia(1060 + i),
         location: { longitude: 120.456, latitude: 30.123, coord_type: 'gcj02' as const },
-        status: i % 3 === 0 ? ('pending' as const) : (i % 2 === 0 ? ('solved' as const) : ('unsolved' as const)),
+        status:
+          i % 3 === 0
+            ? ('pending' as const)
+            : i % 2 === 0
+              ? ('solved' as const)
+              : ('unsolved' as const),
         reject_reason: i % 2 !== 0 && i % 3 !== 0 ? '定位偏差超出阈值' : null,
         created_at: new Date(Date.now() - i * 7200000).toISOString(),
         photo: {
@@ -584,14 +649,16 @@ class MockDatabase {
       },
       help: {
         key: 'help',
-        content: '<h3>帮助中心</h3><p>1. <b>如何投稿地标？</b> 点击底栏“投稿”，选图后系统会自动二分逼近智能压缩（≤20MB 原图保持，>20MB 逼近至 19MB 以内），并上传真实经纬度坐标。<br/>2. <b>破解规则：</b> 前往目标现场后拍摄对比照片，在指定距离误差内比对线索通过审核即可获得积分。<br/>3. <b>修改次数限制：</b> 每位探秘者当月可修改昵称 4 次，修改头像 10 次。</p>',
+        content:
+          '<h3>帮助中心</h3><p>1. <b>如何投稿地标？</b> 点击底栏“投稿”，选图后系统会自动二分逼近智能压缩（≤20MB 原图保持，>20MB 逼近至 19MB 以内），并上传真实经纬度坐标。<br/>2. <b>破解规则：</b> 前往目标现场后拍摄对比照片，在指定距离误差内比对线索通过审核即可获得积分。<br/>3. <b>修改次数限制：</b> 每位探秘者当月可修改昵称 4 次，修改头像 10 次。</p>',
         related_id: null,
         version: 1,
         updated_at: '2026-07-31T00:00:00+08:00',
       },
       score_rules: {
         key: 'score_rules',
-        content: '<h3>积分获得与扣减规则</h3><p>• <b>正确破解地标：</b> 审核通过后一次性获得 +50 积分奖励。<br/>• <b>投稿通过审定：</b> 成功上传优质地标题目获得 +100 积分奖励。<br/>• <b>积分商城兑换：</b> 依照商品定价扣除相应积分，需携带防重 Idempotency-Key。<br/>• <b>违规扣减：</b> 违规提交虚假坐标将被扣除 -20 至 -100 积分。</p>',
+        content:
+          '<h3>积分获得与扣减规则</h3><p>• <b>正确破解地标：</b> 审核通过后一次性获得 +50 积分奖励。<br/>• <b>投稿通过审定：</b> 成功上传优质地标题目获得 +100 积分奖励。<br/>• <b>积分商城兑换：</b> 依照商品定价扣除相应积分，需携带防重 Idempotency-Key。<br/>• <b>违规扣减：</b> 违规提交虚假坐标将被扣除 -20 至 -100 积分。</p>',
         related_id: null,
         version: 1,
         updated_at: '2026-07-31T00:00:00+08:00',
@@ -604,9 +671,8 @@ class MockDatabase {
    * 按 sort_by 排序（created_at/likes_count 均降序、同值按 id 倒序，不传默认 created_at 降序）。
    */
   getCommentsByPhotoId(photoId: number, sortBy?: 'created_at' | 'likes_count') {
-    if (this.scenario === 'empty')
-      return []
-    let list = this.comments.filter(c => c.photo_id === photoId && c.status !== 'pending')
+    if (this.scenario === 'empty') return []
+    let list = this.comments.filter((c) => c.photo_id === photoId && c.status !== 'pending')
     if (list.length === 0) {
       const count = 3 + (photoId % 5)
       for (let i = 1; i <= count; i++) {
@@ -614,7 +680,11 @@ class MockDatabase {
         const record = {
           id,
           photo_id: photoId,
-          author: { id: (i % 6) + 1, nickname: `探秘者_${i}`, avatar: mockImageString(1000 + i, 200, 200) },
+          author: {
+            id: (i % 6) + 1,
+            nickname: `探秘者_${i}`,
+            avatar: mockImageString(1000 + i, 200, 200),
+          },
           content: `这是在题目 #${photoId} 下发布的第 ${i} 条线索讨论评论。`,
           liked: i % 2 === 0,
           likes_count: i * 3,
@@ -623,7 +693,7 @@ class MockDatabase {
         }
         this.comments.push(record)
       }
-      list = this.comments.filter(c => c.photo_id === photoId && c.status !== 'pending')
+      list = this.comments.filter((c) => c.photo_id === photoId && c.status !== 'pending')
     }
     if (sortBy === 'likes_count') {
       return [...list].sort((a, b) => b.likes_count - a.likes_count || b.id - a.id)
@@ -632,9 +702,8 @@ class MockDatabase {
   }
 
   getSolvesByPhotoId(photoId: number) {
-    if (this.scenario === 'empty')
-      return []
-    let list = this.solves.filter(s => s.photo_id === photoId)
+    if (this.scenario === 'empty') return []
+    let list = this.solves.filter((s) => s.photo_id === photoId)
     if (list.length === 0) {
       const count = 2 + (photoId % 4)
       for (let i = 1; i <= count; i++) {
@@ -642,7 +711,11 @@ class MockDatabase {
         const record = {
           id,
           photo_id: photoId,
-          author: { id: (i % 6) + 1, nickname: `破解达人_${i}`, avatar: mockImageString(1000 + i, 200, 200) },
+          author: {
+            id: (i % 6) + 1,
+            nickname: `破解达人_${i}`,
+            avatar: mockImageString(1000 + i, 200, 200),
+          },
           image: mockMedia(1060 + i, 600, 800),
           likes_count: i * 4,
           liked: i % 2 === 0,
@@ -650,17 +723,20 @@ class MockDatabase {
         }
         this.solves.push(record)
       }
-      list = this.solves.filter(s => s.photo_id === photoId)
+      list = this.solves.filter((s) => s.photo_id === photoId)
     }
     return list
   }
 
   getAttemptsByPhotoId(photoId: number) {
-    if (this.scenario === 'empty')
-      return []
-    let list = this.attempts.filter(a => a.photo_id === photoId)
+    if (this.scenario === 'empty') return []
+    let list = this.attempts.filter((a) => a.photo_id === photoId)
     if (list.length === 0) {
-      const photo = this.photos.find(p => p.id === photoId) || { id: photoId, title: `题目 #${photoId}`, image: mockMedia(1040, 800, 600) }
+      const photo = this.photos.find((p) => p.id === photoId) || {
+        id: photoId,
+        title: `题目 #${photoId}`,
+        image: mockMedia(1040, 800, 600),
+      }
       const count = 1 + (photoId % 3)
       for (let i = 1; i <= count; i++) {
         const id = 2000 + this.attempts.length + i
@@ -669,7 +745,11 @@ class MockDatabase {
           photo_id: photoId,
           user_attempts_count: i,
           image: mockMedia(1060 + i, 600, 800),
-          location: { longitude: 120.456 + i * 0.001, latitude: 30.123 + i * 0.001, coord_type: 'gcj02' as const },
+          location: {
+            longitude: 120.456 + i * 0.001,
+            latitude: 30.123 + i * 0.001,
+            coord_type: 'gcj02' as const,
+          },
           status: i % 2 === 0 ? ('solved' as const) : ('unsolved' as const),
           reject_reason: i % 2 !== 0 ? '定位偏差超出阈值' : null,
           created_at: new Date(Date.now() - i * 14400000).toISOString(),
@@ -681,13 +761,13 @@ class MockDatabase {
         }
         this.attempts.push(record)
       }
-      list = this.attempts.filter(a => a.photo_id === photoId)
+      list = this.attempts.filter((a) => a.photo_id === photoId)
     }
     return list
   }
 
   createExchange(goodId: number) {
-    const good = this.goods.find(g => g.id === goodId) || this.goods[0]
+    const good = this.goods.find((g) => g.id === goodId) || this.goods[0]
     const id = this.meta.nextExchangeId++
     const verifyCode = `TX${String(this.meta.nextVerifyCodeSeed++).padStart(6, '0')}`
     const record = {
@@ -711,7 +791,7 @@ class MockDatabase {
 
   createAttempt(photoId: number) {
     const id = this.meta.nextAttemptId++
-    const photo = this.photos.find(p => p.id === photoId) || this.photos[0]
+    const photo = this.photos.find((p) => p.id === photoId) || this.photos[0]
     const record = {
       id,
       photo_id: photoId,
@@ -779,8 +859,7 @@ export function setScenario(scenario: MockScenario) {
   if (typeof window !== 'undefined') {
     try {
       window.localStorage.setItem('mock_scenario', scenario)
-    }
-    catch {
+    } catch {
       // ignore
     }
   }

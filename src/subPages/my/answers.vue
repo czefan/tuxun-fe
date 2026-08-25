@@ -39,20 +39,21 @@ const {
   refetch,
 } = useInfiniteMyAttemptRecords(queryParams)
 
-const list = computed<UserAttemptRecordVM[]>(() => attemptsPagesData.value?.pages.flatMap(page => page.list) ?? [])
+const list = computed<UserAttemptRecordVM[]>(
+  () => attemptsPagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 function getFilteredList(opt: string) {
-  if (opt === '全部')
-    return list.value
+  if (opt === '全部') return list.value
   if (opt === '审核中') {
-    return list.value.filter(item => String(item.status).toLowerCase() === 'pending')
+    return list.value.filter((item) => String(item.status).toLowerCase() === 'pending')
   }
   if (opt === '已破解') {
-    return list.value.filter(item => String(item.status).toLowerCase() === 'solved')
+    return list.value.filter((item) => String(item.status).toLowerCase() === 'solved')
   }
   if (opt === '未破解') {
     // 契约只下发 status；未破解页签严格只显示 unsolved，不混入已破解
-    return list.value.filter(item => String(item.status).toLowerCase() === 'unsolved')
+    return list.value.filter((item) => String(item.status).toLowerCase() === 'unsolved')
   }
   return list.value
 }
@@ -76,7 +77,10 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
 <template>
   <view class="page-my-answers swiper-page bg-tx-main px-3 pt-3">
     <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
-    <view class="flex flex-shrink-0 items-center gap-6 px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+    <view
+      class="flex flex-shrink-0 items-center gap-6 px-1 pb-0"
+      style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
+    >
       <view
         v-for="opt in statusOptions"
         :key="opt"
@@ -97,25 +101,43 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
       class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
       :current="currentTabIndex"
       :duration="300"
-      @change="(e) => activeStatusIndex = statusOptions[e.detail.current]"
+      @change="(e) => (activeStatusIndex = statusOptions[e.detail.current])"
     >
       <swiper-item v-for="opt in statusOptions" :key="opt" class="box-border">
-        <scroll-view scroll-y :show-scrollbar="false" class="hide-scrollbar box-border h-full w-full" @scrolltolower="() => fetchNextPage()">
-          <view v-if="!isLoggedIn()" class="min-h-full flex flex-col items-center justify-center -mt-6">
+        <scroll-view
+          scroll-y
+          :show-scrollbar="false"
+          class="hide-scrollbar box-border h-full w-full"
+          @scrolltolower="() => fetchNextPage()"
+        >
+          <view
+            v-if="!isLoggedIn()"
+            class="min-h-full flex flex-col items-center justify-center -mt-6"
+          >
             <wd-empty icon="no-result" tip="登录后查看作答记录" />
-            <wd-button size="small" round type="warning" custom-class="!mt-4 !font-bold shadow-md" @click="loginDirectly">
+            <wd-button
+              size="small"
+              round
+              type="warning"
+              custom-class="!mt-4 !font-bold shadow-md"
+              @click="loginDirectly"
+            >
               去登录
             </wd-button>
           </view>
           <view v-else class="bottom-space px-3 pt-2.5 space-y-3">
             <view v-if="isLoading" class="space-y-3">
-              <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '70px' }, { width: '100%', height: '70px' }]" />
+              <wd-skeleton
+                animation="gradient"
+                :row-col="[
+                  { width: '100%', height: '70px' },
+                  { width: '100%', height: '70px' },
+                ]"
+              />
             </view>
             <view v-else-if="isError" class="flex flex-col items-center justify-center gap-3 py-20">
               <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-              <wd-button size="small" plain round @click="refetch">
-                重新加载
-              </wd-button>
+              <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
             </view>
             <view v-else-if="getFilteredList(opt).length > 0" class="border-y border-tx-brown">
               <view
@@ -137,7 +159,9 @@ const currentTabIndex = computed(() => statusOptions.indexOf(activeStatusIndex.v
                   <view class="h-16 min-w-0 flex flex-1 flex-col justify-between py-1">
                     <text class="line-clamp-2 block u-title-base font-bold">
                       {{ item.photo.title }}
-                      <text class="ml-1 u-action-link text-base"> {{ Math.min(item.userAttemptsCount || 1, 5) }}/5</text>
+                      <text class="ml-1 u-action-link text-base">
+                        {{ Math.min(item.userAttemptsCount || 1, 5) }}/5
+                      </text>
                     </text>
                     <text class="block u-meta-time">{{ item.createdAt }}</text>
                   </view>

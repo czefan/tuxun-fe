@@ -31,7 +31,8 @@ describe('normalizeRichText 富文本排版与规范化', () => {
   })
 
   it('防御注入：已有行内 style 的标签保留原样，不发生重复覆盖', () => {
-    const customHtml = '<p style="color: red;">自定义红色段落</p><img style="width: 200px;" src="custom.jpg">'
+    const customHtml =
+      '<p style="color: red;">自定义红色段落</p><img style="width: 200px;" src="custom.jpg">'
     const normalized = normalizeRichText(customHtml)
     expect(normalized).toBe(customHtml)
   })

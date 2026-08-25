@@ -80,11 +80,18 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
         violations.push(`未能在契约中匹配到 ${request.method} ${url.pathname}`)
         return
       }
-      const body = await response.clone().json().catch(() => null)
+      const body = await response
+        .clone()
+        .json()
+        .catch(() => null)
       if (!body || typeof body !== 'object') {
         return
       }
-      const error = validator.validateResponse(op, (body as { resp: unknown }).resp, response.status)
+      const error = validator.validateResponse(
+        op,
+        (body as { resp: unknown }).resp,
+        response.status,
+      )
       if (error) {
         violations.push(error)
       }
@@ -106,8 +113,7 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
           fn(),
           new Promise((_, reject) => setTimeout(() => reject(new Error('调用超时 3s')), 3000)),
         ])
-      }
-      catch (error) {
+      } catch (error) {
         violations.push(`${label} 调用失败: ${(error as Error).message}`)
       }
     }
@@ -125,23 +131,27 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
     await call('photo.getPhotos', () => getPhotos())
     await call('photo.getPhotoDetail', () => getPhotoDetail(101))
     await call('photo.setPhotoLike', () => setPhotoLike(101, true))
-    await call('photo.createPhoto', () => createPhoto({
-      activityId: 1,
-      title: '标题',
-      description: '描述',
-      filePath: '/tmp/a.jpg',
-      latitude: 30.1,
-      longitude: 120.4,
-      coordType: 'gcj02',
-    } as never))
+    await call('photo.createPhoto', () =>
+      createPhoto({
+        activityId: 1,
+        title: '标题',
+        description: '描述',
+        filePath: '/tmp/a.jpg',
+        latitude: 30.1,
+        longitude: 120.4,
+        coordType: 'gcj02',
+      } as never),
+    )
 
-    await call('attempt.submitAttempt', () => submitAttempt({
-      photoId: 101,
-      filePath: '/tmp/a.jpg',
-      latitude: 30.1,
-      longitude: 120.4,
-      coordType: 'gcj02',
-    }))
+    await call('attempt.submitAttempt', () =>
+      submitAttempt({
+        photoId: 101,
+        filePath: '/tmp/a.jpg',
+        latitude: 30.1,
+        longitude: 120.4,
+        coordType: 'gcj02',
+      }),
+    )
     await call('attempt.getSolves', () => getSolves(101))
     await call('attempt.getMyAttempts', () => getMyAttempts(101))
     await call('attempt.setSolveLike', () => setSolveLike(1, true))
@@ -159,7 +169,9 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
     await call('score.getScoreLogs', () => getScoreLogs())
 
     await call('mall.getGoods', () => getGoods())
-    await call('mall.exchangeGood', () => exchangeGood({ good_id: 1, quantity: 1 }, 'idem-key-000001'))
+    await call('mall.exchangeGood', () =>
+      exchangeGood({ good_id: 1, quantity: 1 }, 'idem-key-000001'),
+    )
     await call('mall.getExchanges', () => getExchanges())
 
     await call('notification.getAnnouncements', () => getAnnouncements())
@@ -170,17 +182,21 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
 
     await call('content.getContent', () => getContent('popup'))
 
-    await call('feedback.submitFeedback', () => submitFeedback({
-      title: '标题',
-      content: '内容',
-      type: 1,
-      mediaFile: '/tmp/a.jpg',
-    }))
+    await call('feedback.submitFeedback', () =>
+      submitFeedback({
+        title: '标题',
+        content: '内容',
+        type: 1,
+        mediaFile: '/tmp/a.jpg',
+      }),
+    )
 
     // 等待 MSW 事件回调落地
-    await new Promise(resolve => setTimeout(resolve, 50))
+    await new Promise((resolve) => setTimeout(resolve, 50))
 
-    expect(violations, `\n契约违规 ${violations.length} 处：\n${violations.join('\n')}\n`).toEqual([])
+    expect(violations, `\n契约违规 ${violations.length} 处：\n${violations.join('\n')}\n`).toEqual(
+      [],
+    )
   })
 
   /**
@@ -194,7 +210,7 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
 
     const unknown = handlers
       .map((handler) => {
-        const info = handler.info as { method: string, path: unknown }
+        const info = handler.info as { method: string; path: unknown }
         const pathname = String(info.path)
           .replace(/^\*/, '')
           .replace(/:[A-Z_]+/gi, '1')
@@ -207,7 +223,7 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
         }
         return !validator.matchOperation(item.method, item.pathname)
       })
-      .map(item => `${item.method} ${item.pathname}`)
+      .map((item) => `${item.method} ${item.pathname}`)
 
     expect(unknown, `以下 Mock 路由在契约中不存在：\n${unknown.join('\n')}`).toEqual([])
   })
@@ -231,11 +247,11 @@ describe('契约守卫：Mock 响应与请求必须符合 apifox-import.json', (
     const mismatches: string[] = []
     for (const expected of ERROR_CODE_MATRIX) {
       const response = factories[expected.name]()
-      const body = await response.clone().json() as { code: number }
+      const body = (await response.clone().json()) as { code: number }
       if (body.code !== expected.code || response.status !== expected.status) {
         mismatches.push(
-          `${expected.name}: 期望 code=${expected.code}/HTTP ${expected.status}，`
-          + `实际 code=${body.code}/HTTP ${response.status}`,
+          `${expected.name}: 期望 code=${expected.code}/HTTP ${expected.status}，` +
+            `实际 code=${body.code}/HTTP ${response.status}`,
         )
       }
     }

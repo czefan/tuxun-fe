@@ -10,7 +10,7 @@ function normalizeRoutePath(path?: string) {
   }
   const pure = path.split('?')[0]
   const normalized = pure.startsWith('/') ? pure : `/${pure}`
-  return (normalized === '/' || normalized === '') ? '/pages/index/index' : normalized
+  return normalized === '/' || normalized === '' ? '/pages/index/index' : normalized
 }
 
 /** 该路径是否是 tabbar 页；底栏据此决定是否渲染，分包详情页不显示底栏 */
@@ -20,7 +20,9 @@ export function isTabBarPage(path?: string) {
     // 拿不到路由时按「非 tabbar 页」处理：宁可少画底栏，也不能让详情页冒出底栏
     return false
   }
-  return customTabBarList.some(item => item.pagePath && normalizeRoutePath(item.pagePath) === target)
+  return customTabBarList.some(
+    (item) => item.pagePath && normalizeRoutePath(item.pagePath) === target,
+  )
 }
 
 export function useTabBarStore() {
@@ -40,14 +42,13 @@ export function useTabBarStore() {
           return
         }
         const found = customTabBarList.find(
-          item => item.pagePath && normalizeRoutePath(item.pagePath) === routePath,
+          (item) => item.pagePath && normalizeRoutePath(item.pagePath) === routePath,
         )
         if (found?.pagePath) {
           currentPagePath.value = normalizeRoutePath(found.pagePath)
         }
       }
-    }
-    catch {
+    } catch {
       // 忽略 App 初始化极端抓取情况
     }
   }

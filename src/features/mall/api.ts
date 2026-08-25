@@ -1,5 +1,11 @@
 import { request } from '@/service/request'
-import type { ExchangeRecord, ExchangeResult, GoodItem, PageParams, PageResult } from '@/service/contract/types'
+import type {
+  ExchangeRecord,
+  ExchangeResult,
+  GoodItem,
+  PageParams,
+  PageResult,
+} from '@/service/contract/types'
 import { clampPageParams, toImageVM } from '@/service/contract/types'
 import type { ExchangeRecordVM, GoodsQueryParams, GoodsVM } from './types'
 
@@ -38,7 +44,7 @@ export async function getGoods(params?: GoodsQueryParams): Promise<PageResult<Go
 
 /** 兑换商品 POST /exchange（权限：L1，必带 Idempotency-Key） */
 export function exchangeGood(
-  payload: { good_id: number, quantity: number },
+  payload: { good_id: number; quantity: number },
   idempotencyKey: string,
 ): Promise<ExchangeResult> {
   return request<ExchangeResult>({
@@ -52,7 +58,9 @@ export function exchangeGood(
 }
 
 /** 获取兑换记录 GET /exchange（权限：L1） */
-export async function getExchanges(params?: PageParams & { status?: string }): Promise<PageResult<ExchangeRecordVM>> {
+export async function getExchanges(
+  params?: PageParams & { status?: string },
+): Promise<PageResult<ExchangeRecordVM>> {
   const { page, page_size } = clampPageParams(params)
   const raw = await request<PageResult<ExchangeRecord>>({
     url: '/exchange',

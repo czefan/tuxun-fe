@@ -5,9 +5,10 @@ import { useAuthStore } from '@/store/auth'
 import { StorageKey } from '@/constants/storage'
 import { TX_BG_BROWN } from '@/styles/constants'
 
-const isDev = import.meta.env.DEV
-  || import.meta.env.VITE_ENABLE_MOCK === 'true'
-  || import.meta.env.VITE_SHOW_AUDIT_LOGIN === 'true'
+const isDev =
+  import.meta.env.DEV ||
+  import.meta.env.VITE_ENABLE_MOCK === 'true' ||
+  import.meta.env.VITE_SHOW_AUDIT_LOGIN === 'true'
 
 /** 本端绝对 URL；VITE_APP_PUBLIC_BASE 支持子路径部署。H5 页面与登出中转页复用 */
 function absoluteUrl(path: string): string {
@@ -28,8 +29,7 @@ function saveReturnPath() {
     }
     const returnUrl = query && Object.keys(query).length ? ufoWithQuery(path, query) : path
     uni.setStorageSync(StorageKey.LoginReturnPath, returnUrl)
-  }
-  catch {}
+  } catch {}
   // #endif
 }
 
@@ -45,8 +45,7 @@ export function takeReturnPath(): string {
     if (typeof saved === 'string' && /^\/(?:pages|subPages)\//.test(saved)) {
       return saved
     }
-  }
-  catch {}
+  } catch {}
   return ''
 }
 
@@ -54,8 +53,7 @@ export function takeReturnPath(): string {
 export function clearReturnPath() {
   try {
     uni.removeStorageSync(StorageKey.LoginReturnPath)
-  }
-  catch {}
+  } catch {}
 }
 
 /** tz-oauth 授权服务地址（生产 https://oauth.tiaozhan.com，本地 http://localhost:8088） */
@@ -135,7 +133,7 @@ function generateState(): string {
   // #ifdef H5
   const bytes = new Uint8Array(16)
   crypto.getRandomValues(bytes)
-  state = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+  state = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
   // #endif
   // #ifndef H5
   // 小程序没有 crypto.getRandomValues，退而用时间戳 + 多段 Math.random
@@ -143,8 +141,7 @@ function generateState(): string {
   // #endif
   try {
     uni.setStorageSync(StorageKey.OAuthState, state)
-  }
-  catch {}
+  } catch {}
   return state
 }
 
@@ -155,8 +152,7 @@ export function validateAndClearState(state: string): boolean {
     uni.removeStorageSync(StorageKey.OAuthState)
     // stored 为空表示本端没发起过这次登录（非本站跳转）；state 为空表示回调没带 state，一律拒绝
     return !!stored && !!state && stored === state
-  }
-  catch {
+  } catch {
     return false
   }
 }
@@ -188,7 +184,8 @@ export function redirectToOAuth() {
   if (!/^https?:\/\//.test(url)) {
     uni.showModal({
       title: '登录服务未配置',
-      content: '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL 与 VITE_OAUTH_CLIENT_ID。',
+      content:
+        '当前构建缺少 OAuth 配置，请联系管理员配置 VITE_OAUTH_BASE_URL 与 VITE_OAUTH_CLIENT_ID。',
       showCancel: false,
     })
     return
@@ -225,8 +222,7 @@ export function requireLogin(onCancel?: () => void): boolean {
     success: (res) => {
       if (res.confirm) {
         loginDirectly()
-      }
-      else {
+      } else {
         onCancel?.()
       }
     },

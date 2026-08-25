@@ -36,8 +36,7 @@ function syncPackageVersion(nextVersionName) {
  * @returns {string} 新的版本号
  */
 function bumpVersionName(version, type) {
-  if (type === 'none')
-    return version
+  if (type === 'none') return version
 
   const parts = version.split('.')
   let major = Number.parseInt(parts[0] || '0', 10)
@@ -72,7 +71,9 @@ async function run() {
   const nameMatch = source.match(versionNameRegex)
 
   if (!codeMatch || !nameMatch) {
-    console.error(pc.red('✖ [bump-version] 未在 manifest.config.ts 中找到合法的 versionCode 或 versionName'))
+    console.error(
+      pc.red('✖ [bump-version] 未在 manifest.config.ts 中找到合法的 versionCode 或 versionName'),
+    )
     process.exit(1)
   }
 
@@ -81,7 +82,7 @@ async function run() {
   const nextVersionCode = String(currentVersionCode + 1)
 
   // 1. 检查命令行参数是否有 --type
-  const typeArgMatch = process.argv.find(arg => arg.startsWith('--type='))
+  const typeArgMatch = process.argv.find((arg) => arg.startsWith('--type='))
   let bumpType = typeArgMatch ? typeArgMatch.split('=')[1] : null
 
   // 2. 环境判定：如果不在交互终端或者是CI环境，但是没有指定类型，则默认只升级 versionCode
@@ -91,12 +92,13 @@ async function run() {
     if (!isInteractive) {
       console.log(pc.yellow('⚠ [bump-version] 非交互环境且未指定参数，默认不修改 versionName'))
       bumpType = 'none'
-    }
-    else {
+    } else {
       // 3. 在终端交互式询问用户怎么处理 versionName
       console.log('')
       console.log(pc.cyan('📦 准备发布新版本'))
-      console.log(`${pc.gray('当前版本:')} ${pc.bold(currentVersionName)} ${pc.gray(`(v${currentVersionCode})`)}`)
+      console.log(
+        `${pc.gray('当前版本:')} ${pc.bold(currentVersionName)} ${pc.gray(`(v${currentVersionCode})`)}`,
+      )
       console.log('')
 
       const response = await enquirer.prompt({
@@ -152,8 +154,14 @@ async function run() {
   // 4. 根据类型计算下一代版本并进行替换计算
   const nextVersionName = bumpVersionName(currentVersionName, bumpType)
 
-  let updated = source.replace(versionCodeRegex, `${codeMatch[1]}${codeMatch[2]}${nextVersionCode}${codeMatch[2]}`)
-  updated = updated.replace(versionNameRegex, `${nameMatch[1]}${nameMatch[2]}${nextVersionName}${nameMatch[2]}`)
+  let updated = source.replace(
+    versionCodeRegex,
+    `${codeMatch[1]}${codeMatch[2]}${nextVersionCode}${codeMatch[2]}`,
+  )
+  updated = updated.replace(
+    versionNameRegex,
+    `${nameMatch[1]}${nameMatch[2]}${nextVersionName}${nameMatch[2]}`,
+  )
 
   // 5. 回填文件内容
   if (!dryRun) {
@@ -166,16 +174,21 @@ async function run() {
   console.log(pc.green(`✔ ${dryRun ? '(模拟运行) ' : ''}版本更新成功！`))
 
   if (bumpType !== 'none') {
-    console.log(`  ${pc.gray('versionName:')} ${pc.strikethrough(pc.gray(currentVersionName))} → ${pc.bold(pc.green(nextVersionName))}`)
+    console.log(
+      `  ${pc.gray('versionName:')} ${pc.strikethrough(pc.gray(currentVersionName))} → ${pc.bold(pc.green(nextVersionName))}`,
+    )
     if (packageSynced) {
-      console.log(`  ${pc.gray('package.json:')} ${pc.dim('已同步为')} ${pc.green(nextVersionName)}`)
+      console.log(
+        `  ${pc.gray('package.json:')} ${pc.dim('已同步为')} ${pc.green(nextVersionName)}`,
+      )
     }
-  }
-  else {
+  } else {
     console.log(`  ${pc.gray('versionName:')} ${pc.dim(currentVersionName)} (未更改)`)
   }
 
-  console.log(`  ${pc.gray('versionCode:')} ${pc.strikethrough(pc.gray(currentVersionCode))} → ${pc.bold(pc.green(nextVersionCode))}`)
+  console.log(
+    `  ${pc.gray('versionCode:')} ${pc.strikethrough(pc.gray(currentVersionCode))} → ${pc.bold(pc.green(nextVersionCode))}`,
+  )
   console.log('')
 }
 

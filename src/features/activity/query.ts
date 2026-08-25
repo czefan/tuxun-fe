@@ -7,10 +7,13 @@ import { qk } from '@/service/query/keys'
 import { getActivities } from './api'
 import type { ActivityQueryParams, ActivityVM } from './types'
 
-export function useInfiniteActivityList(params?: MaybeRefOrGetter<ActivityQueryParams | undefined>) {
+export function useInfiniteActivityList(
+  params?: MaybeRefOrGetter<ActivityQueryParams | undefined>,
+) {
   return useInfiniteQuery<PageResult<ActivityVM>>({
     queryKey: computed(() => qk.activity.list(toValue(params))),
-    queryFn: ({ pageParam = 1 }) => getActivities({ ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryFn: ({ pageParam = 1 }) =>
+      getActivities({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
   })

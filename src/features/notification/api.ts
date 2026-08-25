@@ -1,5 +1,10 @@
 import { request } from '@/service/request'
-import type { AnnouncementListItem, InteractionMessage, Media, PageParams } from '@/service/contract/types'
+import type {
+  AnnouncementListItem,
+  InteractionMessage,
+  Media,
+  PageParams,
+} from '@/service/contract/types'
 import { clampPageParams, toImageVM } from '@/service/contract/types'
 import type {
   AnnouncementDetailVM,
@@ -13,7 +18,9 @@ import { formatDate } from '@/utils/date'
 import { normalizeRichText } from '@/utils/rich-text'
 
 /** 系统通知列表 GET /announcements（权限：L1） */
-export async function getAnnouncements(params?: AnnouncementQueryParams): Promise<NotificationPageResult<AnnouncementVM>> {
+export async function getAnnouncements(
+  params?: AnnouncementQueryParams,
+): Promise<NotificationPageResult<AnnouncementVM>> {
   const { page, page_size } = clampPageParams(params)
   const raw = await request<{
     total?: number
@@ -29,7 +36,7 @@ export async function getAnnouncements(params?: AnnouncementQueryParams): Promis
     },
   })
 
-  const list = (raw.list || []).map(item => ({
+  const list = (raw.list || []).map((item) => ({
     id: item.id,
     title: item.title,
     // 摘要由后端生成（剥标签、去 [image]、按码点截 50 字），列表项契约里没有 content
@@ -79,7 +86,9 @@ export async function getAnnouncementDetail(id: number): Promise<AnnouncementDet
 }
 
 /** 互动消息列表 GET /notifications（权限：L1） */
-export async function getInteractions(params?: PageParams & { type?: ('like' | 'comment')[] }): Promise<NotificationPageResult<InteractionMessageVM>> {
+export async function getInteractions(
+  params?: PageParams & { type?: ('like' | 'comment')[] },
+): Promise<NotificationPageResult<InteractionMessageVM>> {
   const { page, page_size } = clampPageParams(params)
   const raw = await request<{
     total?: number
@@ -95,7 +104,7 @@ export async function getInteractions(params?: PageParams & { type?: ('like' | '
     },
   })
 
-  const list = (raw.list || []).map(item => ({
+  const list = (raw.list || []).map((item) => ({
     id: item.id,
     type: item.type,
     user: {
@@ -120,8 +129,8 @@ export async function getInteractions(params?: PageParams & { type?: ('like' | '
 }
 
 /** 标记单条互动消息已读 PUT /notifications/{id}/read（权限：L1） */
-export function markInteractionRead(id: number): Promise<{ id: number, is_read: boolean }> {
-  return request<{ id: number, is_read: boolean }>({
+export function markInteractionRead(id: number): Promise<{ id: number; is_read: boolean }> {
+  return request<{ id: number; is_read: boolean }>({
     url: `/notifications/${id}/read`,
     method: 'PUT',
   })

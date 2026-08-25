@@ -67,15 +67,22 @@ const {
   hasNextPage: hasNextInteract,
   isFetchingNextPage: isFetchingInteract,
   refetch: refetchInteract,
-} = useInfiniteInteractions(computed(() => undefined), {
-  enabled: computed(() => isLoggedIn()),
-})
+} = useInfiniteInteractions(
+  computed(() => undefined),
+  {
+    enabled: computed(() => isLoggedIn()),
+  },
+)
 
 const markReadMutation = useMarkInteractionRead()
 const markAllReadMutation = useMarkAllInteractionsRead()
 
-const announcements = computed<AnnouncementVM[]>(() => announcePagesData.value?.pages.flatMap(page => page.list) ?? [])
-const interactions = computed<InteractionMessageVM[]>(() => interactPagesData.value?.pages.flatMap(page => page.list) ?? [])
+const announcements = computed<AnnouncementVM[]>(
+  () => announcePagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
+const interactions = computed<InteractionMessageVM[]>(
+  () => interactPagesData.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 const unreadInteractCount = computed(() => interactPagesData.value?.pages[0]?.unreadCount ?? 0)
 
@@ -99,13 +106,15 @@ function handleInteractionTap(item: InteractionMessageVM) {
   if (!item.isRead) {
     markReadMutation.mutate(item.id)
   }
-  if (!item.photoId)
-    return
+  if (!item.photoId) return
   // 契约：related_type 指向触发事件的对象（like→photo/solve/comment；comment→photo），前端据此跳转。
   // 轻量定位：评论消息/评论点赞 → 评论区 Tab；破解点赞 → 已破解 Tab；题目点赞 → 详情顶部即点赞位置，无需切 Tab。
-  const tab = item.relatedType === 'solve'
-    ? 'solves'
-    : (item.relatedType === 'comment' || item.type === 'comment') ? 'comments' : undefined
+  const tab =
+    item.relatedType === 'solve'
+      ? 'solves'
+      : item.relatedType === 'comment' || item.type === 'comment'
+        ? 'comments'
+        : undefined
   uni.navigateTo({ url: withQuery(AppRoute.QuestionDetail, { id: item.photoId, tab }) })
 }
 
@@ -123,8 +132,7 @@ function loadReadAnnouncementIds(): number[] {
   try {
     const data = uni.getStorageSync(StorageKey.ReadNoticeIds)
     return data ? JSON.parse(data) : []
-  }
-  catch {
+  } catch {
     return []
   }
 }
@@ -137,9 +145,10 @@ function markAnnouncementRead(id: number) {
 }
 
 const unreadAnnounceCount = computed(() => {
-  if (!isLoggedIn() || !announcements.value.length)
-    return 0
-  return announcements.value.filter((a: AnnouncementVM) => !readAnnouncementIds.value.includes(a.id)).length
+  if (!isLoggedIn() || !announcements.value.length) return 0
+  return announcements.value.filter(
+    (a: AnnouncementVM) => !readAnnouncementIds.value.includes(a.id),
+  ).length
 })
 
 function goAnnouncementDetail(id: number) {
@@ -153,7 +162,10 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
 <template>
   <view class="page-notice swiper-page bg-tx-main px-3 pt-3">
     <!-- 融入页面的顶栏 Seamless Sub Tabs 导航 -->
-    <view class="flex flex-shrink-0 items-end justify-between px-1 pb-0" style="border-bottom: 1px solid rgba(211, 186, 159, 0.5);">
+    <view
+      class="flex flex-shrink-0 items-end justify-between px-1 pb-0"
+      style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
+    >
       <view class="flex items-center gap-6">
         <view
           v-for="opt in tabOptions"
@@ -163,8 +175,14 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
           @tap="activeTab = opt"
         >
           <text>{{ opt }}</text>
-          <view v-if="isLoggedIn() && opt === '系统通知' && unreadAnnounceCount" class="h-2 w-2 rounded-full bg-rose-500" />
-          <view v-if="isLoggedIn() && opt === '互动消息' && unreadInteractCount" class="h-2 w-2 rounded-full bg-rose-500" />
+          <view
+            v-if="isLoggedIn() && opt === '系统通知' && unreadAnnounceCount"
+            class="h-2 w-2 rounded-full bg-rose-500"
+          />
+          <view
+            v-if="isLoggedIn() && opt === '互动消息' && unreadInteractCount"
+            class="h-2 w-2 rounded-full bg-rose-500"
+          />
           <view
             v-if="activeTab === opt"
             class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
@@ -177,7 +195,11 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
         <view
           v-if="activeTab === '系统通知'"
           class="h-7 w-7 flex cursor-pointer items-center justify-center rounded-full transition-all active:scale-90"
-          :class="showSearchInput ? 'bg-tx-brown text-white shadow-2xs' : 'text-tx-ink-2 hover:text-tx-ink'"
+          :class="
+            showSearchInput
+              ? 'bg-tx-brown text-white shadow-2xs'
+              : 'text-tx-ink-2 hover:text-tx-ink'
+          "
           @tap="showSearchInput = !showSearchInput"
         >
           <text class="i-carbon:search text-base" />
@@ -194,7 +216,10 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
     </view>
 
     <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
-    <view v-if="activeTab === '系统通知' && showSearchInput" class="w-full border-b border-tx-border/50 pb-2 pt-2">
+    <view
+      v-if="activeTab === '系统通知' && showSearchInput"
+      class="w-full border-b border-tx-border/50 pb-2 pt-2"
+    >
       <wd-search
         v-model="searchKeyword"
         :focus="true"
@@ -211,7 +236,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
       class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
       :current="currentTabIndex"
       :duration="300"
-      @change="(e) => activeTab = tabOptions[e.detail.current]"
+      @change="(e) => (activeTab = tabOptions[e.detail.current])"
     >
       <!-- 滑块 1：系统通知 -->
       <swiper-item class="box-border">

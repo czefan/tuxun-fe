@@ -51,8 +51,7 @@ function toJsonSchema(node: any): any {
     delete out.nullable
     if (typeof out.type === 'string') {
       out.type = [out.type, 'null']
-    }
-    else if (out.$ref) {
+    } else if (out.$ref) {
       // $ref 与 null 并存时改写成 anyOf，避免 ajv 忽略同级关键字
       const ref = out.$ref
       delete out.$ref
@@ -71,9 +70,9 @@ export function createContractValidator(spec: Json): ContractValidator {
 
   const components = toJsonSchema(spec.components ?? {})
   const responseValidators = new Map<string, ValidateFunction>()
-  const multipartFields = new Map<OperationKey, { all: Set<string>, required: Set<string> }>()
+  const multipartFields = new Map<OperationKey, { all: Set<string>; required: Set<string> }>()
   /** 路径模板 → 匹配正则，用于把真实 URL 还原成操作键 */
-  const routeMatchers: Array<{ method: string, template: string, re: RegExp, depth: number }> = []
+  const routeMatchers: Array<{ method: string; template: string; re: RegExp; depth: number }> = []
 
   for (const [pathTemplate, pathItem] of Object.entries(spec.paths ?? {}) as [string, Json][]) {
     for (const method of HTTP_METHODS) {
@@ -89,8 +88,10 @@ export function createContractValidator(spec: Json): ContractValidator {
       routeMatchers.push({
         method: method.toUpperCase(),
         template: pathTemplate,
-        re: new RegExp(`^${pathTemplate.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{[^}]+\}/g, '[^/]+')}$`),
-        depth: pathTemplate.split('/').filter(seg => seg && !seg.startsWith('{')).length,
+        re: new RegExp(
+          `^${pathTemplate.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{[^}]+\}/g, '[^/]+')}$`,
+        ),
+        depth: pathTemplate.split('/').filter((seg) => seg && !seg.startsWith('{')).length,
       })
 
       // 1. 响应体：只校验业务负载 resp，信封字段由 http 层保证
@@ -104,12 +105,8 @@ export function createContractValidator(spec: Json): ContractValidator {
           continue
         }
         try {
-          responseValidators.set(
-            `${key}#${status}`,
-            ajv.compile({ ...respSchema, components }),
-          )
-        }
-        catch {
+          responseValidators.set(`${key}#${status}`, ajv.compile({ ...respSchema, components }))
+        } catch {
           // 个别响应 schema 无法编译时跳过，不阻塞其余校验
         }
       }
@@ -151,7 +148,7 @@ export function createContractValidator(spec: Json): ContractValidator {
         return ''
       }
       const detail = (validate.errors ?? [])
-        .map(e => `${e.instancePath || '(root)'} ${e.message}`)
+        .map((e) => `${e.instancePath || '(root)'} ${e.message}`)
         .join('; ')
       return `${op} ${status} 响应不符合契约: ${detail}`
     },
@@ -161,11 +158,11 @@ export function createContractValidator(spec: Json): ContractValidator {
       if (!spec) {
         return `契约中不存在 ${op} 的 multipart 请求定义`
       }
-      const unknown = fieldNames.filter(name => !spec.all.has(name))
+      const unknown = fieldNames.filter((name) => !spec.all.has(name))
       if (unknown.length) {
         return `${op} 提交了契约未定义的表单字段: ${unknown.join(', ')}（契约字段: ${Array.from(spec.all).join(', ')}）`
       }
-      const missing = Array.from(spec.required).filter(name => !fieldNames.includes(name))
+      const missing = Array.from(spec.required).filter((name) => !fieldNames.includes(name))
       if (missing.length) {
         return `${op} 缺少必填表单字段: ${missing.join(', ')}`
       }
@@ -177,7 +174,7 @@ export function createContractValidator(spec: Json): ContractValidator {
       const path = pathname.replace(/^\/api(?=\/|$)/, '') || '/'
       const upper = method.toUpperCase()
       const hit = routeMatchers
-        .filter(item => item.method === upper && item.re.test(path))
+        .filter((item) => item.method === upper && item.re.test(path))
         .sort((a, b) => b.depth - a.depth)[0]
       return hit ? `${upper} ${hit.template}` : null
     },

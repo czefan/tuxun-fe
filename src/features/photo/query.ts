@@ -7,7 +7,13 @@ import { nextPageByLoadedCount } from '@/service/query/pagination'
 import { qk } from '@/service/query/keys'
 import { useAuthStore } from '@/store/auth'
 import { createPhoto, getPhotoDetail, getPhotos, setPhotoLike } from './api'
-import type { CreatePhotoPayload, PhotoCardVM, PhotoDetailVM, PhotoFilterParams, PhotoQueryParams } from './types'
+import type {
+  CreatePhotoPayload,
+  PhotoCardVM,
+  PhotoDetailVM,
+  PhotoFilterParams,
+  PhotoQueryParams,
+} from './types'
 
 export function useCreatePhoto() {
   const queryClient = useQueryClient()
@@ -26,7 +32,8 @@ export function useInfinitePhotoList(params?: MaybeRefOrGetter<PhotoQueryParams 
   const authStore = useAuthStore()
   return useInfiniteQuery<PageResult<PhotoCardVM>>({
     queryKey: computed(() => [...qk.photo.list(toValue(params)), authStore.isLoggedIn]),
-    queryFn: ({ pageParam = 1 }) => getPhotos({ ...toValue(params), page: pageParam as number, page_size: 20 }),
+    queryFn: ({ pageParam = 1 }) =>
+      getPhotos({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
   })
@@ -44,7 +51,7 @@ export function usePhotoDetail(id: MaybeRefOrGetter<number>) {
 export function useSetPhotoLike() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, liked }: { id: number, liked: boolean }) => setPhotoLike(id, liked),
+    mutationFn: ({ id, liked }: { id: number; liked: boolean }) => setPhotoLike(id, liked),
     // 乐观热更新：点击瞬间立即翻转按钮状态与点赞数字，零延迟无感体验
     onMutate: async ({ id, liked }) => {
       const matchPhotoQuery = (query: { queryKey: readonly unknown[] }) =>
@@ -56,20 +63,22 @@ export function useSetPhotoLike() {
       queryClient.setQueriesData<InfiniteData<PageResult<PhotoCardVM>> | PhotoDetailVM>(
         { predicate: matchPhotoQuery },
         (old) => {
-          if (!old)
-            return old
+          if (!old) return old
           // 列表缓存：无限分页结构 { pages: [{ list }] }
           if ('pages' in old && Array.isArray(old.pages)) {
             return {
               ...old,
-              pages: old.pages.map(page => ({
+              pages: old.pages.map((page) => ({
                 ...page,
                 list: Array.isArray(page.list)
                   ? page.list.map((item) => {
-                      if (item.id !== id)
-                        return item
-                      const delta = item.liked === liked ? 0 : (liked ? 1 : -1)
-                      return { ...item, liked, likesCount: Math.max(0, (item.likesCount ?? 0) + delta) }
+                      if (item.id !== id) return item
+                      const delta = item.liked === liked ? 0 : liked ? 1 : -1
+                      return {
+                        ...item,
+                        liked,
+                        likesCount: Math.max(0, (item.likesCount ?? 0) + delta),
+                      }
                     })
                   : page.list,
               })),
@@ -77,7 +86,7 @@ export function useSetPhotoLike() {
           }
           // 详情缓存：单对象
           if ('id' in old && old.id === id) {
-            const delta = old.liked === liked ? 0 : (liked ? 1 : -1)
+            const delta = old.liked === liked ? 0 : liked ? 1 : -1
             return { ...old, liked, likesCount: Math.max(0, (old.likesCount ?? 0) + delta) }
           }
           return old
@@ -113,20 +122,22 @@ export function findAdjacentPhotoId(
 ): number | null {
   // 1. 若携带来源列表参数，通过匹配列表查询缓存（兼容 page_size 等默认字段差异）精准定位
   if (params) {
-    const listQueries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[], total?: number }>>({ queryKey: qk.photo.all() })
+    const listQueries = queryClient.getQueriesData<
+      InfiniteData<{ list: PhotoCardVM[]; total?: number }>
+    >({ queryKey: qk.photo.all() })
     for (const [key, data] of listQueries) {
       if (Array.isArray(key) && key[1] === 'list' && typeof key[2] === 'object' && key[2]) {
         const p = key[2] as Record<string, any>
-        const match
-          = (params.activity_id === undefined || p.activity_id === params.activity_id)
-            && (params.activity_status === undefined || p.activity_status === params.activity_status)
-            && (params.sort_by === undefined || p.sort_by === params.sort_by)
-            && (params.solved === undefined || p.solved === params.solved)
-            && (params.keyword === undefined || p.keyword === params.keyword)
+        const match =
+          (params.activity_id === undefined || p.activity_id === params.activity_id) &&
+          (params.activity_status === undefined || p.activity_status === params.activity_status) &&
+          (params.sort_by === undefined || p.sort_by === params.sort_by) &&
+          (params.solved === undefined || p.solved === params.solved) &&
+          (params.keyword === undefined || p.keyword === params.keyword)
 
         if (match && data?.pages) {
-          const list: PhotoCardVM[] = data.pages.flatMap(pg => pg.list ?? [])
-          const idx = list.findIndex(item => item.id === currentId)
+          const list: PhotoCardVM[] = data.pages.flatMap((pg) => pg.list ?? [])
+          const idx = list.findIndex((item) => item.id === currentId)
           if (idx !== -1 && list[idx + offset]) {
             return list[idx + offset].id
           }
@@ -136,10 +147,12 @@ export function findAdjacentPhotoId(
   }
 
   // 2. 回退兜底：从所有包含当前题目的 photo 列表缓存中查找
-  const queries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[], total?: number }>>({ queryKey: qk.photo.all() })
+  const queries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[]; total?: number }>>(
+    { queryKey: qk.photo.all() },
+  )
   for (const [_, data] of queries) {
-    const list: PhotoCardVM[] = data?.pages?.flatMap(p => p.list ?? []) ?? []
-    const idx = list.findIndex(p => p.id === currentId)
+    const list: PhotoCardVM[] = data?.pages?.flatMap((p) => p.list ?? []) ?? []
+    const idx = list.findIndex((p) => p.id === currentId)
     if (idx !== -1 && list[idx + offset]) {
       return list[idx + offset].id
     }

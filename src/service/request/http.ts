@@ -29,15 +29,15 @@ export async function http<T>(options: CustomRequestOptions) {
         if (typeof responseData === 'string') {
           try {
             responseData = JSON.parse(responseData)
-          }
-          catch {
+          } catch {
             responseData = {}
           }
         }
         const dataObj = (responseData || {}) as Partial<ContractResponse<T>>
         const statusCode = res.statusCode
 
-        const isSuccess = dataObj.success === true && dataObj.code === 0 && statusCode >= 200 && statusCode < 300
+        const isSuccess =
+          dataObj.success === true && dataObj.code === 0 && statusCode >= 200 && statusCode < 300
 
         if (isSuccess) {
           return resolve(dataObj.resp as T)

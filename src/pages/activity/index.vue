@@ -27,24 +27,21 @@ const filterOptions = [
   { label: '已结束', value: 'ended' },
 ] as const
 
-type FilterValue = typeof filterOptions[number]['value']
+type FilterValue = (typeof filterOptions)[number]['value']
 const activeFilter = ref<FilterValue>(undefined)
 
-const {
-  data,
-  isLoading,
-  isError,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
-  refetch,
-} = useInfiniteActivityList(computed(() => ({
-  status: activeFilter.value as ActivityQueryParams['status'],
-  keyword: searchKeyword.value.trim() || undefined,
-  page_size: 20,
-})))
+const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+  useInfiniteActivityList(
+    computed(() => ({
+      status: activeFilter.value as ActivityQueryParams['status'],
+      keyword: searchKeyword.value.trim() || undefined,
+      page_size: 20,
+    })),
+  )
 
-const activities = computed<ActivityVM[]>(() => data.value?.pages.flatMap(page => page.list) ?? [])
+const activities = computed<ActivityVM[]>(
+  () => data.value?.pages.flatMap((page) => page.list) ?? [],
+)
 
 useInfiniteListPage({
   hasNextPage,
@@ -90,7 +87,10 @@ function handleModalGoActivity() {
 <template>
   <view class="page-activity safe-bottom-page--fixed-bar bg-tx-main">
     <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
-    <view class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5" :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]">
+    <view
+      class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5"
+      :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]"
+    >
       <view class="flex items-center gap-2">
         <view class="min-w-0 flex-1">
           <wd-search
@@ -104,10 +104,17 @@ function handleModalGoActivity() {
         </view>
         <view
           class="shadow-2xs h-9 w-9 flex flex-shrink-0 cursor-pointer items-center justify-center border border-tx-border rounded-full transition-transform active:scale-95"
-          :class="filterVisible ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
+          :class="
+            filterVisible
+              ? 'border-tx-brown bg-tx-brown text-white shadow-xs'
+              : 'border-tx-border bg-white text-tx-ink'
+          "
           @tap="filterVisible = !filterVisible"
         >
-          <text class="i-carbon:filter text-base" :class="filterVisible ? 'text-white' : 'text-tx-brown'" />
+          <text
+            class="i-carbon:filter text-base"
+            :class="filterVisible ? 'text-white' : 'text-tx-brown'"
+          />
         </view>
       </view>
     </view>
@@ -142,7 +149,11 @@ function handleModalGoActivity() {
                 v-for="opt in filterOptions"
                 :key="opt.label"
                 class="flex cursor-pointer items-center justify-center border rounded-xl py-2 text-xs font-bold transition-all active:scale-95"
-                :class="activeFilter === opt.value ? 'border-tx-brown bg-tx-brown text-white shadow-xs' : 'border-tx-border bg-white text-tx-ink'"
+                :class="
+                  activeFilter === opt.value
+                    ? 'border-tx-brown bg-tx-brown text-white shadow-xs'
+                    : 'border-tx-border bg-white text-tx-ink'
+                "
                 @tap="selectFilter(opt.value)"
               >
                 {{ opt.label }}
@@ -171,7 +182,9 @@ function handleModalGoActivity() {
               height="100%"
             />
             <!-- 渐变阴影保护文案透明度 -->
-            <view class="pointer-events-none absolute inset-0 from-black/85 via-black/35 to-transparent bg-gradient-to-t" />
+            <view
+              class="pointer-events-none absolute inset-0 from-black/85 via-black/35 to-transparent bg-gradient-to-t"
+            />
 
             <!-- 左上角状态徽章 -->
             <view class="absolute left-3 top-3 z-1">
@@ -191,8 +204,12 @@ function handleModalGoActivity() {
             </view>
 
             <!-- 图片上方浮层：标题（最多一行） + 进入所有题目按钮 -->
-            <view class="absolute bottom-3.5 left-3.5 right-3.5 z-1 flex items-center justify-between gap-2.5">
-              <text class="min-w-0 flex-1 truncate text-base text-white font-black tracking-tight drop-shadow-sm">
+            <view
+              class="absolute bottom-3.5 left-3.5 right-3.5 z-1 flex items-center justify-between gap-2.5"
+            >
+              <text
+                class="min-w-0 flex-1 truncate text-base text-white font-black tracking-tight drop-shadow-sm"
+              >
                 {{ item.title }}
               </text>
               <view
@@ -214,14 +231,21 @@ function handleModalGoActivity() {
       </view>
 
       <view v-else-if="isLoading" class="space-y-3">
-        <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '96px' }, { width: '100%', height: '96px' }]" />
+        <wd-skeleton
+          animation="gradient"
+          :row-col="[
+            { width: '100%', height: '96px' },
+            { width: '100%', height: '96px' },
+          ]"
+        />
       </view>
 
-      <view v-else-if="isError" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12">
+      <view
+        v-else-if="isError"
+        class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12"
+      >
         <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-        <wd-button size="small" plain round @click="refetch">
-          重新加载
-        </wd-button>
+        <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
       </view>
 
       <view v-else class="min-h-[50vh] flex flex-col items-center justify-center py-12">
@@ -235,11 +259,20 @@ function handleModalGoActivity() {
         :z-index="999"
         custom-style="background: transparent; width: 90%; max-width: 400px;"
       >
-        <view v-if="selectedActivity" class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-tx-main shadow-2xl">
+        <view
+          v-if="selectedActivity"
+          class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-tx-main shadow-2xl"
+        >
           <!-- 弹窗活动大图/封面 -->
           <view
             class="relative w-full flex overflow-hidden bg-tx-brown/10"
-            :style="selectedActivity.coverImage?.width && selectedActivity.coverImage?.height ? { aspectRatio: `${selectedActivity.coverImage.width} / ${selectedActivity.coverImage.height}` } : {}"
+            :style="
+              selectedActivity.coverImage?.width && selectedActivity.coverImage?.height
+                ? {
+                    aspectRatio: `${selectedActivity.coverImage.width} / ${selectedActivity.coverImage.height}`,
+                  }
+                : {}
+            "
           >
             <wd-img
               :key="`activity-modal-${selectedActivity.id}`"
@@ -250,7 +283,10 @@ function handleModalGoActivity() {
               mode="widthFix"
               width="100%"
             />
-            <view class="absolute right-3 top-3 z-1 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/60 backdrop-blur-md transition-transform active:scale-90" @click="modalVisible = false">
+            <view
+              class="absolute right-3 top-3 z-1 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/60 backdrop-blur-md transition-transform active:scale-90"
+              @click="modalVisible = false"
+            >
               <wd-icon name="close" size="16px" color="#FFFFFF" />
             </view>
           </view>
@@ -269,9 +305,13 @@ function handleModalGoActivity() {
             </view>
 
             <!-- 时间区间 -->
-            <view v-if="selectedActivity.startTime || selectedActivity.endTime" class="border-t border-tx-border/30 pt-2.5">
+            <view
+              v-if="selectedActivity.startTime || selectedActivity.endTime"
+              class="border-t border-tx-border/30 pt-2.5"
+            >
               <text class="block text-sm text-tx-ink-2 font-bold font-numeric">
-                {{ formatDate(selectedActivity.startTime) }} ~ {{ formatDate(selectedActivity.endTime) }}
+                {{ formatDate(selectedActivity.startTime) }} ~
+                {{ formatDate(selectedActivity.endTime) }}
               </text>
             </view>
           </view>

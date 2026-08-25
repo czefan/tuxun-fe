@@ -116,9 +116,10 @@ function pushH5ImagePreviewGuard() {
 
   h5ImagePreviewGuardPushed = true
   const currentState = window.history.state
-  const nextState = currentState && typeof currentState === 'object'
-    ? { ...(currentState as Record<string, unknown>), [H5_IMAGE_PREVIEW_GUARD_KEY]: true }
-    : { [H5_IMAGE_PREVIEW_GUARD_KEY]: true }
+  const nextState =
+    currentState && typeof currentState === 'object'
+      ? { ...(currentState as Record<string, unknown>), [H5_IMAGE_PREVIEW_GUARD_KEY]: true }
+      : { [H5_IMAGE_PREVIEW_GUARD_KEY]: true }
 
   window.history.pushState(nextState, '', window.location.href)
   // #endif
@@ -186,9 +187,9 @@ function hasH5ImagePreviewElement(root: Element) {
   return elements.some((element) => {
     const style = window.getComputedStyle(element)
     return (
-      style.position === 'fixed'
-      && style.zIndex === '999'
-      && style.backgroundColor.replace(/\s/g, '') === 'rgba(0,0,0,0.8)'
+      style.position === 'fixed' &&
+      style.zIndex === '999' &&
+      style.backgroundColor.replace(/\s/g, '') === 'rgba(0,0,0,0.8)'
     )
   })
   // #endif

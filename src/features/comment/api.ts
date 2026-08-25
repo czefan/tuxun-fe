@@ -6,16 +6,21 @@ import { formatDate } from '@/utils/date'
 import type { CommentQueryParams, CommentVM } from './types'
 
 /** 获取题目评论列表 GET /photos/{id}/comments（无需登录） */
-export async function getComments(photoId: number, params?: CommentQueryParams): Promise<PageResult<CommentVM>> {
+export async function getComments(
+  photoId: number,
+  params?: CommentQueryParams,
+): Promise<PageResult<CommentVM>> {
   const { page, page_size } = clampPageParams(params)
-  const raw = await request<PageResult<{
-    id: number
-    author: { id: number, nickname: string, avatar: string }
-    content: string
-    liked: boolean
-    likes_count: number
-    created_at: string
-  }>>({
+  const raw = await request<
+    PageResult<{
+      id: number
+      author: { id: number; nickname: string; avatar: string }
+      content: string
+      liked: boolean
+      likes_count: number
+      created_at: string
+    }>
+  >({
     url: `/photos/${photoId}/comments`,
     method: 'GET',
     query: {
@@ -29,7 +34,7 @@ export async function getComments(photoId: number, params?: CommentQueryParams):
   const isLoggedIn = Boolean(authStore.token || authStore.hasSession || authStore.sessionId)
 
   const rawList = Array.isArray(raw?.list) ? raw.list : []
-  const list = rawList.map(item => ({
+  const list = rawList.map((item) => ({
     id: item.id,
     author: {
       id: item.author.id,
@@ -46,8 +51,11 @@ export async function getComments(photoId: number, params?: CommentQueryParams):
 }
 
 /** 发表评论 POST /photos/{id}/comments（权限：L1） */
-export function postComment(photoId: number, content: string): Promise<{ id: number, status: 'pending' }> {
-  return request<{ id: number, status: 'pending' }>({
+export function postComment(
+  photoId: number,
+  content: string,
+): Promise<{ id: number; status: 'pending' }> {
+  return request<{ id: number; status: 'pending' }>({
     url: `/photos/${photoId}/comments`,
     method: 'POST',
     data: { content },

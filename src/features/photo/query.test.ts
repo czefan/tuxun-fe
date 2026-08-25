@@ -58,13 +58,10 @@ describe('findAdjacentPhotoId', () => {
       { id: 103, title: 'Photo 103' },
     ] as PhotoCardVM[]
 
-    queryClient.setQueryData(
-      [...qk.photo.list({ activity_id: 1, sort_by: 'hot' }), true],
-      {
-        pages: [{ list: mockPhotos, total: 3 }],
-        pageParams: [1],
-      },
-    )
+    queryClient.setQueryData([...qk.photo.list({ activity_id: 1, sort_by: 'hot' }), true], {
+      pages: [{ list: mockPhotos, total: 3 }],
+      pageParams: [1],
+    })
 
     // 中间题目：下一题 103，上一题 101
     expect(findAdjacentPhotoId(queryClient, { activity_id: 1, sort_by: 'hot' }, 102, 1)).toBe(103)
@@ -82,13 +79,10 @@ describe('findAdjacentPhotoId', () => {
       { id: 202, title: 'Photo 202' },
     ] as PhotoCardVM[]
 
-    queryClient.setQueryData(
-      [...qk.photo.list({ sort_by: 'created_at' }), false],
-      {
-        pages: [{ list: mockPhotos, total: 2 }],
-        pageParams: [1],
-      },
-    )
+    queryClient.setQueryData([...qk.photo.list({ sort_by: 'created_at' }), false], {
+      pages: [{ list: mockPhotos, total: 2 }],
+      pageParams: [1],
+    })
 
     // 传入未完全吻合的 params 或 null，依然能够从现有 photo 缓存中定位相邻题
     expect(findAdjacentPhotoId(queryClient, { keyword: 'unknown' }, 201, 1)).toBe(202)
