@@ -26,14 +26,19 @@ function getTaskWeight(script) {
 }
 
 function getCapacity() {
-  if (process.env.CHECK_CAPACITY) {
-    return Number.parseInt(process.env.CHECK_CAPACITY, 10) || 4
+  if (process.env.CHECK_CAPACITY !== undefined) {
+    const parsed = Number.parseInt(process.env.CHECK_CAPACITY, 10)
+    if (Number.isInteger(parsed) && parsed > 0) {
+      return parsed
+    }
+    console.warn(
+      `[warn] ⚠️ CHECK_CAPACITY="${process.env.CHECK_CAPACITY}" 为非法值（须为正整数），已自动回落为默认值 4`,
+    )
   }
-  const totalMemGb = os.totalmem() / (1024 * 1024 * 1024)
-  if (totalMemGb < 4) {
-    return 2 // 针对超小内存沙箱降级为 2
-  }
-  return 4
+  const GB = 1024 ** 3
+  // 结合「可用内存」与总内存进行安全评估（freemem * 1.5 留出页缓存可回收余量）
+  const usableGb = Math.min(os.totalmem(), os.freemem() * 1.5) / GB
+  return usableGb < 4 ? 2 : 4
 }
 
 const scripts = process.argv.slice(2)
@@ -55,13 +60,19 @@ function stopAllProcesses() {
   for (const [child, info] of activeProcesses.entries()) {
     try {
       console.log(`[abort] 🛑 终止任务: ${info.script}`)
-      child.kill('SIGTERM')
+      if (process.platform === 'win32') {
+        // Windows 没有进程组，用 taskkill /T /F 杀掉整棵子进程树
+        spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+      } else {
+        // POSIX 负号表示发送信号给整个独立进程组，递归清理 pnpm 拉起的孙进程
+        process.kill(-child.pid, 'SIGTERM')
+      }
     } catch {}
   }
 }
 
 process.on('SIGINT', () => {
-  console.log('\n[SIGINT] 用户中断，正在清理子进程...')
+  console.log('\n[SIGINT] 用户中断，正在清理子进程树...')
   stopAllProcesses()
   process.exit(130)
 })
@@ -84,9 +95,11 @@ function runScript(script) {
 
     const child = spawn(pnpm, ['run', script], {
       stdio: 'inherit',
+      // 自成独立进程组，fail-fast / SIGINT 才能连带杀掉 pnpm 拉起的孙进程（如 vue-tsc / vitest）
+      detached: process.platform !== 'win32',
       env: {
         ...process.env,
-        FORCE_COLOR: '1',
+        FORCE_COLOR: process.env.FORCE_COLOR ?? '1',
       },
     })
 
@@ -98,23 +111,26 @@ function runScript(script) {
       console.error(
         `[error] ❌ [${script}] 执行出错 (${formatDuration(duration)}): ${error.message}`,
       )
-      resolve({ script, code: 1, duration, error })
+      resolve({ script, code: 1, duration, error, wasAborted: isAborting })
     })
 
     child.on('close', (code, signal) => {
       activeProcesses.delete(child)
       const duration = Date.now() - startTime
+      const wasAborted = isAborting || signal === 'SIGTERM' || signal === 'SIGINT'
       const isSuccess = code === 0
 
       if (isSuccess) {
         console.log(`[passed] ✅ [${script}] 通过 (${formatDuration(duration)})`)
+      } else if (wasAborted) {
+        console.log(`[aborted] 🛑 [${script}] 已中止 (${formatDuration(duration)})`)
       } else {
         console.error(
           `[failed] ❌ [${script}] 失败 (退出码: ${code ?? signal}, 耗时: ${formatDuration(duration)})`,
         )
       }
 
-      resolve({ script, code: code ?? 1, duration, signal })
+      resolve({ script, code: code ?? (wasAborted ? 143 : 1), duration, signal, wasAborted })
     })
   })
 }
@@ -191,14 +207,24 @@ async function schedule(taskList) {
 }
 
 const allResults = await schedule(scripts)
-const failed = allResults.filter((r) => r.code !== 0)
+const realFailed = allResults.filter((r) => r.code !== 0 && !r.wasAborted)
+const aborted = allResults.filter((r) => r.wasAborted)
 
-if (failed.length > 0) {
-  console.error(`\n❌ 检测到 ${failed.length} 个任务未通过:`)
-  for (const f of failed) {
+if (realFailed.length > 0) {
+  console.error(`\n❌ 检测到 ${realFailed.length} 个任务未通过:`)
+  for (const f of realFailed) {
     console.error(`  - [${f.script}] (${formatDuration(f.duration)})`)
   }
+  if (aborted.length > 0) {
+    console.log(`\n🛑 另有 ${aborted.length} 个任务已被 Fail-Fast 级联中止:`)
+    for (const a of aborted) {
+      console.log(`  - [${a.script}] (${formatDuration(a.duration)})`)
+    }
+  }
   process.exit(1)
+} else if (aborted.length > 0) {
+  console.log('\n🛑 检测任务已中止')
+  process.exit(143)
 } else {
   console.log('\n🎉 所有代码质量与类型/测试检查 100% 全部通过！')
   process.exit(0)

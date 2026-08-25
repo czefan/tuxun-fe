@@ -9,8 +9,11 @@
 提交代码前，请确保本地通过项目的静态与测试校验：
 
 ```bash
-# 运行完整校验
+# 运行完整校验（多任务智能并发）
 pnpm check
+
+# 内存受限/低配环境运行（限制并发预算为 2）
+CHECK_CAPACITY=2 pnpm check
 
 # 单独校验
 pnpm lint:quick       # oxlint 极速自检
