@@ -159,3 +159,20 @@ export function findAdjacentPhotoId(
   }
   return null
 }
+
+/**
+ * 从已缓存的题目列表中查找指定 ID 的题目卡片快照。
+ * 用于详情页首屏或切题时，在详情接口或大图返回前进行零延迟缩略图与骨架占位。
+ */
+export function findCachedPhotoCard(queryClient: QueryClient, id: number): PhotoCardVM | null {
+  if (!id) return null
+  const queries = queryClient.getQueriesData<InfiniteData<{ list: PhotoCardVM[]; total?: number }>>(
+    { queryKey: qk.photo.all() },
+  )
+  for (const [_, data] of queries) {
+    const list: PhotoCardVM[] = data?.pages?.flatMap((p) => p.list ?? []) ?? []
+    const found = list.find((p) => p.id === id)
+    if (found) return found
+  }
+  return null
+}

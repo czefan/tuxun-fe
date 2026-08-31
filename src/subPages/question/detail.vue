@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
+import { useQueryClient } from '@tanstack/vue-query'
 import LikeButton from '@/components/like-button/like-button.vue'
 import PhotoLocationView from '@/components/photo-location-view/photo-location-view.vue'
 import SolveList from '@/features/attempt/components/solve-list.vue'
@@ -8,7 +9,7 @@ import MyAttemptList from '@/features/attempt/components/my-attempt-list.vue'
 import CommentList from '@/features/comment/components/comment-list.vue'
 import CommentInputPopup from '@/features/comment/components/comment-input-popup.vue'
 import { useInfiniteCommentList, usePostComment } from '@/features/comment/query'
-import { usePhotoDetail, useSetPhotoLike } from '@/features/photo/query'
+import { findCachedPhotoCard, usePhotoDetail, useSetPhotoLike } from '@/features/photo/query'
 import { useInfiniteMyAttemptsList, useInfiniteSolvesList } from '@/features/attempt/query'
 import type { MyAttemptVM, SolveRecordVM } from '@/features/attempt/types'
 import { useAuth } from '@/features/user/composables/use-auth'
@@ -64,6 +65,26 @@ const { isLoggedIn, isMe, loginDirectly, requireLogin } = useAuth()
 const { mutate: setLike } = useSetPhotoLike()
 
 const { data: question } = usePhotoDetail(computed(() => questionId.value))
+
+const queryClient = useQueryClient()
+const isOriginLoaded = ref(false)
+
+watch(questionId, () => {
+  isOriginLoaded.value = false
+})
+
+const cachedCard = computed(() => findCachedPhotoCard(queryClient, questionId.value))
+
+const thumbUrl = computed(() => {
+  if (cachedCard.value?.image?.url) {
+    return cachedCard.value.image.url
+  }
+  if (question.value?.image?.url && question.value.image.url !== question.value.image.originUrl) {
+    return question.value.image.url
+  }
+  return null
+})
+
 const { data: commentPagesData } = useInfiniteCommentList(
   computed(() => questionId.value),
   computed(() => ({ sort_by: commentSortBy.value })),
@@ -228,8 +249,26 @@ function goSubmit() {
       <!-- 题目核心卡片 (Single-Layer Card) -->
       <view class="shadow-2xs overflow-hidden border border-tx-border rounded-[18px] bg-white">
         <view class="relative w-full overflow-hidden">
+          <!-- 缩略图占位层：存在有效缩略图且原图未就绪时直接展示（秒级占位） -->
+          <wd-img
+            v-if="thumbUrl && !isOriginLoaded"
+            custom-class="w-full cursor-pointer block overflow-hidden rounded-t-[18px]"
+            :style="{
+              aspectRatio: `${question.image.width} / ${question.image.height}`,
+            }"
+            :src="thumbUrl"
+            lazy-load
+            mode="widthFix"
+            width="100%"
+            @click="handlePreviewImage"
+          />
+
+          <!-- 高清原图层：有缩略图时在后台静默加载，加载完成（@load）后自然覆盖展示；无缩略图时直接展示走默认 loading 占位 -->
           <wd-img
             custom-class="w-full cursor-pointer block overflow-hidden rounded-t-[18px]"
+            :class="[
+              thumbUrl && !isOriginLoaded ? 'absolute inset-0 opacity-0 pointer-events-none' : '',
+            ]"
             :style="{
               'view-transition-name': `photo-cover-${question.id}`,
               aspectRatio: `${question.image.width} / ${question.image.height}`,
@@ -238,6 +277,7 @@ function goSubmit() {
             lazy-load
             mode="widthFix"
             width="100%"
+            @load="isOriginLoaded = true"
             @click="handlePreviewImage"
           />
         </view>

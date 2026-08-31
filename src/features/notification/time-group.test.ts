@@ -22,17 +22,18 @@ describe('groupItemsByTime 时间分组', () => {
     expect(groups.some((g) => g.title === '更早' && g.list.some((i) => i.id === 2))).toBe(true)
   })
 
-  it('相对时间文本（刚刚/今天/昨天）归入本周', () => {
+  it('相对时间文本（刚刚/今天/昨天）归入本周并保持降序', () => {
     const items = [
+      { id: 3, title: '昨天发生', createdAt: '昨天 18:30' },
       { id: 1, title: '刚刚发生', createdAt: '刚刚' },
       { id: 2, title: '今天发生', createdAt: '今天 12:00' },
-      { id: 3, title: '昨天发生', createdAt: '昨天 18:30' },
     ]
 
     const groups = groupItemsByTime(items)
     expect(groups).toHaveLength(1)
     expect(groups[0].title).toBe('本周')
     expect(groups[0].list).toHaveLength(3)
+    expect(groups[0].list[2].id).toBe(3)
   })
 
   it('缺少年份的 "MM-DD HH:mm" 格式不会被误解析为 2001 年导致错判', () => {

@@ -13,7 +13,7 @@ vi.mock('./api', () => ({
   setPhotoLike: vi.fn(async () => ({ liked: true })),
 }))
 
-const { useInfinitePhotoList, findAdjacentPhotoId } = await import('./query')
+const { useInfinitePhotoList, findAdjacentPhotoId, findCachedPhotoCard } = await import('./query')
 
 describe('photo query keys', () => {
   beforeEach(() => {
@@ -92,5 +92,40 @@ describe('findAdjacentPhotoId', () => {
   it('缓存中不存在题目时返回 null', () => {
     const queryClient = new QueryClient()
     expect(findAdjacentPhotoId(queryClient, null, 9999, 1)).toBeNull()
+  })
+})
+
+describe('findCachedPhotoCard', () => {
+  it('从列表缓存中查找并返回指定 ID 的 PhotoCardVM 快照', () => {
+    const queryClient = new QueryClient()
+    const mockCard = {
+      id: 301,
+      title: 'Photo 301',
+      image: {
+        url: 'https://img.example.com/thumb.jpg',
+        originUrl: 'https://img.example.com/origin.jpg',
+        width: 1080,
+        height: 720,
+      },
+      author: { id: 1, nickname: 'Alice', avatar: '' },
+      likesCount: 5,
+      liked: false,
+      solved: true,
+      createdAt: '2026-08-01',
+    } as PhotoCardVM
+
+    queryClient.setQueryData([...qk.photo.list({ sort_by: 'hot' }), true], {
+      pages: [{ list: [mockCard], total: 1 }],
+      pageParams: [1],
+    })
+
+    const found = findCachedPhotoCard(queryClient, 301)
+    expect(found).toEqual(mockCard)
+  })
+
+  it('未命中或 ID 为 0 时返回 null', () => {
+    const queryClient = new QueryClient()
+    expect(findCachedPhotoCard(queryClient, 0)).toBeNull()
+    expect(findCachedPhotoCard(queryClient, 999)).toBeNull()
   })
 })

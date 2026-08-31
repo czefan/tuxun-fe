@@ -23,9 +23,14 @@ export function groupItemsByTime<T extends { createdAt: string; rawCreatedAt?: s
       if (!Number.isNaN(t)) return t
     }
     if (typeof item.createdAt === 'string') {
-      if (item.createdAt.includes('刚刚') || item.createdAt.includes('今天')) return Date.now()
-      if (item.createdAt.includes('昨天')) return Date.now() - 86400000
+      if (item.createdAt.includes('刚刚') || item.createdAt.includes('今天')) {
+        return Date.now()
+      }
+      if (item.createdAt.includes('昨天')) {
+        return Math.max(Date.now() - 86400000, thisWeekStart + 1000)
+      }
     }
+
     const t = new Date(item.createdAt).getTime()
     // 相对字符串 "MM-DD HH:mm" 会被 new Date() 误解析成 2001 年，视为无效，避免分错组
     if (!Number.isNaN(t)) {
