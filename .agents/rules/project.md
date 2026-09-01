@@ -20,6 +20,8 @@ description: High-level agent development rules and guidelines for tuxun-fe.
 5. **SFC 代码块顺序**：Vue SFC 统一必须按 `<script setup>` → `<template>` → `<style>` 顺序组织。
 6. **文件名命名规范**：组件、composable 及普通 TS 模块文件名统一使用 `kebab-case`（例：`photo-card.vue`）。
 7. **修改完成自检**：任何代码修改完成后，必须运行 `pnpm check` 确保类型与 Lint 全绿。
+8. **小程序虚拟宿主节点 (`virtualHost`)**：根节点参与父级 Flex 或百分比高度链 (`h-full`) 的组件，必须配置 `defineOptions({ options: { virtualHost: true } })`。
+9. **小程序插槽高度契约**：不得将带 `h-full` 契约的内容做成 `v-for` 中的具名作用域插槽（小程序端包裹容器会导致高度塌陷）。
 
 ## 3. 规则索引
 

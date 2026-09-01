@@ -72,4 +72,6 @@ export const rules: Rule[] = [
       }
     `,
   ],
+  // 全站通用 1px 细分割底边线 Token（同时输出 width, style 与 rgba 颜色，解决 UnoCSS border 缺少 border-style 导致无法渲染的问题）
+  ['u-divider-b', { 'border-bottom': '1px solid rgba(211, 186, 159, 0.5)' }],
 ]

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import StatusTabSwiper from '@/components/status-tab-swiper/status-tab-swiper.vue'
+import TabHeader from '@/components/tab-header/tab-header.vue'
 import GoodsGridTab from '@/features/mall/components/goods-grid-tab.vue'
 import ExchangeRecordTab from '@/features/mall/components/exchange-record-tab.vue'
 import VerifyCodeQr from '@/features/mall/components/verify-code-qr.vue'
@@ -25,6 +25,7 @@ const userStore = useUserStore()
 const tabOptions = ['积分商城', '兑换记录'] as const
 type TabOption = (typeof tabOptions)[number]
 const activeTab = ref<TabOption>('积分商城')
+const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
 
 const goodsGridRef = ref<InstanceType<typeof GoodsGridTab> | null>(null)
 const exchangeRecordRef = ref<InstanceType<typeof ExchangeRecordTab> | null>(null)
@@ -36,6 +37,7 @@ const setKeyword = debounce((val: string) => {
 }, 300)
 watch(searchKeyword, setKeyword)
 onUnmounted(() => setKeyword.cancel())
+
 const showSearchInput = ref(false)
 
 watch(activeTab, () => {
@@ -43,8 +45,6 @@ watch(activeTab, () => {
   searchKeyword.value = ''
   debouncedKeyword.value = ''
 })
-
-const exchangeMutation = useExchangeGood()
 
 onShow(() => {
   if (activeTab.value === '积分商城') {
@@ -54,10 +54,15 @@ onShow(() => {
   }
 })
 
-const activeRecord = ref<ExchangeRecordVM | null>(null)
-const qrModalVisible = ref(false)
 const activeGood = ref<GoodsVM | null>(null)
 const goodDetailVisible = ref(false)
+const activeRecord = ref<ExchangeRecordVM | null>(null)
+const qrModalVisible = ref(false)
+
+function openGoodDetail(good: GoodsVM) {
+  activeGood.value = good
+  goodDetailVisible.value = true
+}
 
 function handleGoodsUpdated(list: GoodsVM[]) {
   if (activeGood.value) {
@@ -74,10 +79,7 @@ function openQrModal(record: ExchangeRecordVM) {
   qrModalVisible.value = true
 }
 
-function openGoodDetail(good: GoodsVM) {
-  activeGood.value = good
-  goodDetailVisible.value = true
-}
+const exchangeMutation = useExchangeGood()
 
 function handleExchange({ goodId, quantity }: { goodId: number; quantity: number }) {
   if (!requireLogin()) {
@@ -98,68 +100,78 @@ function handleExchange({ goodId, quantity }: { goodId: number; quantity: number
 
 <template>
   <view class="page-mall swiper-page bg-tx-main px-3 pt-3">
-    <StatusTabSwiper v-model="activeTab" :options="tabOptions">
-      <!-- 右侧：仅在积分商城 Tab 显示搜索图标按钮 + 竖向分割线 + 总积分展示 -->
+    <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
+    <TabHeader v-model="activeTab" :options="tabOptions">
       <template #actions="{ active }">
-        <template v-if="active === '积分商城'">
-          <view
-            class="h-7 w-7 flex cursor-pointer items-center justify-center rounded-full transition-all active:scale-90"
-            :class="
-              showSearchInput
-                ? 'bg-tx-brown text-white shadow-2xs'
-                : 'text-tx-ink-2 hover:text-tx-ink'
-            "
-            @tap="showSearchInput = !showSearchInput"
-          >
-            <text class="i-carbon:search text-base" />
+        <view class="flex items-center gap-2.5">
+          <template v-if="active === '积分商城'">
+            <view
+              class="h-7 w-7 flex cursor-pointer items-center justify-center rounded-full transition-all active:scale-90"
+              :class="
+                showSearchInput
+                  ? 'bg-tx-brown text-white shadow-2xs'
+                  : 'text-tx-ink-2 hover:text-tx-ink'
+              "
+              @tap="showSearchInput = !showSearchInput"
+            >
+              <text class="i-carbon-search text-base" />
+            </view>
+            <view class="h-3 w-[1px] bg-tx-border/60" />
+          </template>
+          <view class="flex items-center gap-1">
+            <text class="i-my-icons-points text-base text-tx-brown" />
+            <text class="text-lg text-tx-ink font-bold font-numeric">
+              {{ userStore.userInfo?.points ?? 0 }}
+            </text>
           </view>
-          <view class="h-3 w-[1px] bg-tx-border/60" />
-        </template>
-        <view class="flex items-center gap-1">
-          <text class="i-my-icons-points text-base text-tx-brown" />
-          <text class="text-lg text-tx-ink font-bold font-numeric">
-            {{ userStore.userInfo?.points ?? 0 }}
-          </text>
         </view>
       </template>
+    </TabHeader>
 
-      <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
-      <template #extra>
-        <view
-          v-if="activeTab === '积分商城' && showSearchInput"
-          class="w-full border-b border-tx-border/50 pb-2 pt-2"
-        >
-          <wd-search
-            v-model="searchKeyword"
-            :focus="true"
-            placeholder="搜索商品名称或描述..."
-            hide-cancel
-            custom-class="tx-search"
-            placeholder-left
-            @clear="searchKeyword = ''"
-          />
-        </view>
-      </template>
+    <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
+    <view
+      v-if="activeTab === '积分商城' && showSearchInput"
+      class="w-full border-b border-tx-border/50 pb-2 pt-2"
+    >
+      <wd-search
+        v-model="searchKeyword"
+        :focus="true"
+        placeholder="搜索商品名称或描述..."
+        hide-cancel
+        custom-class="tx-search"
+        placeholder-left
+        @clear="searchKeyword = ''"
+      />
+    </view>
 
-      <!-- 面板 1：积分商城商品网格；面板 2：兑换记录列表 -->
-      <template #panel="{ option, active }">
+    <!-- 支持左右平滑连贯拖拽滑屏的 Swiper 容器 -->
+    <swiper
+      class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
+      :current="currentTabIndex"
+      :duration="300"
+      @change="(e: any) => (activeTab = tabOptions[e.detail.current])"
+    >
+      <!-- 面板 1：积分商城商品网格 -->
+      <swiper-item class="box-border">
         <GoodsGridTab
-          v-if="option === '积分商城'"
           ref="goodsGridRef"
           :keyword="debouncedKeyword"
-          :active="active"
+          :active="activeTab === '积分商城'"
           @select-good="openGoodDetail"
           @update:goods="handleGoodsUpdated"
         />
+      </swiper-item>
+
+      <!-- 面板 2：兑换记录列表 -->
+      <swiper-item class="box-border">
         <ExchangeRecordTab
-          v-else-if="option === '兑换记录'"
           ref="exchangeRecordRef"
-          :active="active"
+          :active="activeTab === '兑换记录'"
           @select-record="openQrModal"
           @login="loginDirectly"
         />
-      </template>
-    </StatusTabSwiper>
+      </swiper-item>
+    </swiper>
 
     <!-- 商品详情与兑换弹窗 -->
     <GoodDetailPopup

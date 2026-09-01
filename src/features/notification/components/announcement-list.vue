@@ -5,6 +5,12 @@ import { groupItemsByTime } from '../time-group'
 import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { formatRelativeTime } from '@/utils/date'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = defineProps<{
   items: AnnouncementVM[]
   loading?: boolean

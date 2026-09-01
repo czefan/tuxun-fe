@@ -8,6 +8,12 @@ import { useAuth } from '@/composables/use-auth'
 import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
 import { AppRoute, withQuery } from '@/router/routes'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = defineProps<{
   status?: 'pending' | 'solved' | 'unsolved'
   active: boolean

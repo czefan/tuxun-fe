@@ -165,14 +165,14 @@ function goSubmit() {
       :style="undoBannerStyle"
     >
       <view class="flex items-center gap-2 font-medium">
-        <text class="i-carbon:information text-base text-tx-brown" />
+        <text class="i-carbon-information text-base text-tx-brown" />
         <text>已为您切至下一题</text>
       </view>
       <view
         class="shadow-2xs flex cursor-pointer items-center gap-1.5 rounded-lg bg-tx-accent px-3 py-2 text-xs text-tx-ink font-bold transition-transform active:scale-95"
         @tap.stop="switchQuestion(-1)"
       >
-        <text class="i-carbon:undo text-sm" />
+        <text class="i-carbon-undo text-sm" />
         <text>撤销 / 上一题</text>
       </view>
     </view>
@@ -217,7 +217,7 @@ function goSubmit() {
         <view
           class="h-6 w-6 flex items-center justify-center rounded-full bg-tx-brown/20 text-tx-brown"
         >
-          <text class="i-carbon:arrow-up animate-bounce text-xs font-bold" />
+          <text class="i-carbon-arrow-up animate-bounce text-xs font-bold" />
         </view>
         <text class="text-xs font-bold">向上滑动或点击查看下一个题目</text>
       </view>

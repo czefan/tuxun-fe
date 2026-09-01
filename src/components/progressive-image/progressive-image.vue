@@ -24,6 +24,12 @@ interface Props {
   viewTransitionName?: string
 }
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = withDefaults(defineProps<Props>(), {
   image: () => ({ url: '', originUrl: '', width: 800, height: 600 }),
   thumbUrl: null,
@@ -107,7 +113,7 @@ const aspectRatioStyle = computed(() => {
       v-if="!isOriginLoaded && !effectiveThumbUrl"
       class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 text-tx-brown/40"
     >
-      <text class="i-carbon:image text-4xl opacity-50" />
+      <text class="i-carbon-image text-4xl opacity-50" />
     </view>
 
     <!-- 默认插槽：供父组件覆盖悬浮胶囊、角标、操作按钮等 -->

@@ -10,6 +10,12 @@ interface Props {
   active?: boolean
 }
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = withDefaults(defineProps<Props>(), {
   active: true,
 })
@@ -151,7 +157,7 @@ defineExpose({
                 v-if="item.status === 'pending'"
                 class="flex items-center justify-center text-tx-brown transition-transform active:scale-90"
               >
-                <text class="i-carbon:qr-code text-2xl" />
+                <text class="i-carbon-qr-code text-2xl" />
               </view>
               <wd-tag
                 :type="RECORD_STATUS_MAP[item.status]?.type || 'default'"

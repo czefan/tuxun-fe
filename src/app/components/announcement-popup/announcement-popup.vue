@@ -93,7 +93,7 @@ function handleViewNotice() {
           @tap="hasRelated ? handleViewNotice() : handleClose()"
         >
           <text>{{ hasRelated ? '查看通知' : '关闭' }}</text>
-          <text v-if="hasRelated" class="i-carbon:arrow-right text-xs" />
+          <text v-if="hasRelated" class="i-carbon-arrow-right text-xs" />
         </view>
       </view>
     </view>

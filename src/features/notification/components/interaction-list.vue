@@ -6,6 +6,12 @@ import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { useAuth } from '@/composables/use-auth'
 import { formatRelativeTime } from '@/utils/date'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = defineProps<{
   items: InteractionMessageVM[]
   loading?: boolean

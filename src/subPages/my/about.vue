@@ -13,7 +13,7 @@ definePage({
       <view
         class="mx-auto h-20 w-20 flex items-center justify-center rounded-3xl bg-tx-brown text-white shadow-sm ring-4 ring-tx-accent/50"
       >
-        <text class="i-carbon:location text-4xl text-tx-accent font-extrabold" />
+        <text class="i-carbon-location text-4xl text-tx-accent font-extrabold" />
       </view>
       <view>
         <text class="block text-2xl text-tx-ink font-black tracking-tight">图寻 TuXun</text>

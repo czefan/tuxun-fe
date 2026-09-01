@@ -1,10 +1,10 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import StatusTabSwiper from './status-tab-swiper.vue'
+import TabHeader from './tab-header.vue'
 
-describe('status-tab-swiper 组件', () => {
+describe('tab-header 组件', () => {
   it('正确渲染选项并响应 Tab 点击切换', async () => {
-    const wrapper = mount(StatusTabSwiper, {
+    const wrapper = mount(TabHeader, {
       props: {
         modelValue: '全部',
         options: ['全部', '进行中', '已结束'] as const,
@@ -21,8 +21,8 @@ describe('status-tab-swiper 组件', () => {
     expect(wrapper.emitted('tab-click')?.[0]).toEqual(['进行中'])
   })
 
-  it('支持自定义 #label, #actions 与 #extra 插槽渲染', () => {
-    const wrapper = mount(StatusTabSwiper, {
+  it('支持自定义 #label 与 #actions 插槽渲染', () => {
+    const wrapper = mount(TabHeader, {
       props: {
         modelValue: '通知',
         options: ['通知', '互动'] as const,
@@ -30,13 +30,11 @@ describe('status-tab-swiper 组件', () => {
       slots: {
         label: `<template #label="{ option, active }"><span class="custom-label">{{ option }}-{{ active }}</span></template>`,
         actions: `<div class="test-actions">操作区</div>`,
-        extra: `<div class="test-extra">搜索栏</div>`,
       },
     })
 
     expect(wrapper.find('.custom-label').exists()).toBe(true)
     expect(wrapper.text()).toContain('通知-true')
     expect(wrapper.find('.test-actions').text()).toBe('操作区')
-    expect(wrapper.find('.test-extra').text()).toBe('搜索栏')
   })
 })

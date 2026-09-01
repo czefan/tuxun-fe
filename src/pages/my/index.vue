@@ -103,7 +103,7 @@ function navigateTo(url: string) {
               <view
                 class="shadow-xs absolute h-5 w-5 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink ring-1 ring-white -bottom-0.5 -right-0.5"
               >
-                <text class="i-carbon:camera text-3xs font-black" />
+                <text class="i-carbon-camera text-3xs font-black" />
               </view>
             </view>
 

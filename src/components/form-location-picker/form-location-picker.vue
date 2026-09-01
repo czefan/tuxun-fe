@@ -9,6 +9,12 @@ interface Props {
   selectedText?: string
 }
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = withDefaults(defineProps<Props>(), {
   address: '',
   selectedText: '已选择地点',
@@ -243,7 +249,7 @@ defineExpose({ locate: locate_, chooseLocation: chooseLocation_, isSubmittable }
       <view
         class="pointer-events-none absolute left-1/2 top-1/2 z-10 transform -translate-x-1/2 -translate-y-full"
       >
-        <text class="i-carbon:location-filled block text-[24px] text-rose-500 drop-shadow-md" />
+        <text class="i-carbon-location-filled block text-[24px] text-rose-500 drop-shadow-md" />
       </view>
 
       <!-- 左下角叉号按钮：重置 -->

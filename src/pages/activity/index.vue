@@ -89,8 +89,8 @@ function handleModalGoActivity() {
   <view class="page-activity safe-bottom-page--fixed-bar bg-tx-main">
     <!-- 顶部固定吸顶搜索栏（自动适配 H5 导航栏 top: var(--window-top, 0px)，带浅色下分割线） -->
     <view
-      class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5"
-      :style="[{ borderBottom: '1px solid rgba(211, 186, 159, 0.5)' }, stickyTopStyle]"
+      class="sticky z-20 box-border w-full bg-tx-main px-1.5 py-1.5 u-divider-b"
+      :style="stickyTopStyle"
     >
       <view class="flex items-center gap-2">
         <view class="min-w-0 flex-1">
@@ -113,7 +113,7 @@ function handleModalGoActivity() {
           @tap="filterVisible = !filterVisible"
         >
           <text
-            class="i-carbon:filter text-base"
+            class="i-carbon-filter text-base"
             :class="filterVisible ? 'text-white' : 'text-tx-brown'"
           />
         </view>

@@ -7,6 +7,12 @@ import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { useAuth } from '@/composables/use-auth'
 import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = defineProps<{
   status?: 'pending' | 'approved' | 'rejected'
   active: boolean

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import StatusTabSwiper from '@/components/status-tab-swiper/status-tab-swiper.vue'
+import TabHeader from '@/components/tab-header/tab-header.vue'
 import { useContent } from '@/features/content/query'
 import { useUserStore } from '@/features/user'
 import { useAuth } from '@/features/user/composables/use-auth'
@@ -22,6 +22,7 @@ const { isLoggedIn, loginDirectly } = useAuth()
 const tabOptions = ['积分明细', '积分规则'] as const
 type TabOption = (typeof tabOptions)[number]
 const activeTab = ref<TabOption>('积分明细')
+const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
 const userStore = useUserStore()
 
 const { data: rulesData } = useContent('score_rules')
@@ -63,36 +64,46 @@ function handleLogTap(item: ScoreLogVM) {
 
 <template>
   <view class="page-points swiper-page bg-tx-main px-3 pt-3">
-    <StatusTabSwiper v-model="activeTab" :options="tabOptions">
-      <!-- 右侧总积分与收入支出 (仅占 Tab 这一行，左侧附带积分图标，简短文字说明只含“收入”“支出”) -->
+    <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
+    <TabHeader v-model="activeTab" :options="tabOptions">
+      <!-- 右侧总积分与收入支出 -->
       <template #actions>
-        <view class="flex items-center gap-1">
-          <text class="i-my-icons-points text-lg text-tx-brown" />
-          <text class="text-xl text-tx-ink font-bold leading-none font-numeric">
-            {{ isLoggedIn() ? (userStore.userInfo?.points ?? 0) : '--' }}
-          </text>
-        </view>
-
-        <view class="flex flex-col justify-center gap-0.5 text-[10px] leading-tight">
-          <view class="flex items-center gap-0.5 text-tx-ink-2">
-            <text>收入</text>
-            <text class="text-tx-brown font-bold font-numeric">
-              {{ isLoggedIn() ? `+${totalIncome}` : '--' }}
+        <view class="flex items-center gap-2">
+          <view class="flex items-center gap-1">
+            <text class="i-my-icons-points text-lg text-tx-brown" />
+            <text class="text-xl text-tx-ink font-bold leading-none font-numeric">
+              {{ isLoggedIn() ? (userStore.userInfo?.points ?? 0) : '--' }}
             </text>
           </view>
-          <view class="flex items-center gap-0.5 text-tx-ink-2">
-            <text>支出</text>
-            <text class="text-tx-ink font-bold font-numeric">
-              {{ isLoggedIn() ? `-${totalExpense}` : '--' }}
-            </text>
+
+          <view class="flex flex-col justify-center gap-0.5 text-[10px] leading-tight">
+            <view class="flex items-center gap-0.5 text-tx-ink-2">
+              <text>收入</text>
+              <text class="text-tx-brown font-bold font-numeric">
+                {{ isLoggedIn() ? `+${totalIncome}` : '--' }}
+              </text>
+            </view>
+            <view class="flex items-center gap-0.5 text-tx-ink-2">
+              <text>支出</text>
+              <text class="text-tx-ink font-bold font-numeric">
+                {{ isLoggedIn() ? `-${totalExpense}` : '--' }}
+              </text>
+            </view>
           </view>
         </view>
       </template>
+    </TabHeader>
 
-      <!-- 面板 1：积分明细；面板 2：积分规则 -->
-      <template #panel="{ option }">
+    <!-- 支持左右平滑连贯拖拽滑屏的 Swiper 容器 -->
+    <swiper
+      class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
+      :current="currentTabIndex"
+      :duration="300"
+      @change="(e) => (activeTab = tabOptions[e.detail.current])"
+    >
+      <!-- 滑块 1：积分明细 -->
+      <swiper-item class="box-border">
         <scroll-view
-          v-if="option === '积分明细'"
           scroll-y
           :show-scrollbar="false"
           class="hide-scrollbar box-border h-full w-full"
@@ -158,10 +169,11 @@ function handleLogTap(item: ScoreLogVM) {
             </view>
           </ListStateView>
         </scroll-view>
+      </swiper-item>
 
-        <!-- 滑块 2：积分规则 -->
+      <!-- 滑块 2：积分规则 -->
+      <swiper-item class="box-border">
         <scroll-view
-          v-else-if="option === '积分规则'"
           scroll-y
           :show-scrollbar="false"
           class="hide-scrollbar box-border h-full w-full"
@@ -175,7 +187,7 @@ function handleLogTap(item: ScoreLogVM) {
             </view>
           </view>
         </scroll-view>
-      </template>
-    </StatusTabSwiper>
+      </swiper-item>
+    </swiper>
   </view>
 </template>

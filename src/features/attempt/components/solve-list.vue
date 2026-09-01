@@ -6,6 +6,12 @@ import { useSetSolveLike } from '../query'
 import { useAuth } from '@/composables/use-auth'
 import { previewImage } from '@/utils/image-preview'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = defineProps<{
   list: SolveRecordVM[]
   loading?: boolean

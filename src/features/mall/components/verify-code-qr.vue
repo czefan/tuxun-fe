@@ -140,7 +140,7 @@ function copyCode() {
         class="absolute right-3 top-1/2 h-8 w-8 flex items-center justify-center rounded-lg bg-tx-brown/10 text-tx-brown -translate-y-1/2 active:scale-90"
         @tap.stop="copyCode"
       >
-        <text class="i-carbon:copy text-base" />
+        <text class="i-carbon-copy text-base" />
       </view>
     </view>
   </view>

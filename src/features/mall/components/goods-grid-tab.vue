@@ -10,6 +10,12 @@ interface Props {
   active?: boolean
 }
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = withDefaults(defineProps<Props>(), {
   keyword: '',
   active: true,

@@ -6,6 +6,12 @@ import type { CommentVM } from '../types'
 import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { useAuth } from '@/composables/use-auth'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = withDefaults(
   defineProps<{
     photoId: number
@@ -132,7 +138,7 @@ function confirmDelete(id: number) {
               :class="index === 0 ? 'top-full mt-2' : '-top-12'"
               @tap.stop="handleTriggerDelete(item.id)"
             >
-              <text class="i-carbon:trash-can text-sm text-rose-400" />
+              <text class="i-carbon-trash-can text-sm text-rose-400" />
               <text class="text-sm text-white font-bold">删除评论</text>
               <!-- 指向高亮评论框的小尖角 -->
               <view

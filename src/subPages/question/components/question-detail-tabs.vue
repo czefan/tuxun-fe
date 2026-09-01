@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import SolveList from '@/features/attempt/components/solve-list.vue'
 import MyAttemptList from '@/features/attempt/components/my-attempt-list.vue'
 import CommentList from '@/features/comment/components/comment-list.vue'
+import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { useInfiniteCommentList } from '@/features/comment/query'
 import { useInfiniteMyAttemptsList, useInfiniteSolvesList } from '@/features/attempt/query'
 import type { MyAttemptVM, SolveRecordVM } from '@/features/attempt/types'
@@ -106,10 +107,7 @@ const myAttempts = computed<MyAttemptVM[]>(
     @click="showCommentSortPopover = false"
   >
     <!-- 融入卡片顶部的无缝 Tab 标头：指示线无留白紧贴浅分割线 -->
-    <view
-      class="relative z-30 flex items-center justify-around px-4 pb-0 pt-1"
-      style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
-    >
+    <view class="relative z-30 flex items-center justify-around px-4 pb-0 pt-1 u-divider-b">
       <view
         v-for="tab in [
           { value: 'comments' as const, label: `评论 ${formatCompactCount(commentTotal)}` },
@@ -167,7 +165,7 @@ const myAttempts = computed<MyAttemptVM[]>(
         <text>{{ opt.label }}</text>
         <text
           v-if="commentSortType === opt.key"
-          class="i-carbon:checkmark text-base text-tx-brown font-bold"
+          class="i-carbon-checkmark text-base text-tx-brown font-bold"
         />
       </view>
     </view>
@@ -210,32 +208,26 @@ const myAttempts = computed<MyAttemptVM[]>(
         </scroll-view>
       </swiper-item>
       <swiper-item class="box-border">
-        <view v-if="!isLoggedIn()" class="h-full flex flex-col items-center justify-center -mt-6">
-          <wd-empty icon="no-result" tip="登录后查看我的作答" />
-          <wd-button
-            size="small"
-            round
-            type="warning"
-            custom-class="!mt-4 !font-bold shadow-md"
-            @click="loginDirectly"
-          >
-            去登录
-          </wd-button>
-        </view>
-        <scroll-view
-          v-else
-          scroll-y
-          :show-scrollbar="false"
-          class="hide-scrollbar box-border h-full w-full"
+        <ListStateView
+          :needs-login="!isLoggedIn()"
+          login-tip="登录后查看我的作答"
+          center-class="h-full flex flex-col items-center justify-center -mt-6"
+          @login="loginDirectly"
         >
-          <MyAttemptList
-            :list="myAttempts"
-            :loading="isMyAttemptsLoading"
-            :has-next-page="hasNextMyAttempts"
-            :is-fetching-next-page="isFetchingMyAttempts"
-            @load-more="fetchNextMyAttempts"
-          />
-        </scroll-view>
+          <scroll-view
+            scroll-y
+            :show-scrollbar="false"
+            class="hide-scrollbar box-border h-full w-full"
+          >
+            <MyAttemptList
+              :list="myAttempts"
+              :loading="isMyAttemptsLoading"
+              :has-next-page="hasNextMyAttempts"
+              :is-fetching-next-page="isFetchingMyAttempts"
+              @load-more="fetchNextMyAttempts"
+            />
+          </scroll-view>
+        </ListStateView>
       </swiper-item>
     </swiper>
   </view>

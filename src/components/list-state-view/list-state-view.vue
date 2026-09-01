@@ -15,6 +15,17 @@ interface Props {
   centerClass?: string
 }
 
+/**
+ * 列表四态统一视图（未登录、加载、失败、空态）
+ * 注意：本组件模板为多根分支渲染，微信小程序端无法向内部根节点合并 virtualHostClass，
+ * 外部使用时请通过 `center-class` 传递自定义定位/居中样式，勿直接传 `class`。
+ */
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = withDefaults(defineProps<Props>(), {
   needsLogin: false,
   loading: false,

@@ -253,7 +253,7 @@ const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void }
                     '点击选择活动'
                   }}
                 </text>
-                <text class="i-carbon:chevron-down text-tx-brown" />
+                <text class="i-carbon-chevron-down text-tx-brown" />
               </view>
             </picker>
           </view>
@@ -317,7 +317,7 @@ const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void }
             <view
               class="shadow-2xs h-12 w-12 flex items-center justify-center rounded-full bg-tx-accent text-tx-ink"
             >
-              <text class="i-carbon:cloud-upload text-2xl font-black" />
+              <text class="i-carbon-cloud-upload text-2xl font-black" />
             </view>
             <text class="block text-sm text-tx-ink font-black"> 点击选择 或 拖拽上传图片 </text>
             <text class="block text-xs text-tx-ink-2 font-bold"> 支持 JPG / PNG </text>
@@ -327,7 +327,7 @@ const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void }
             v-if="form.filePath"
             class="shadow-xs absolute right-3.5 top-3.5 z-1 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-white backdrop-blur-md"
           >
-            <text class="i-carbon:renew text-xs" />
+            <text class="i-carbon-renew text-xs" />
             <text class="text-xs font-bold">重新选择</text>
           </view>
         </view>
@@ -350,7 +350,7 @@ const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void }
               class="flex cursor-pointer items-center gap-1 text-sm text-tx-brown font-bold transition-opacity active:opacity-70"
               @click="locationPickerRef?.locate()"
             >
-              <text class="i-carbon:location text-sm text-tx-brown" />
+              <text class="i-carbon-location text-sm text-tx-brown" />
               <text>定位</text>
             </view>
             <!-- #ifndef H5 -->
@@ -359,7 +359,7 @@ const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void }
               class="flex cursor-pointer items-center gap-1 text-sm text-tx-ink-2 font-medium transition-opacity active:opacity-70"
               @click="locationPickerRef?.chooseLocation()"
             >
-              <text class="i-carbon:map text-sm text-tx-ink-2" />
+              <text class="i-carbon-map text-sm text-tx-ink-2" />
               <text>全屏</text>
             </view>
             <!-- #endif -->

@@ -324,7 +324,7 @@ function handleSubmit() {
             class="h-28 w-28 flex flex-col cursor-pointer items-center justify-center border-2 border-tx-border rounded-2xl border-dashed bg-tx-surface text-tx-ink-2 transition-all active:scale-95"
             @tap="chooseMedia"
           >
-            <text class="i-carbon:camera mb-1 text-2xl text-tx-brown" />
+            <text class="i-carbon-camera mb-1 text-2xl text-tx-brown" />
             <text class="text-xs text-tx-ink font-bold">上传图片/视频</text>
           </view>
         </view>

@@ -14,6 +14,12 @@ interface Props {
   fontSize?: string
 }
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 const props = withDefaults(defineProps<Props>(), {
   liked: false,
   size: 'sm',

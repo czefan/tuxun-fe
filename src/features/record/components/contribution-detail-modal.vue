@@ -110,7 +110,7 @@ function handleOpenLocation() {
             class="absolute bottom-2.5 right-2.5 z-10 flex cursor-pointer items-center gap-1.5 border border-white/20 rounded-full bg-black/50 px-3 py-1 text-xs text-white font-bold shadow-md backdrop-blur-md transition-transform active:scale-95"
             @click.stop="handleOpenLocation"
           >
-            <text class="i-carbon:location text-sm text-tx-accent" />
+            <text class="i-carbon-location text-sm text-tx-accent" />
             <text>查看位置</text>
           </view>
         </ProgressiveImage>

@@ -186,7 +186,7 @@ function handleClose() {
           "
           @tap="!loading && text.trim() && emit('submit')"
         >
-          <text v-if="loading" class="i-carbon:circle-dash mr-1 animate-spin text-xs" />
+          <text v-if="loading" class="i-carbon-circle-dash mr-1 animate-spin text-xs" />
           <text>发送</text>
         </view>
       </view>

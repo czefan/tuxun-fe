@@ -100,4 +100,32 @@ describe('list-state-view 组件与状态优先级守卫', () => {
     )
     expect(wrapper.find('.default-content').exists()).toBe(false)
   })
+
+  it('支持默认与自定义 #empty 插槽渲染', () => {
+    const defaultWrapper = mount(ListStateView, {
+      props: { empty: true, emptyTip: '暂无任何数据' },
+    })
+    expect(defaultWrapper.html()).toContain('tip="暂无任何数据"')
+
+    const customWrapper = mount(ListStateView, {
+      props: { empty: true },
+      slots: { empty: '<div class="custom-empty">自定义空列表</div>' },
+    })
+    expect(customWrapper.find('.custom-empty').exists()).toBe(true)
+    expect(customWrapper.text()).toContain('自定义空列表')
+  })
+
+  it('支持默认与自定义 #error 插槽渲染', () => {
+    const defaultWrapper = mount(ListStateView, {
+      props: { error: true, errorTip: '网络请求异常' },
+    })
+    expect(defaultWrapper.html()).toContain('tip="网络请求异常"')
+
+    const customWrapper = mount(ListStateView, {
+      props: { error: true },
+      slots: { error: '<div class="custom-error">自定义错误组件</div>' },
+    })
+    expect(customWrapper.find('.custom-error').exists()).toBe(true)
+    expect(customWrapper.text()).toContain('自定义错误组件')
+  })
 })

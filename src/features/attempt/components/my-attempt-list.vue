@@ -5,6 +5,12 @@ import { previewImage } from '@/utils/image-preview'
 import type { MyAttemptVM } from '../types'
 import type { Location } from '@/service/contract/types'
 
+defineOptions({
+  options: {
+    virtualHost: true,
+  },
+})
+
 defineProps<{
   list: MyAttemptVM[]
   loading?: boolean
@@ -81,7 +87,7 @@ function handleOpenLocation(location?: Location | null) {
                     class="flex u-action-link items-center gap-1 transition-opacity active:opacity-70"
                     @click="handleOpenLocation(item.location)"
                   >
-                    <text class="i-carbon:location text-sm text-tx-brown" />
+                    <text class="i-carbon-location text-sm text-tx-brown" />
                     <text>查看位置</text>
                   </view>
                 </view>

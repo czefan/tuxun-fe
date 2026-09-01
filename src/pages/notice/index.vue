@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import StatusTabSwiper from '@/components/status-tab-swiper/status-tab-swiper.vue'
+import TabHeader from '@/components/tab-header/tab-header.vue'
 import AnnouncementList from '@/features/notification/components/announcement-list.vue'
 import InteractionList from '@/features/notification/components/interaction-list.vue'
 import {
@@ -156,6 +156,8 @@ const unreadMap = computed<Record<TabOption, number>>(() => ({
   互动消息: unreadInteractCount.value,
 }))
 
+const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
+
 function goAnnouncementDetail(id: number) {
   markAnnouncementRead(id)
   uni.navigateTo({ url: withQuery(AppRoute.NoticeDetail, { id }) })
@@ -164,8 +166,8 @@ function goAnnouncementDetail(id: number) {
 
 <template>
   <view class="page-notice swiper-page bg-tx-main px-3 pt-3">
-    <StatusTabSwiper v-model="activeTab" :options="tabOptions">
-      <!-- 自定义标签：支持数据驱动红点徽标 -->
+    <!-- 融入页面的顶栏 Seamless Sub Tabs 导航 -->
+    <TabHeader v-model="activeTab" :options="tabOptions">
       <template #label="{ option }">
         <view class="flex items-center gap-1.5">
           <text>{{ option }}</text>
@@ -185,7 +187,7 @@ function goAnnouncementDetail(id: number) {
           "
           @tap="showSearchInput = !showSearchInput"
         >
-          <text class="i-carbon:search text-base" />
+          <text class="i-carbon-search text-base" />
         </view>
         <template v-if="active === '互动消息' && unreadInteractCount">
           <view
@@ -196,29 +198,34 @@ function goAnnouncementDetail(id: number) {
           </view>
         </template>
       </template>
+    </TabHeader>
 
-      <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
-      <template #extra>
-        <view
-          v-if="activeTab === '系统通知' && showSearchInput"
-          class="w-full border-b border-tx-border/50 pb-2 pt-2"
-        >
-          <wd-search
-            v-model="searchKeyword"
-            :focus="true"
-            placeholder="搜索标题或正文..."
-            hide-cancel
-            custom-class="tx-search"
-            placeholder-left
-            @clear="searchKeyword = ''"
-          />
-        </view>
-      </template>
+    <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
+    <view
+      v-if="activeTab === '系统通知' && showSearchInput"
+      class="w-full border-b border-tx-border/50 pb-2 pt-2"
+    >
+      <wd-search
+        v-model="searchKeyword"
+        :focus="true"
+        placeholder="搜索标题或正文..."
+        hide-cancel
+        custom-class="tx-search"
+        placeholder-left
+        @clear="searchKeyword = ''"
+      />
+    </view>
 
-      <!-- 面板 1：系统通知；面板 2：互动消息 -->
-      <template #panel="{ option }">
+    <!-- 可左右手势滑动的 Swiper 容器 (全屏物理宽度，零裁剪) -->
+    <swiper
+      class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
+      :current="currentTabIndex"
+      :duration="300"
+      @change="(e) => (activeTab = tabOptions[e.detail.current])"
+    >
+      <!-- 滑块 1：系统通知 -->
+      <swiper-item class="box-border">
         <AnnouncementList
-          v-if="option === '系统通知'"
           :items="announcements"
           :loading="announceLoading"
           :error="announceError"
@@ -230,8 +237,11 @@ function goAnnouncementDetail(id: number) {
           @load-more="fetchNextAnnounce"
           @select="goAnnouncementDetail"
         />
+      </swiper-item>
+
+      <!-- 滑块 2：互动消息 -->
+      <swiper-item class="box-border">
         <InteractionList
-          v-else-if="option === '互动消息'"
           :items="interactions"
           :loading="interactLoading"
           :error="interactError"
@@ -242,7 +252,7 @@ function goAnnouncementDetail(id: number) {
           @load-more="fetchNextInteract"
           @select="handleInteractionTap"
         />
-      </template>
-    </StatusTabSwiper>
+      </swiper-item>
+    </swiper>
   </view>
 </template>

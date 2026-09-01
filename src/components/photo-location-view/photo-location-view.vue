@@ -65,7 +65,7 @@ function openFullScreenMap() {
         @click="openFullScreenMap"
       >
         <text>全屏查看</text>
-        <text class="i-carbon:chevron-right text-xs text-tx-brown" />
+        <text class="i-carbon-chevron-right text-xs text-tx-brown" />
       </view>
     </view>
 
@@ -87,11 +87,11 @@ function openFullScreenMap() {
         <text class="text-xs text-tx-ink-2 font-bold">点击打开地图查看位置</text>
       </view>
 
-      <!-- 答案中心定位针：与选点卡片完全一致的实心填充图标 i-carbon:location-filled -->
+      <!-- 答案中心定位针：与选点卡片完全一致的实心填充图标 i-carbon-location-filled -->
       <view
         class="pointer-events-none absolute left-1/2 top-1/2 z-10 transform -translate-x-1/2 -translate-y-full"
       >
-        <text class="i-carbon:location-filled block text-[24px] text-rose-500 drop-shadow-md" />
+        <text class="i-carbon-location-filled block text-[24px] text-rose-500 drop-shadow-md" />
       </view>
     </view>
   </view>
