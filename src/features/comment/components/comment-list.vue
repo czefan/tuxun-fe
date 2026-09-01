@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import LikeButton from '@/components/like-button/like-button.vue'
 import { useDeleteComment, useInfiniteCommentList, useSetCommentLike } from '../query'
 import type { CommentVM } from '../types'
+import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { useAuth } from '@/composables/use-auth'
-import { TX_BG_BROWN } from '@/styles/constants'
 
 const props = withDefaults(
   defineProps<{
@@ -104,104 +104,100 @@ function confirmDelete(id: number) {
       class="hide-scrollbar box-border min-h-0 w-full flex-1 pt-0"
       @tap="activeMenuCommentId = null"
     >
-      <view
-        v-if="isLoading"
-        class="h-full min-h-[45vh] flex flex-col items-center justify-center -mt-4"
+      <ListStateView
+        :loading="isLoading"
+        :error="isError"
+        :empty="!commentsList.length"
+        empty-tip="暂无评论，快来抢沙发吧！"
+        loading-variant="spinner"
+        center-class="h-full min-h-[45vh] flex flex-col items-center justify-center -mt-4"
+        @retry="refetch"
       >
-        <wd-loading type="circular" :color="TX_BG_BROWN" size="32px" />
-      </view>
-      <view
-        v-else-if="isError"
-        class="h-full min-h-[45vh] flex flex-col items-center justify-center gap-3 -mt-4"
-      >
-        <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-        <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
-      </view>
-      <view v-else-if="commentsList.length" class="px-4 pt-2.5 space-y-3.5">
-        <view
-          v-for="(item, index) in commentsList"
-          :key="item.id"
-          class="relative flex items-start gap-3 border-b border-tx-border/30 rounded-xl px-1.5 pb-3.5 pt-1 transition-colors"
-          :class="
-            activeMenuCommentId === item.id
-              ? 'z-30 bg-[#EFECE6] ring-1 ring-tx-brown/40 shadow-2xs'
-              : 'active:bg-tx-surface'
-          "
-          @longpress.stop="handleLongPress(item)"
-        >
-          <!-- 朋友圈式主流长按 Popover 顶部/底部气泡菜单 (首条评论向下弹避免被 scroll-view 裁剪) -->
+        <view class="px-4 pt-2.5 space-y-3.5">
           <view
-            v-if="activeMenuCommentId === item.id"
-            class="absolute left-1/2 z-40 flex cursor-pointer items-center gap-2 rounded-xl bg-[#2C2C2C] px-4 py-2 text-white shadow-xl -translate-x-1/2 active:scale-95"
-            :class="index === 0 ? 'top-full mt-2' : '-top-12'"
-            @tap.stop="handleTriggerDelete(item.id)"
+            v-for="(item, index) in commentsList"
+            :key="item.id"
+            class="relative flex items-start gap-3 border-b border-tx-border/30 rounded-xl px-1.5 pb-3.5 pt-1 transition-colors"
+            :class="
+              activeMenuCommentId === item.id
+                ? 'z-30 bg-[#EFECE6] ring-1 ring-tx-brown/40 shadow-2xs'
+                : 'active:bg-tx-surface'
+            "
+            @longpress.stop="handleLongPress(item)"
           >
-            <text class="i-carbon:trash-can text-sm text-rose-400" />
-            <text class="text-sm text-white font-bold">删除评论</text>
-            <!-- 指向高亮评论框的小尖角 -->
+            <!-- 朋友圈式主流长按 Popover 顶部/底部气泡菜单 (首条评论向下弹避免被 scroll-view 裁剪) -->
             <view
-              class="absolute left-1/2 h-2.5 w-2.5 rotate-45 bg-[#2C2C2C] -translate-x-1/2"
-              :class="index === 0 ? '-top-1' : '-bottom-1'"
-            />
-          </view>
-
-          <!-- 左侧头像 -->
-          <wd-img
-            custom-class="h-9 w-9 flex-shrink-0 rounded-full bg-slate-100 object-cover ring-1 ring-tx-border"
-            :src="item.author.avatar || '/static/images/default-avatar.png'"
-            lazy-load
-            mode="aspectFill"
-            round
-            width="72rpx"
-            height="72rpx"
-          />
-
-          <!-- 右侧主体：充满全宽 -->
-          <view class="flex-1 space-y-1">
-            <!-- 第一行：评论者昵称（与下文时间字体风格一致），本人增加高亮「我」角标，点赞按钮在右 -->
-            <view class="flex items-center justify-between gap-2">
-              <view class="min-w-0 flex items-center">
-                <text class="truncate u-meta-time !text-tx-ink-3 !font-normal">
-                  {{ item.author.nickname }}
-                </text>
-                <text
-                  v-if="isMe(item.author.id)"
-                  class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
-                >
-                  我
-                </text>
-              </view>
-              <like-button
-                :liked="item.liked"
-                :count="item.likesCount"
-                icon-size="15px"
-                font-size="12px"
-                @click="handleToggleLike(item)"
+              v-if="activeMenuCommentId === item.id"
+              class="absolute left-1/2 z-40 flex cursor-pointer items-center gap-2 rounded-xl bg-[#2C2C2C] px-4 py-2 text-white shadow-xl -translate-x-1/2 active:scale-95"
+              :class="index === 0 ? 'top-full mt-2' : '-top-12'"
+              @tap.stop="handleTriggerDelete(item.id)"
+            >
+              <text class="i-carbon:trash-can text-sm text-rose-400" />
+              <text class="text-sm text-white font-bold">删除评论</text>
+              <!-- 指向高亮评论框的小尖角 -->
+              <view
+                class="absolute left-1/2 h-2.5 w-2.5 rotate-45 bg-[#2C2C2C] -translate-x-1/2"
+                :class="index === 0 ? '-top-1' : '-bottom-1'"
               />
             </view>
-            <!-- 第二行：评论正文（主要内容，醒目高亮） -->
-            <text class="block py-0.5 u-body-main text-tx-ink">{{ item.content }}</text>
-            <!-- 第三行：发布时间（与昵称同风尚浅虚色） -->
-            <text class="block u-meta-time !text-tx-ink-3 !font-normal">{{ item.createdAt }}</text>
-          </view>
-        </view>
 
-        <wd-button
-          v-if="hasNextPage && !isFetchingNextPage"
-          plain
-          round
-          block
-          size="small"
-          custom-class="!font-bold !my-2"
-          @click="fetchNextPage()"
-        >
-          加载更多
-        </wd-button>
-        <wd-loadmore v-else-if="isFetchingNextPage" state="loading" />
-      </view>
-      <view v-else class="h-full flex flex-col items-center justify-center">
-        <wd-empty icon="no-result" tip="暂无评论，快来抢沙发吧！" />
-      </view>
+            <!-- 左侧头像 -->
+            <wd-img
+              custom-class="h-9 w-9 flex-shrink-0 rounded-full bg-slate-100 object-cover ring-1 ring-tx-border"
+              :src="item.author.avatar || '/static/images/default-avatar.png'"
+              lazy-load
+              mode="aspectFill"
+              round
+              width="72rpx"
+              height="72rpx"
+            />
+
+            <!-- 右侧主体：充满全宽 -->
+            <view class="flex-1 space-y-1">
+              <!-- 第一行：评论者昵称（与下文时间字体风格一致），本人增加高亮「我」角标，点赞按钮在右 -->
+              <view class="flex items-center justify-between gap-2">
+                <view class="min-w-0 flex items-center">
+                  <text class="truncate u-meta-time !text-tx-ink-3 !font-normal">
+                    {{ item.author.nickname }}
+                  </text>
+                  <text
+                    v-if="isMe(item.author.id)"
+                    class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
+                  >
+                    我
+                  </text>
+                </view>
+                <like-button
+                  :liked="item.liked"
+                  :count="item.likesCount"
+                  icon-size="15px"
+                  font-size="12px"
+                  @click="handleToggleLike(item)"
+                />
+              </view>
+              <!-- 第二行：评论正文（主要内容，醒目高亮） -->
+              <text class="block py-0.5 u-body-main text-tx-ink">{{ item.content }}</text>
+              <!-- 第三行：发布时间（与昵称同风尚浅虚色） -->
+              <text class="block u-meta-time !text-tx-ink-3 !font-normal">
+                {{ item.createdAt }}
+              </text>
+            </view>
+          </view>
+
+          <wd-button
+            v-if="hasNextPage && !isFetchingNextPage"
+            plain
+            round
+            block
+            size="small"
+            custom-class="!font-bold !my-2"
+            @click="fetchNextPage()"
+          >
+            加载更多
+          </wd-button>
+          <wd-loadmore v-else-if="isFetchingNextPage" state="loading" />
+        </view>
+      </ListStateView>
     </scroll-view>
 
     <!-- 发表评论框（常驻底部：固定在评论区最底端，不随列表滚动，点击唤起抖音风格多行输入弹层） -->

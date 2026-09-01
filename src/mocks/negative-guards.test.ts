@@ -524,14 +524,15 @@ describe('契约变更负向守卫', () => {
     ).toEqual([])
   })
 
-  it('组件库收敛：瀑布流与列表空态必须统一使用 wd-empty', () => {
+  it('组件库收敛：瀑布流与列表空态必须统一使用 ListStateView 或 wd-empty', () => {
     const cardContent = fs.readFileSync(
       path.join(PROJECT_ROOT, 'src/features/photo/components/photo-waterfall.vue'),
       'utf-8',
     )
-    expect(cardContent.includes('<wd-empty'), 'photo-waterfall.vue 必须使用 wd-empty 组件').toBe(
-      true,
-    )
+    expect(
+      cardContent.includes('<ListStateView') || cardContent.includes('<wd-empty'),
+      'photo-waterfall.vue 必须使用 ListStateView 或 wd-empty 组件',
+    ).toBe(true)
     expect(
       cardContent.includes('photo-waterfall__empty'),
       'photo-waterfall.vue 不能保留手写空态类名',
@@ -796,5 +797,63 @@ describe('契约变更负向守卫', () => {
     }
 
     expect(violations, `发现未收敛的主题色硬编码：\n${violations.join('\n')}`).toEqual([])
+  })
+
+  it('shortcuts.ts 里不得有零引用的死 shortcut', () => {
+    const shortcutsPath = path.join(PROJECT_ROOT, 'src/styles/uno/shortcuts.ts')
+    const shortcutsContent = fs.readFileSync(shortcutsPath, 'utf-8')
+    const keyMatches = [...shortcutsContent.matchAll(/'([^']+)'\s*:/g)].map((m) => m[1])
+
+    const files = collectSourceFiles(SRC_ROOT).filter(
+      (f) =>
+        !f.endsWith('shortcuts.ts') &&
+        !f.endsWith('negative-guards.test.ts') &&
+        !f.endsWith('uno/index.ts'),
+    )
+
+    const fileContents = files.map((f) => fs.readFileSync(f, 'utf-8'))
+
+    const deadShortcuts: string[] = []
+    for (const key of keyMatches) {
+      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const pattern = new RegExp(`(?:^|[^a-zA-Z0-9_:-])${escaped}(?:$|[^a-zA-Z0-9_:-])`)
+      const isUsed = fileContents.some((content) => pattern.test(content))
+      if (!isUsed) {
+        deadShortcuts.push(key)
+      }
+    }
+
+    expect(
+      deadShortcuts,
+      `发现未被任何页面或组件引用的死 shortcut，请移除或接入：\n${deadShortcuts.join('\n')}`,
+    ).toEqual([])
+  })
+
+  it('safelist 里不得有零引用的死图标', () => {
+    const unoConfigPath = path.join(PROJECT_ROOT, 'uno.config.ts')
+    const unoConfigContent = fs.readFileSync(unoConfigPath, 'utf-8')
+    const safelistBlock = unoConfigContent.match(/safelist:\s*\[([\s\S]*?)\]/)?.[1] || ''
+    const iconMatches = [...safelistBlock.matchAll(/'([^']+)'/g)].map((m) => m[1])
+
+    expect(iconMatches.length).toBeGreaterThan(0)
+
+    const files = collectSourceFiles(SRC_ROOT).filter((f) => !f.endsWith('negative-guards.test.ts'))
+
+    const fileContents = files.map((f) => fs.readFileSync(f, 'utf-8'))
+
+    const deadIcons: string[] = []
+    for (const icon of iconMatches) {
+      const escaped = icon.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const pattern = new RegExp(`(?:^|[^a-zA-Z0-9_:-])${escaped}(?:$|[^a-zA-Z0-9_:-])`)
+      const isUsed = fileContents.some((content) => pattern.test(content))
+      if (!isUsed) {
+        deadIcons.push(icon)
+      }
+    }
+
+    expect(
+      deadIcons,
+      `发现未被任何配置或源码引用的死 safelist 图标，请从 uno.config.ts 中移除：\n${deadIcons.join('\n')}`,
+    ).toEqual([])
   })
 })

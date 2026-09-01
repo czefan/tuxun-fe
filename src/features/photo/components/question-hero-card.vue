@@ -39,17 +39,7 @@ const isTall = computed(() => {
       custom-class="rounded-t-[18px]"
       :view-transition-name="`photo-cover-${question.id}`"
       @click="emit('preview-image')"
-    >
-      <!-- 方案 B：长图提示（防止核心辨认线索遗漏） -->
-      <view
-        v-if="isTall"
-        class="absolute bottom-2.5 right-2.5 z-10 flex cursor-pointer items-center gap-1 border border-white/20 rounded-full bg-black/50 px-2.5 py-1 text-[11px] text-white/90 font-medium backdrop-blur-md transition-transform active:scale-95"
-        @click.stop="emit('preview-image')"
-      >
-        <text class="i-carbon:fit-to-screen text-xs text-tx-accent" />
-        <text>点击查看完整大图</text>
-      </view>
-    </ProgressiveImage>
+    />
 
     <view class="px-5 pb-5 pt-6 space-y-3.5">
       <text class="block u-title-page leading-snug">{{ question.title }}</text>

@@ -74,30 +74,26 @@ export default defineConfig({
     transformerVariantGroup(),
   ],
   shortcuts: [...shortcuts, ...transitions],
-  // 动态图标需要在这里配置，或者写在vue页面中注释掉
+  // safelist 只放「UnoCSS 静态扫描扫不到」的类名。
+  // 默认扫描管线是 /\.(vue|svelte|[jt]sx|vine.ts|...)/，纯 .ts 不在内，
+  // 所以 tab-bar/config.ts 与 pages/my/menu-groups.ts 里的图标必须在此登记。
+  // 写在 .vue 模板里的 i-carbon:xxx 能被扫到，不要往这里加。
   safelist: [
-    'i-carbon-home',
-    'i-carbon-app',
-    'i-carbon-email',
-    'i-carbon-location',
-    'i-carbon-location-filled',
-    'i-carbon-event',
-    'i-carbon-event-schedule',
-    'i-carbon-calendar',
-    'i-carbon-calendar-heat-map',
+    // 底部导航栏 (src/app/tab-bar/config.ts)
     'i-carbon-flag',
     'i-carbon-flag-filled',
-    'i-carbon-activity',
-    'i-carbon-trophy',
-    'i-carbon-trophy-filled',
-    'i-carbon-fire',
-    'i-carbon-time',
-    'i-carbon-time-filled',
     'i-carbon-notification',
     'i-carbon-notification-filled',
     'i-carbon-user',
     'i-carbon-user-filled',
-    'i-carbon-user-avatar-filled',
+    // 个人中心菜单 (src/pages/my/menu-groups.ts)
+    'i-carbon:camera',
+    'i-carbon:task',
+    'i-carbon:currency-dollar',
+    'i-carbon:store',
+    'i-carbon:help',
+    'i-carbon:chat',
+    'i-carbon:information',
   ],
   rules,
   theme,

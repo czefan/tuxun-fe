@@ -320,9 +320,7 @@ const locationPickerRef = ref<{ locate: () => void; chooseLocation: () => void }
               <text class="i-carbon:cloud-upload text-2xl font-black" />
             </view>
             <text class="block text-sm text-tx-ink font-black"> 点击选择 或 拖拽上传图片 </text>
-            <text class="block text-xs text-tx-ink-2 font-bold">
-              支持 JPG / PNG 原图（建议清晰无遮挡）
-            </text>
+            <text class="block text-xs text-tx-ink-2 font-bold"> 支持 JPG / PNG </text>
           </view>
 
           <view

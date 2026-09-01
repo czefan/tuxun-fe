@@ -106,20 +106,18 @@ async function confirmUpdateAvatar() {
         </wd-tag>
       </view>
 
-      <!-- 头像展示区 -->
-      <view class="flex justify-center py-2">
-        <view class="relative rounded-full p-1 ring-4 ring-tx-accent/40">
-          <wd-img
-            :key="modalAvatarUrl"
-            lazy-load
-            custom-class="h-22 w-22 rounded-full bg-tx-surface object-cover ring-2 ring-tx-accent shadow-sm"
-            :src="modalAvatarUrl"
-            mode="aspectFill"
-            round
-            width="176rpx"
-            height="176rpx"
-          />
-        </view>
+      <!-- 头像预览区：纯粹精致单环与柔和阴影，突显图片内容 -->
+      <view class="flex justify-center py-3">
+        <wd-img
+          :key="modalAvatarUrl"
+          lazy-load
+          custom-class="h-28 w-28 rounded-full bg-tx-surface object-cover ring-2 ring-tx-brown/30 shadow-md"
+          :src="modalAvatarUrl"
+          mode="aspectFill"
+          round
+          width="224rpx"
+          height="224rpx"
+        />
       </view>
 
       <!-- 操作区 -->

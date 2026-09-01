@@ -2,10 +2,10 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import ProgressiveImage from '@/components/progressive-image/progressive-image.vue'
+import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { useAnnouncementDetail } from '@/features/notification/query'
 import { useInfiniteActivityList } from '@/features/activity/query'
 import { previewImage } from '@/utils/image-preview'
-import { TX_BG_BROWN } from '@/styles/constants'
 
 definePage({
   style: {
@@ -32,44 +32,37 @@ onLoad((query) => {
 
 <template>
   <view class="page-notice-detail safe-bottom-page box-border bg-tx-main px-4 pt-6">
-    <!-- 加载中动效：避免首屏白屏 -->
-    <view v-if="loading" class="min-h-[65vh] flex flex-col items-center justify-center -mt-8">
-      <wd-loading type="circular" :color="TX_BG_BROWN" size="36px" />
-    </view>
+    <ListStateView :loading="loading" :empty="!detail" empty-tip="未找到相关通知">
+      <!-- 公告详情：版心居中排版 -->
+      <view class="mx-auto max-w-xl space-y-3">
+        <!-- 标题与时间 / 关联活动 -->
+        <view class="border-b border-tx-brown/40 pb-2.5 space-y-2.5">
+          <text class="block text-2xl text-tx-ink font-extrabold leading-snug tracking-tight">
+            {{ detail?.title }}
+          </text>
+          <text class="block text-sm text-tx-ink-2 font-medium tracking-wide font-numeric">
+            {{ detail?.createdAt }}
+          </text>
+          <!-- 关联活动标签 -->
+          <text v-if="relatedActivity" class="block text-base text-tx-brown font-bold">
+            #{{ relatedActivity.title }}
+          </text>
+        </view>
 
-    <!-- 公告详情：版心居中排版 -->
-    <view v-else-if="detail" class="mx-auto max-w-xl space-y-3">
-      <!-- 标题与时间 / 关联活动 -->
-      <view class="border-b border-tx-brown/40 pb-2.5 space-y-2.5">
-        <text class="block text-2xl text-tx-ink font-extrabold leading-snug tracking-tight">
-          {{ detail.title }}
-        </text>
-        <text class="block text-sm text-tx-ink-2 font-medium tracking-wide font-numeric">
-          {{ detail.createdAt }}
-        </text>
-        <!-- 关联活动标签 -->
-        <text v-if="relatedActivity" class="block text-base text-tx-brown font-bold">
-          #{{ relatedActivity.title }}
-        </text>
+        <!-- 正文内容：rich-text 渲染 HTML 富文本；容器不带字号/颜色 class，避免 H5 端继承污染内容（小程序端原生组件不继承外部样式） -->
+        <view v-if="detail?.content">
+          <rich-text :nodes="detail.content" />
+        </view>
+
+        <!-- 通知配图 (渐进式展示) -->
+        <ProgressiveImage
+          v-if="detail?.image?.originUrl"
+          :image="detail.image"
+          mode="aspectFill"
+          custom-class="mt-2 rounded-2xl shadow-xs"
+          @click="previewImage(detail.image.originUrl)"
+        />
       </view>
-
-      <!-- 正文内容：rich-text 渲染 HTML 富文本；容器不带字号/颜色 class，避免 H5 端继承污染内容（小程序端原生组件不继承外部样式） -->
-      <view>
-        <rich-text :nodes="detail.content" />
-      </view>
-
-      <!-- 通知配图 (渐进式展示) -->
-      <ProgressiveImage
-        v-if="detail.image?.originUrl"
-        :image="detail.image"
-        mode="aspectFill"
-        custom-class="mt-2 rounded-2xl shadow-xs"
-        @click="previewImage(detail.image.originUrl)"
-      />
-    </view>
-
-    <view v-else class="min-h-[65vh] flex flex-col items-center justify-center -mt-8">
-      <wd-empty icon="no-result" tip="未找到相关通知" />
-    </view>
+    </ListStateView>
   </view>
 </template>

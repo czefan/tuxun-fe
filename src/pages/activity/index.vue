@@ -6,6 +6,7 @@ import { useInfiniteActivityList } from '@/features/activity/query'
 import type { ActivityQueryParams, ActivityVM } from '@/features/activity/types'
 import { usePopupTopPadding, useStickyTop } from '@/composables/use-sticky-top'
 import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
+import ListStateView from '@/components/list-state-view/list-state-view.vue'
 import { TX_INK } from '@/styles/constants'
 
 definePage({
@@ -163,94 +164,94 @@ function handleModalGoActivity() {
         </view>
       </wd-popup>
 
-      <!-- 活动卡片列表 -->
-      <view v-if="activities.length" class="space-y-3">
-        <view
-          v-for="item in activities"
-          :key="item.id"
-          class="group shadow-2xs relative cursor-pointer overflow-hidden border border-tx-border rounded-xl bg-white transition-all active:scale-[0.99]"
-          @tap="openDetailModal(item)"
-        >
-          <!-- 图片卡片主视图 -->
-          <view class="relative h-48 w-full overflow-hidden bg-tx-brown/10">
-            <wd-img
-              custom-class="h-full w-full object-cover"
-              lazy-load
-              :src="item.coverImage.url"
-              mode="aspectFill"
-              width="100%"
-              height="100%"
+      <!-- 活动列表状态视图 -->
+      <ListStateView
+        :loading="isLoading"
+        :error="isError"
+        :empty="activities.length === 0"
+        :empty-tip="emptyTip"
+        loading-variant="skeleton"
+        @retry="refetch"
+      >
+        <template #loading>
+          <view class="space-y-3">
+            <wd-skeleton
+              animation="gradient"
+              :row-col="[
+                { width: '100%', height: '192px' },
+                { width: '100%', height: '192px' },
+              ]"
             />
-            <!-- 渐变阴影保护文案透明度 -->
-            <view
-              class="pointer-events-none absolute inset-0 from-black/85 via-black/35 to-transparent bg-gradient-to-t"
-            />
+          </view>
+        </template>
 
-            <!-- 左上角状态徽章 -->
-            <view class="absolute left-3 top-3 z-1">
+        <!-- 活动卡片列表 -->
+        <view class="space-y-3">
+          <view
+            v-for="item in activities"
+            :key="item.id"
+            class="group shadow-2xs relative cursor-pointer overflow-hidden border border-tx-border rounded-xl bg-white transition-all active:scale-[0.99]"
+            @tap="openDetailModal(item)"
+          >
+            <!-- 图片卡片主视图 -->
+            <view class="relative h-48 w-full overflow-hidden bg-tx-brown/10">
+              <wd-img
+                custom-class="h-full w-full object-cover"
+                lazy-load
+                :src="item.coverImage.url"
+                mode="aspectFill"
+                width="100%"
+                height="100%"
+              />
+              <!-- 渐变阴影保护文案透明度 -->
               <view
-                v-if="item.status === 'ongoing'"
-                class="flex items-center gap-1 rounded-full bg-[#4ADE80] px-2.5 py-0.5 text-xs text-[#064E3B] font-bold shadow-sm"
-              >
-                <view class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#047857]" />
-                <text>进行中</text>
-              </view>
-              <view
-                v-else-if="item.status === 'ended'"
-                class="backdrop-blur-xs rounded-full bg-black/50 px-2.5 py-0.5 text-xs text-white/80 font-bold shadow-sm"
-              >
-                <text>已结束</text>
-              </view>
-            </view>
+                class="pointer-events-none absolute inset-0 from-black/85 via-black/35 to-transparent bg-gradient-to-t"
+              />
 
-            <!-- 图片上方浮层：标题（最多一行） + 进入所有题目按钮 -->
-            <view
-              class="absolute bottom-3.5 left-3.5 right-3.5 z-1 flex items-center justify-between gap-2.5"
-            >
-              <text
-                class="min-w-0 flex-1 truncate text-base text-white font-black tracking-tight drop-shadow-sm"
-              >
-                {{ item.title }}
-              </text>
+              <!-- 左上角状态徽章 -->
+              <view class="absolute left-3 top-3 z-1">
+                <view
+                  v-if="item.status === 'ongoing'"
+                  class="flex items-center gap-1 rounded-full bg-[#4ADE80] px-2.5 py-0.5 text-xs text-[#064E3B] font-bold shadow-sm"
+                >
+                  <view class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#047857]" />
+                  <text>进行中</text>
+                </view>
+                <view
+                  v-else-if="item.status === 'ended'"
+                  class="backdrop-blur-xs rounded-full bg-black/50 px-2.5 py-0.5 text-xs text-white/80 font-bold shadow-sm"
+                >
+                  <text>已结束</text>
+                </view>
+              </view>
+
+              <!-- 图片上方浮层：标题（最多一行） + 进入所有题目按钮 -->
               <view
-                class="shadow-xs flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-full bg-tx-accent px-3 py-1.5 text-xs text-tx-ink font-black transition-transform active:scale-95"
-                @tap.stop="goActivity(item)"
+                class="absolute bottom-3.5 left-3.5 right-3.5 z-1 flex items-center justify-between gap-2.5"
               >
-                <text>进入</text>
-                <wd-icon name="arrow-right" size="12px" :color="TX_INK" />
+                <text
+                  class="min-w-0 flex-1 truncate text-base text-white font-black tracking-tight drop-shadow-sm"
+                >
+                  {{ item.title }}
+                </text>
+                <view
+                  class="shadow-xs flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-full bg-tx-accent px-3 py-1.5 text-xs text-tx-ink font-black transition-transform active:scale-95"
+                  @tap.stop="goActivity(item)"
+                >
+                  <text>进入</text>
+                  <wd-icon name="arrow-right" size="12px" :color="TX_INK" />
+                </view>
               </view>
             </view>
           </view>
+
+          <wd-loadmore
+            v-if="isFetchingNextPage"
+            :state="isFetchingNextPage ? 'loading' : undefined"
+            @reload="fetchNextPage"
+          />
         </view>
-
-        <wd-loadmore
-          v-if="isFetchingNextPage"
-          :state="isFetchingNextPage ? 'loading' : undefined"
-          @reload="fetchNextPage"
-        />
-      </view>
-
-      <view v-else-if="isLoading" class="space-y-3">
-        <wd-skeleton
-          animation="gradient"
-          :row-col="[
-            { width: '100%', height: '192px' },
-            { width: '100%', height: '192px' },
-          ]"
-        />
-      </view>
-
-      <view
-        v-else-if="isError"
-        class="min-h-[65vh] flex flex-col items-center justify-center gap-3 -mt-8"
-      >
-        <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-        <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
-      </view>
-
-      <view v-else class="min-h-[65vh] flex flex-col items-center justify-center -mt-8">
-        <wd-empty icon="no-result" :tip="emptyTip" />
-      </view>
+      </ListStateView>
 
       <!-- 点击卡片展示的完整活动详情 Modal -->
       <wd-popup

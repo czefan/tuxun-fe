@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import PhotoCard from './photo-card.vue'
 import type { PhotoCardVM } from '../types'
+import ListStateView from '@/components/list-state-view/list-state-view.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -105,62 +106,61 @@ const splitColumns = computed(() => {
 
 <template>
   <view class="photo-waterfall">
-    <view v-if="list.length > 0" class="photo-waterfall__grid">
-      <view class="photo-waterfall__col">
-        <PhotoCard
-          v-for="item in splitColumns.left"
-          :key="item.id"
-          :item="item"
-          :opening="item.id === props.openingId"
-          @open="emit('open', $event)"
-        />
-      </view>
-      <view class="photo-waterfall__col">
-        <PhotoCard
-          v-for="item in splitColumns.right"
-          :key="item.id"
-          :item="item"
-          :opening="item.id === props.openingId"
-          @open="emit('open', $event)"
-        />
-      </view>
-    </view>
-
-    <!-- 首屏加载骨架屏 -->
-    <view v-else-if="loading" class="photo-waterfall__grid">
-      <view class="photo-waterfall__col space-y-3">
-        <wd-skeleton
-          animation="gradient"
-          :row-col="[
-            { width: '100%', height: '220px' },
-            { width: '100%', height: '180px' },
-          ]"
-        />
-      </view>
-      <view class="photo-waterfall__col space-y-3">
-        <wd-skeleton
-          animation="gradient"
-          :row-col="[
-            { width: '100%', height: '180px' },
-            { width: '100%', height: '220px' },
-          ]"
-        />
-      </view>
-    </view>
-
-    <!-- 失败态视图 -->
-    <view
-      v-else-if="error"
-      class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12"
+    <ListStateView
+      :loading="loading"
+      :error="error"
+      :empty="list.length === 0"
+      :empty-tip="emptyText"
+      loading-variant="skeleton"
+      center-class="min-h-[50vh] flex flex-col items-center justify-center py-12"
+      @retry="emit('retry')"
     >
-      <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
-      <wd-button size="small" plain round @click="emit('retry')"> 重新加载 </wd-button>
-    </view>
+      <!-- 首屏加载骨架屏 -->
+      <template #loading>
+        <view class="photo-waterfall__grid">
+          <view class="photo-waterfall__col space-y-3">
+            <wd-skeleton
+              animation="gradient"
+              :row-col="[
+                { width: '100%', height: '220px' },
+                { width: '100%', height: '180px' },
+              ]"
+            />
+          </view>
+          <view class="photo-waterfall__col space-y-3">
+            <wd-skeleton
+              animation="gradient"
+              :row-col="[
+                { width: '100%', height: '180px' },
+                { width: '100%', height: '220px' },
+              ]"
+            />
+          </view>
+        </view>
+      </template>
 
-    <!-- 空态视图 -->
-    <view v-else class="min-h-[50vh] flex flex-col items-center justify-center py-12">
-      <wd-empty icon="no-result" :tip="emptyText" />
-    </view>
+      <!-- 正常双列瀑布流 -->
+      <view class="photo-waterfall__grid">
+        <view class="photo-waterfall__col">
+          <PhotoCard
+            v-for="item in splitColumns.left"
+            :key="item.id"
+            :item="item"
+            :opening="item.id === props.openingId"
+            @open="emit('open', $event)"
+          />
+        </view>
+        <view class="photo-waterfall__col">
+          <PhotoCard
+            v-for="item in splitColumns.right"
+            :key="item.id"
+            :item="item"
+            :opening="item.id === props.openingId"
+            @open="emit('open', $event)"
+          />
+        </view>
+      </view>
+    </ListStateView>
   </view>
 </template>
 

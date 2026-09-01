@@ -117,7 +117,7 @@ function confirmNickname() {
           :loading="nicknameMutation.isPending.value"
           @click="confirmNickname"
         >
-          保存修改
+          确认修改
         </wd-button>
       </view>
     </view>

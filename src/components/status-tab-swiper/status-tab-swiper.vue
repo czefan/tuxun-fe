@@ -58,8 +58,8 @@ function handleSwiperChange(opt?: T) {
         <view
           v-for="opt in options"
           :key="opt"
-          class="relative cursor-pointer pb-2.5 text-base transition-all active:scale-95"
-          :class="modelValue === opt ? 'text-tx-ink font-black' : 'text-tx-ink-3 font-bold'"
+          class="relative cursor-pointer pb-2.5 transition-all active:scale-95"
+          :class="modelValue === opt ? 'u-tab-active' : 'u-tab-inactive'"
           @tap="handleTabTap(opt)"
         >
           <slot name="label" :option="opt" :active="modelValue === opt">
