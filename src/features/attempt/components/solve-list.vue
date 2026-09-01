@@ -56,7 +56,7 @@ function handlePreviewImage(url: string) {
         <!-- 左侧：破解实拍缩略图（点击放大预览） -->
         <view
           class="h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl bg-tx-surface ring-1 ring-tx-border/60 transition-transform active:scale-95"
-          @click="handlePreviewImage(item.image.originUrl || item.image.url)"
+          @click="handlePreviewImage(item.image.originUrl)"
         >
           <wd-img
             custom-class="h-full w-full object-cover"

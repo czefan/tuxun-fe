@@ -18,8 +18,8 @@ const emit = defineEmits<{
 
 /** 点开看高清原图 */
 function handlePreview(item: MyAttemptVM) {
-  if (item.image?.originUrl || item.image?.url) {
-    previewImage(item.image.originUrl || item.image.url)
+  if (item.image?.originUrl) {
+    previewImage(item.image.originUrl)
   }
 }
 

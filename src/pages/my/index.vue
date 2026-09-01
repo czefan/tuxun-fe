@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { MENU_GROUPS } from './menu-groups'
 import { useUserStore } from '@/features/user'
 import { useAuth } from '@/features/user/composables/use-auth'
-import { useUpdateAvatar, useUpdateNickname, useUserInfo } from '@/features/user/query'
-import { smartCompressImage } from '@/utils/image-compress'
+import { useUserInfo } from '@/features/user/query'
+import EditNicknamePopup from '@/features/user/components/edit-nickname-popup.vue'
+import EditAvatarPopup from '@/features/user/components/edit-avatar-popup.vue'
 import { AppRoute } from '@/router/routes'
 import { clearReturnPath, redirectToLogout } from '@/service/auth/login'
 import { TX_INK } from '@/styles/constants'
@@ -19,81 +21,25 @@ const { isLoggedIn, loginDirectly, logout } = useAuth()
 
 const editNameVisible = ref(false)
 const editAvatarVisible = ref(false)
-const newNickname = ref('')
 
 const { data: profileInfo } = useUserInfo({ silentAuth: true, enabled: () => isLoggedIn() })
-const canSaveNickname = computed(() => {
-  const trimmed = newNickname.value.trim()
-  const current = profileInfo.value?.nickname || userStore.userInfo?.nickname || ''
-  return !!trimmed && trimmed !== current && trimmed.length <= 10
-})
-const nicknameMutation = useUpdateNickname()
-const avatarMutation = useUpdateAvatar()
+
+const currentNickname = computed(
+  () => profileInfo.value?.nickname || userStore.userInfo?.nickname || '',
+)
+const nicknameRemaining = computed(
+  () =>
+    profileInfo.value?.nicknameEditsRemaining ?? userStore.userInfo?.nicknameEditsRemaining ?? 0,
+)
 
 const heroAvatarUrl = computed(() => {
   const url = profileInfo.value?.avatar || userStore.userInfo?.avatar
   return url && url.trim() ? url : '/static/images/default-avatar.png'
 })
 
-const menuGroups = [
-  {
-    title: '活动',
-    items: [
-      {
-        title: '我的投稿',
-        route: AppRoute.MyContributions,
-        icon: 'i-carbon:camera',
-        color: 'bg-amber-500/10 text-amber-600',
-      },
-      {
-        title: '我的答题',
-        route: AppRoute.MyAnswers,
-        icon: 'i-carbon:task',
-        color: 'bg-emerald-500/10 text-emerald-600',
-      },
-    ],
-  },
-  {
-    title: '积分',
-    items: [
-      {
-        title: '积分明细',
-        route: AppRoute.MyPoints,
-        icon: 'i-carbon:currency-dollar',
-        color: 'bg-indigo-500/10 text-indigo-600',
-      },
-      {
-        title: '积分商城',
-        route: AppRoute.Mall,
-        icon: 'i-carbon:store',
-        color: 'bg-purple-500/10 text-purple-600',
-      },
-    ],
-  },
-  {
-    title: '更多',
-    items: [
-      {
-        title: '帮助中心',
-        route: AppRoute.MyHelp,
-        icon: 'i-carbon:help',
-        color: 'bg-teal-500/10 text-teal-600',
-      },
-      {
-        title: '意见反馈',
-        route: AppRoute.MyFeedback,
-        icon: 'i-carbon:chat',
-        color: 'bg-blue-500/10 text-blue-600',
-      },
-      {
-        title: '关于我们',
-        route: AppRoute.MyAbout,
-        icon: 'i-carbon:information',
-        color: 'bg-rose-500/10 text-rose-600',
-      },
-    ],
-  },
-]
+const avatarRemaining = computed(
+  () => profileInfo.value?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining ?? 0,
+)
 
 function handleLogout() {
   uni.showModal({
@@ -118,78 +64,15 @@ function handleLogout() {
 
 function openEditNickname() {
   if (!isLoggedIn()) return loginDirectly()
-  newNickname.value = profileInfo.value?.nickname || userStore.userInfo?.nickname || ''
   editNameVisible.value = true
 }
 
-function confirmNickname() {
-  if (!canSaveNickname.value) return
-
-  nicknameMutation.mutate(newNickname.value.trim(), {
-    onSuccess: (res) => {
-      userStore.updateUserInfo({
-        nickname: res.nickname,
-        nicknameEditsRemaining: res.nicknameEditsRemaining,
-      })
-      editNameVisible.value = false
-      uni.showToast({ title: '修改成功', icon: 'none' })
-    },
-  })
-}
-
-const selectedAvatarPath = ref('')
-const avatarRemaining = computed(
-  () => profileInfo.value?.avatarEditsRemaining ?? userStore.userInfo?.avatarEditsRemaining ?? 0,
-)
-
-const modalAvatarUrl = computed(() => {
-  if (selectedAvatarPath.value) return selectedAvatarPath.value
-  const url = profileInfo.value?.avatar || userStore.userInfo?.avatar
-  return url && url.trim() ? url : '/static/images/default-avatar.png'
-})
-
 function openEditAvatar() {
   if (!isLoggedIn()) return loginDirectly()
-  selectedAvatarPath.value = ''
   editAvatarVisible.value = true
 }
 
-function startChooseAvatar() {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: (res) => (selectedAvatarPath.value = res.tempFilePaths[0] || ''),
-  })
-}
-
-function handleChooseAvatar(e: any) {
-  selectedAvatarPath.value = e.detail?.avatarUrl || ''
-}
-
-async function confirmUpdateAvatar() {
-  if (avatarRemaining.value <= 0)
-    return uni.showToast({ title: '头像修改次数已用尽', icon: 'none' })
-  if (!selectedAvatarPath.value) return uni.showToast({ title: '请先选择新头像', icon: 'none' })
-
-  const compressedPath = await smartCompressImage(selectedAvatarPath.value)
-  avatarMutation.mutate(compressedPath, {
-    onSuccess: (res) => {
-      userStore.updateUserInfo({
-        avatar: res.avatarUrl,
-        avatarEditsRemaining: res.avatarEditsRemaining,
-      })
-      selectedAvatarPath.value = ''
-      editAvatarVisible.value = false
-      uni.showToast({ title: '头像更新成功', icon: 'none' })
-    },
-  })
-}
-
 function navigateTo(url: string) {
-  if (!isLoggedIn()) {
-    // 未登录用户依然允许访问页面（通过页面内部去登录卡片引导登录）
-  }
   uni.navigateTo({ url })
 }
 </script>
@@ -209,7 +92,7 @@ function navigateTo(url: string) {
             >
               <wd-img
                 :key="heroAvatarUrl"
-                custom-class="h-16 w-16 rounded-full bg-[#D9D9D9] object-cover ring-2 ring-tx-brown shadow-xs"
+                custom-class="h-16 w-16 rounded-full bg-tx-surface object-cover ring-2 ring-tx-brown shadow-xs"
                 :src="heroAvatarUrl"
                 lazy-load
                 mode="aspectFill"
@@ -299,7 +182,7 @@ function navigateTo(url: string) {
 
     <!-- 功能列表：按 活动 / 积分 / 更多 3 大板块区分与呈现 -->
     <view class="space-y-4">
-      <view v-for="group in menuGroups" :key="group.title" class="space-y-1">
+      <view v-for="group in MENU_GROUPS" :key="group.title" class="space-y-1">
         <text
           class="block px-1 text-xs text-tx-ink-2 font-black tracking-wider font-mono uppercase"
         >
@@ -343,175 +226,17 @@ function navigateTo(url: string) {
     </view>
 
     <!-- 修改昵称 Popup -->
-    <wd-popup
-      v-model="editNameVisible"
-      position="center"
-      custom-style="background: transparent; width: 88vw; max-width: 620rpx; overflow: visible;"
-      @close="editNameVisible = false"
-    >
-      <view
-        class="box-border w-full border border-tx-border rounded-[22px] bg-white p-5 shadow-xl space-y-4"
-      >
-        <!-- 标题栏 -->
-        <view class="flex items-center justify-between border-b border-tx-border/30 pb-3">
-          <view class="flex items-center gap-2">
-            <view class="h-4 w-1.5 rounded-full bg-tx-accent" />
-            <text class="u-title-lg">修改个人昵称</text>
-          </view>
-          <wd-tag
-            type="warning"
-            round
-            size="small"
-            custom-class="!font-bold !bg-tx-accent/50 !text-[#854D0E] !border-0"
-          >
-            剩余
-            {{
-              profileInfo?.nicknameEditsRemaining ?? userStore.userInfo?.nicknameEditsRemaining ?? 0
-            }}
-            次
-          </wd-tag>
-        </view>
-
-        <!-- 输入框 -->
-        <view class="space-y-1">
-          <text class="block text-xs text-tx-ink-2 font-bold">新昵称</text>
-          <wd-input
-            v-model="newNickname"
-            placeholder="请输入新昵称 (≤10字)"
-            :maxlength="10"
-            clearable
-            custom-class="!bg-tx-surface !rounded-xl !p-3 !border !border-tx-border/60"
-          />
-        </view>
-
-        <!-- 操作按钮 -->
-        <view class="flex gap-3 pt-1">
-          <wd-button
-            class="flex-1"
-            round
-            size="medium"
-            custom-class="!bg-tx-surface !text-tx-ink-2 !border !border-tx-border/50 !font-bold"
-            @click="editNameVisible = false"
-          >
-            取消
-          </wd-button>
-          <wd-button
-            class="flex-1"
-            round
-            size="medium"
-            custom-class="!bg-tx-accent !text-tx-ink !font-black shadow-xs active:scale-95 transition-transform"
-            :disabled="!canSaveNickname || nicknameMutation.isPending.value"
-            :loading="nicknameMutation.isPending.value"
-            @click="confirmNickname"
-          >
-            保存修改
-          </wd-button>
-        </view>
-      </view>
-    </wd-popup>
+    <EditNicknamePopup
+      v-model:visible="editNameVisible"
+      :nickname="currentNickname"
+      :remaining="nicknameRemaining"
+    />
 
     <!-- 修改头像 Popup -->
-    <wd-popup
-      v-model="editAvatarVisible"
-      position="center"
-      custom-style="background: transparent; width: 88vw; max-width: 620rpx; overflow: visible;"
-      @close="editAvatarVisible = false"
-    >
-      <view
-        class="box-border w-full border border-tx-border rounded-[22px] bg-white p-5 shadow-xl space-y-4"
-      >
-        <!-- 标题栏 -->
-        <view class="flex items-center justify-between border-b border-tx-border/30 pb-3">
-          <view class="flex items-center gap-2">
-            <view class="h-4 w-1.5 rounded-full bg-tx-accent" />
-            <text class="u-title-lg">修改个人头像</text>
-          </view>
-          <wd-tag
-            type="warning"
-            round
-            size="small"
-            custom-class="!font-bold !bg-tx-accent/50 !text-[#854D0E] !border-0"
-          >
-            剩余 {{ avatarRemaining }} 次
-          </wd-tag>
-        </view>
-
-        <!-- 头像展示区 -->
-        <view class="flex justify-center py-2">
-          <view class="relative rounded-full p-1 ring-4 ring-tx-accent/40">
-            <wd-img
-              :key="modalAvatarUrl"
-              lazy-load
-              custom-class="h-22 w-22 rounded-full bg-tx-surface object-cover ring-2 ring-tx-accent shadow-sm"
-              :src="modalAvatarUrl"
-              mode="aspectFill"
-              round
-              width="176rpx"
-              height="176rpx"
-            />
-          </view>
-        </view>
-
-        <!-- 操作区 -->
-        <view class="space-y-2.5">
-          <!-- #ifdef MP-WEIXIN -->
-          <button
-            class="m-0 w-full border-none bg-transparent p-0 outline-none"
-            open-type="chooseAvatar"
-            @chooseavatar="handleChooseAvatar"
-          >
-            <wd-button
-              round
-              block
-              size="medium"
-              custom-class="!bg-tx-surface !text-tx-ink !border !border-tx-border/60 !font-bold"
-            >
-              <template #icon>
-                <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
-              </template>
-              选择图片
-            </wd-button>
-          </button>
-          <!-- #endif -->
-          <!-- #ifndef MP-WEIXIN -->
-          <wd-button
-            round
-            block
-            size="medium"
-            custom-class="!bg-tx-surface !text-tx-ink !border !border-tx-border/60 !font-bold"
-            @click="startChooseAvatar"
-          >
-            <template #icon>
-              <wd-icon name="picture" size="16px" custom-class="text-[#D97706]" />
-            </template>
-            选择图片
-          </wd-button>
-          <!-- #endif -->
-
-          <view class="flex gap-3 pt-1">
-            <wd-button
-              class="flex-1"
-              round
-              size="medium"
-              custom-class="!bg-tx-surface !text-tx-ink-2 !border !border-tx-border/50 !font-bold"
-              @click="editAvatarVisible = false"
-            >
-              取消
-            </wd-button>
-            <wd-button
-              class="flex-1"
-              round
-              size="medium"
-              custom-class="!bg-tx-accent !text-tx-ink !font-black shadow-xs active:scale-95 transition-transform"
-              :disabled="!selectedAvatarPath || avatarMutation.isPending.value"
-              :loading="avatarMutation.isPending.value"
-              @click="confirmUpdateAvatar"
-            >
-              确认修改
-            </wd-button>
-          </view>
-        </view>
-      </view>
-    </wd-popup>
+    <EditAvatarPopup
+      v-model:visible="editAvatarVisible"
+      :current-avatar="heroAvatarUrl"
+      :remaining="avatarRemaining"
+    />
   </view>
 </template>

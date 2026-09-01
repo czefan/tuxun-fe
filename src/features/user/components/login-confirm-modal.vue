@@ -2,8 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { redirectToOAuth } from '@/service/auth/login'
 import { useAuthStore } from '@/store/auth'
-import { getUserInfo, testLogin } from '../../api'
-import { useUserStore } from '../../store/user'
+import { getUserInfo, testLogin } from '../api'
+import { useUserStore } from '../store/user'
 
 const emit = defineEmits<{
   (e: 'success'): void

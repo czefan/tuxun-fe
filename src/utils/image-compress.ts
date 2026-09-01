@@ -121,13 +121,17 @@ function getImageSize(filePath: string): Promise<{ width: number; height: number
   })
 }
 
-async function compressWithQuality(filePath: string, quality: number): Promise<string> {
+async function compressWithQuality(
+  filePath: string,
+  quality: number,
+  size?: { width: number; height: number },
+): Promise<string> {
   if (!canUseUniCompress()) {
     return compressByCanvas(filePath, quality)
   }
 
-  // compressedWidth 是「压缩后的宽度」而非上限，无条件传会把小图放大 —— 必须先量尺寸
-  const { width, height } = await getImageSize(filePath)
+  // 尺寸在整个二分过程中不变，优先使用调用方预先测量好的 size，避免每轮都重复 getImageSize 解码
+  const { width, height } = size ?? (await getImageSize(filePath))
   const needsResize = width > MAX_DIMENSION || height > MAX_DIMENSION
   const ratio = needsResize ? Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height) : 1
 
@@ -166,6 +170,7 @@ export async function smartCompressImage(filePath: string): Promise<string> {
 
   uni.showLoading({ title: '正在压缩图片…', mask: true })
   try {
+    const sourceSize = await getImageSize(filePath)
     let low = 0
     let high = QUALITY_STEPS.length - 1
     let bestPath = ''
@@ -176,7 +181,7 @@ export async function smartCompressImage(filePath: string): Promise<string> {
 
     while (low <= high) {
       const mid = Math.floor((low + high) / 2)
-      const candidate = await compressWithQuality(filePath, QUALITY_STEPS[mid])
+      const candidate = await compressWithQuality(filePath, QUALITY_STEPS[mid], sourceSize)
       const candidateSize = await getFileSize(candidate)
 
       if (candidateSize > 0 && candidateSize < smallestSize) {

@@ -47,7 +47,11 @@ export type GoodItem = S['GoodItem']
 export type Location = S['Location']
 export type ScoreLog = S['ScoreLog']
 
-/** 通用图片 ViewModel（包含宽高预留及瀑布流计算支持） */
+/**
+ * 通用图片 ViewModel（包含宽高预留及瀑布流计算支持）
+ * 注意：url 与 originUrl 互为兜底，要么同时非空，要么同时为空串。
+ * 在消费处直接使用对应字段即可，无需写 `originUrl || url` 之类的冗余死兜底。
+ */
 export interface ImageVM {
   /** 列表 / 卡片展示：thumb_url ?? origin_url */
   url: string

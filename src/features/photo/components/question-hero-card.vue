@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import LikeButton from '@/components/like-button/like-button.vue'
+import ProgressiveImage from '@/components/progressive-image/progressive-image.vue'
 import type { PhotoDetailVM } from '@/features/photo/types'
 
 interface Props {
@@ -20,15 +21,6 @@ const emit = defineEmits<{
   (e: 'action'): void
 }>()
 
-const isOriginLoaded = ref(false)
-
-watch(
-  () => props.question.id,
-  () => {
-    isOriginLoaded.value = false
-  },
-)
-
 const isTall = computed(() => {
   const img = props.question.image
   if (!img?.width || !img?.height) return false
@@ -38,50 +30,16 @@ const isTall = computed(() => {
 
 <template>
   <view class="shadow-2xs overflow-hidden border border-tx-border rounded-[18px] bg-white">
-    <!-- 题目主图展示区（宽高比自适应 + 统一全尺寸占位底色，最高 60vh 防长图霸屏） -->
-    <view
-      class="relative w-full overflow-hidden rounded-t-[18px] bg-tx-brown/10"
-      :style="{
-        aspectRatio:
-          question.image?.width && question.image?.height
-            ? `${question.image.width} / ${question.image.height}`
-            : '4 / 3',
-        maxHeight: '60vh',
-      }"
+    <!-- 题目主图展示区（渐进式直切瞬时高清 + 统一全尺寸占位底色，最高 60vh 防长图霸屏） -->
+    <ProgressiveImage
+      :image="question.image"
+      :thumb-url="thumbUrl"
+      :mode="isTall ? 'aspectFit' : 'aspectFill'"
+      max-height="60vh"
+      custom-class="rounded-t-[18px]"
+      :view-transition-name="`photo-cover-${question.id}`"
+      @click="emit('preview-image')"
     >
-      <!-- 缩略图占位层：秒级就绪 -->
-      <image
-        v-if="thumbUrl && !isOriginLoaded"
-        class="block h-full w-full cursor-pointer"
-        :src="thumbUrl"
-        :mode="isTall ? 'aspectFit' : 'aspectFill'"
-        @click="emit('preview-image')"
-      />
-
-      <!-- 高清原图层：后台静默加载完成后淡入覆盖 -->
-      <image
-        class="block h-full w-full cursor-pointer transition-opacity duration-300"
-        :class="[
-          thumbUrl && !isOriginLoaded ? 'opacity-0' : 'opacity-100',
-          thumbUrl ? 'absolute inset-0' : '',
-        ]"
-        :style="{
-          'view-transition-name': `photo-cover-${question.id}`,
-        }"
-        :src="question.image.originUrl"
-        :mode="isTall ? 'aspectFit' : 'aspectFill'"
-        @load="isOriginLoaded = true"
-        @click="emit('preview-image')"
-      />
-
-      <!-- 未加载完成且无缩略图时的全局优雅居中占位 -->
-      <view
-        v-if="!isOriginLoaded && !thumbUrl"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-tx-brown/40"
-      >
-        <text class="i-carbon:image text-4xl opacity-50" />
-      </view>
-
       <!-- 方案 B：长图提示（防止核心辨认线索遗漏） -->
       <view
         v-if="isTall"
@@ -91,7 +49,7 @@ const isTall = computed(() => {
         <text class="i-carbon:fit-to-screen text-xs text-tx-accent" />
         <text>点击查看完整大图</text>
       </view>
-    </view>
+    </ProgressiveImage>
 
     <view class="px-5 pb-5 pt-6 space-y-3.5">
       <text class="block u-title-page leading-snug">{{ question.title }}</text>

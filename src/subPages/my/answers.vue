@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useAuth } from '@/features/user/composables/use-auth'
 import MyAnswerTab from '@/features/record/components/my-answer-tab.vue'
-import StatusTabSwiper from '@/features/record/components/status-tab-swiper.vue'
+import StatusTabSwiper from '@/components/status-tab-swiper/status-tab-swiper.vue'
 
 definePage({
   style: {

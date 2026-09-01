@@ -22,8 +22,9 @@
   - 响应字段 `total` 为过滤后的实际记录总数。
 - **核销码规范 (`verify_code`)**：
   - 由后端生成的 8~16 位大写英数字组合，生成后不可更改，全局唯一。
-- **媒体规范 (`Media` / `FeedbackMedia`)**：
-  - 图片/媒体宽高等字段非空时最小值为 1 (`minimum: 1`)。
+- **媒体与图片规范 (`Media` / `ImageVM`)**：
+  - 宽高等字段非空时最小值为 1 (`minimum: 1`)，异常缺失时统一降级为 4:3。
+  - `toImageVM` 统一转化输出 `ImageVM`（`url` 与 `originUrl` 互为兜底，列表消费 `url`，详情/预览消费 `originUrl`）。
 - **关联类型 (`related_type`)**：
   - 系统通知：`'activity'`
   - 互动消息：`'photo' | 'solve' | 'comment'`

@@ -77,3 +77,11 @@ src/
 - **全局声明 (`src/types/*.d.ts`)**：存放全局类型补丁、环境声明与 Vite 插件自动生成类型（如 `uni-pages.d.ts`）。
 - **契约类型 (`src/service/contract/schema.d.ts`)**：OpenAPI 生成类型，由 `pnpm gen:api-types` 自动维护，禁止手动修改。
 - **私有与业务类型**：Feature、页面及组件的专属类型，就近存放在各自目录下的 `types.ts`。
+
+---
+
+## 🧩 组件放置准则 (Components Guidelines)
+
+- **底层通用组件 (`src/components/`)**：零业务 Feature 耦合（不依赖任何 `features/*`），纯 UI 或跨域通用控件（如 `like-button`、`status-tag`、`status-tab-swiper`、`progressive-image`）。
+- **单域业务组件 (`src/features/<domain>/components/`)**：仅服务于该业务域且无跨域依赖的组件（如 `photo-card`、`comment-list`、`good-detail-popup`）。
+- **跨域组合组件 (`src/subPages/<page>/components/`)**：由编排层页面持有、同时组合多个不同业务域的聚合型业务组件（如 `question-detail-tabs`）。

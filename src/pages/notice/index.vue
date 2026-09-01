@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
+import StatusTabSwiper from '@/components/status-tab-swiper/status-tab-swiper.vue'
 import AnnouncementList from '@/features/notification/components/announcement-list.vue'
 import InteractionList from '@/features/notification/components/interaction-list.vue'
 import {
@@ -23,8 +24,9 @@ definePage({
 })
 
 const { isLoggedIn, loginDirectly } = useAuth()
-const activeTab = ref('系统通知')
-const tabOptions = ['系统通知', '互动消息']
+const tabOptions = ['系统通知', '互动消息'] as const
+type TabOption = (typeof tabOptions)[number]
+const activeTab = ref<TabOption>('系统通知')
 
 const searchKeyword = ref('')
 const debouncedKeyword = ref('')
@@ -107,8 +109,6 @@ function handleInteractionTap(item: InteractionMessageVM) {
     markReadMutation.mutate(item.id)
   }
   if (!item.photoId) return
-  // 契约：related_type 指向触发事件的对象（like→photo/solve/comment；comment→photo），前端据此跳转。
-  // 轻量定位：评论消息/评论点赞 → 评论区 Tab；破解点赞 → 已破解 Tab；题目点赞 → 详情顶部即点赞位置，无需切 Tab。
   const tab =
     item.relatedType === 'solve'
       ? 'solves'
@@ -151,49 +151,32 @@ const unreadAnnounceCount = computed(() => {
   ).length
 })
 
+const unreadMap = computed<Record<TabOption, number>>(() => ({
+  系统通知: unreadAnnounceCount.value,
+  互动消息: unreadInteractCount.value,
+}))
+
 function goAnnouncementDetail(id: number) {
   markAnnouncementRead(id)
   uni.navigateTo({ url: withQuery(AppRoute.NoticeDetail, { id }) })
 }
-
-const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
 </script>
 
 <template>
   <view class="page-notice swiper-page bg-tx-main px-3 pt-3">
-    <!-- 融入页面的顶栏 Seamless Sub Tabs 导航 -->
-    <view
-      class="flex flex-shrink-0 items-end justify-between px-1 pb-0"
-      style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
-    >
-      <view class="flex items-center gap-6">
-        <view
-          v-for="opt in tabOptions"
-          :key="opt"
-          class="relative flex cursor-pointer items-center gap-1.5 pb-2.5 text-base transition-all active:scale-95"
-          :class="activeTab === opt ? 'text-tx-ink font-black' : 'text-tx-ink-3 font-bold'"
-          @tap="activeTab = opt"
-        >
-          <text>{{ opt }}</text>
-          <view
-            v-if="isLoggedIn() && opt === '系统通知' && unreadAnnounceCount"
-            class="h-2 w-2 rounded-full bg-rose-500"
-          />
-          <view
-            v-if="isLoggedIn() && opt === '互动消息' && unreadInteractCount"
-            class="h-2 w-2 rounded-full bg-rose-500"
-          />
-          <view
-            v-if="activeTab === opt"
-            class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
-          />
+    <StatusTabSwiper v-model="activeTab" :options="tabOptions">
+      <!-- 自定义标签：支持数据驱动红点徽标 -->
+      <template #label="{ option }">
+        <view class="flex items-center gap-1.5">
+          <text>{{ option }}</text>
+          <view v-if="isLoggedIn() && unreadMap[option]" class="h-2 w-2 rounded-full bg-rose-500" />
         </view>
-      </view>
+      </template>
 
-      <!-- 右侧：仅在系统通知 Tab 显示搜索图标按钮 + 互动消息的一键已读按钮 (固定 h-7 防止无节点时高度塌陷上顶) -->
-      <view class="h-7 flex items-center gap-2.5 pb-2.5">
+      <!-- 右侧：仅在系统通知 Tab 显示搜索图标按钮 + 互动消息的一键已读按钮 -->
+      <template #actions="{ active }">
         <view
-          v-if="activeTab === '系统通知'"
+          v-if="active === '系统通知'"
           class="h-7 w-7 flex cursor-pointer items-center justify-center rounded-full transition-all active:scale-90"
           :class="
             showSearchInput
@@ -204,7 +187,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
         >
           <text class="i-carbon:search text-base" />
         </view>
-        <template v-if="activeTab === '互动消息' && unreadInteractCount">
+        <template v-if="active === '互动消息' && unreadInteractCount">
           <view
             class="cursor-pointer text-sm text-tx-brown font-black transition-opacity active:opacity-75"
             @tap="handleReadAllInteractions"
@@ -212,35 +195,30 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
             一键已读
           </view>
         </template>
-      </view>
-    </view>
+      </template>
 
-    <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
-    <view
-      v-if="activeTab === '系统通知' && showSearchInput"
-      class="w-full border-b border-tx-border/50 pb-2 pt-2"
-    >
-      <wd-search
-        v-model="searchKeyword"
-        :focus="true"
-        placeholder="搜索标题或正文..."
-        hide-cancel
-        custom-class="tx-search"
-        placeholder-left
-        @clear="searchKeyword = ''"
-      />
-    </view>
+      <!-- 下拉展开的搜索框容器（自动聚焦光标） -->
+      <template #extra>
+        <view
+          v-if="activeTab === '系统通知' && showSearchInput"
+          class="w-full border-b border-tx-border/50 pb-2 pt-2"
+        >
+          <wd-search
+            v-model="searchKeyword"
+            :focus="true"
+            placeholder="搜索标题或正文..."
+            hide-cancel
+            custom-class="tx-search"
+            placeholder-left
+            @clear="searchKeyword = ''"
+          />
+        </view>
+      </template>
 
-    <!-- 可左右手势滑动的 Swiper 容器 (全屏物理宽度，零裁剪) -->
-    <swiper
-      class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
-      :current="currentTabIndex"
-      :duration="300"
-      @change="(e) => (activeTab = tabOptions[e.detail.current])"
-    >
-      <!-- 滑块 1：系统通知 -->
-      <swiper-item class="box-border">
+      <!-- 面板 1：系统通知；面板 2：互动消息 -->
+      <template #panel="{ option }">
         <AnnouncementList
+          v-if="option === '系统通知'"
           :items="announcements"
           :loading="announceLoading"
           :error="announceError"
@@ -252,11 +230,8 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
           @load-more="fetchNextAnnounce"
           @select="goAnnouncementDetail"
         />
-      </swiper-item>
-
-      <!-- 滑块 2：互动消息 -->
-      <swiper-item class="box-border">
         <InteractionList
+          v-else-if="option === '互动消息'"
           :items="interactions"
           :loading="interactLoading"
           :error="interactError"
@@ -267,7 +242,7 @@ const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
           @load-more="fetchNextInteract"
           @select="handleInteractionTap"
         />
-      </swiper-item>
-    </swiper>
+      </template>
+    </StatusTabSwiper>
   </view>
 </template>

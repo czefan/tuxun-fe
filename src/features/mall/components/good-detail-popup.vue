@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import ProgressiveImage from '@/components/progressive-image/progressive-image.vue'
 import type { GoodsVM } from '../types'
 import { TX_BG_BROWN } from '@/styles/constants'
 
@@ -107,24 +108,8 @@ function handleConfirmExchange() {
       v-if="good"
       class="relative mx-auto box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-2xl bg-white shadow-2xl"
     >
-      <!-- 详情大图用高清原图 -->
-      <view
-        class="relative w-full flex overflow-hidden bg-tx-brown/10"
-        :style="
-          good.image?.width && good.image?.height
-            ? { aspectRatio: `${good.image.width} / ${good.image.height}` }
-            : {}
-        "
-      >
-        <wd-img
-          :key="`good-modal-${good.id}`"
-          custom-class="w-full !block"
-          :custom-style="`display: block; vertical-align: top; width: 100%;${good.image?.width && good.image?.height ? ` aspect-ratio: ${good.image.width} / ${good.image.height};` : ''}`"
-          lazy-load
-          :src="good.image.originUrl || good.image.url"
-          mode="widthFix"
-          width="100%"
-        />
+      <!-- 详情大图：通过 ProgressiveImage 消费 good.image.originUrl 高清图（免额外详情请求），缩略图秒开占位 + 原图直切无缝覆盖 -->
+      <ProgressiveImage :image="good.image" custom-class="w-full">
         <!-- 右上角关闭按钮 -->
         <view
           class="absolute right-3 top-3 z-10 h-7 w-7 flex cursor-pointer items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-transform active:scale-90"
@@ -132,7 +117,7 @@ function handleConfirmExchange() {
         >
           <wd-icon name="close" size="16px" />
         </view>
-      </view>
+      </ProgressiveImage>
 
       <!-- 弹窗可滚动内容区 -->
       <view class="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">

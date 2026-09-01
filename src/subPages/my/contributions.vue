@@ -4,7 +4,7 @@ import type { UserPhotoVM } from '@/features/record/types'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
 import MyContributionTab from '@/features/record/components/my-contribution-tab.vue'
-import StatusTabSwiper from '@/features/record/components/status-tab-swiper.vue'
+import StatusTabSwiper from '@/components/status-tab-swiper/status-tab-swiper.vue'
 import ContributionDetailModal from '@/features/record/components/contribution-detail-modal.vue'
 
 definePage({

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import StatusTabSwiper from '@/components/status-tab-swiper/status-tab-swiper.vue'
 import { useContent } from '@/features/content/query'
 import { useUserStore } from '@/features/user'
 import { useAuth } from '@/features/user/composables/use-auth'
@@ -18,10 +19,10 @@ definePage({
 })
 
 const { isLoggedIn, loginDirectly } = useAuth()
-const activeTab = ref('积分明细')
+const tabOptions = ['积分明细', '积分规则'] as const
+type TabOption = (typeof tabOptions)[number]
+const activeTab = ref<TabOption>('积分明细')
 const userStore = useUserStore()
-const tabOptions = ['积分明细', '积分规则']
-const currentTabIndex = computed(() => tabOptions.indexOf(activeTab.value))
 
 const { data: rulesData } = useContent('score_rules')
 
@@ -62,28 +63,9 @@ function handleLogTap(item: ScoreLogVM) {
 
 <template>
   <view class="page-points swiper-page bg-tx-main px-3 pt-3">
-    <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 (与全站完全统一的 16px 标头) -->
-    <view
-      class="flex flex-shrink-0 items-end justify-between px-1 pb-0"
-      style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
-    >
-      <view class="flex items-center gap-6">
-        <view
-          v-for="opt in tabOptions"
-          :key="opt"
-          class="relative cursor-pointer pb-2.5 text-base transition-all active:scale-95"
-          :class="activeTab === opt ? 'text-tx-ink font-black' : 'text-tx-ink-3 font-bold'"
-          @tap="activeTab = opt"
-        >
-          <text>{{ opt }}</text>
-          <view
-            v-if="activeTab === opt"
-            class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
-          />
-        </view>
-      </view>
+    <StatusTabSwiper v-model="activeTab" :options="tabOptions">
       <!-- 右侧总积分与收入支出 (仅占 Tab 这一行，左侧附带积分图标，简短文字说明只含“收入”“支出”) -->
-      <view class="flex items-center gap-2 pb-2.5">
+      <template #actions>
         <view class="flex items-center gap-1">
           <text class="i-my-icons-points text-lg text-tx-brown" />
           <text class="text-xl text-tx-ink font-bold leading-none font-numeric">
@@ -105,19 +87,12 @@ function handleLogTap(item: ScoreLogVM) {
             </text>
           </view>
         </view>
-      </view>
-    </view>
+      </template>
 
-    <!-- 支持左右平滑手势连贯滑屏的 Swiper 容器 -->
-    <swiper
-      class="box-border min-h-0 w-[calc(100%+24px)] flex-1 -mx-3"
-      :current="currentTabIndex"
-      :duration="300"
-      @change="(e) => (activeTab = tabOptions[e.detail.current])"
-    >
-      <!-- 滑块 1：积分明细 -->
-      <swiper-item class="box-border">
+      <!-- 面板 1：积分明细；面板 2：积分规则 -->
+      <template #panel="{ option }">
         <scroll-view
+          v-if="option === '积分明细'"
           scroll-y
           :show-scrollbar="false"
           class="hide-scrollbar box-border h-full w-full"
@@ -209,18 +184,16 @@ function handleLogTap(item: ScoreLogVM) {
             <wd-empty icon="no-result" tip="暂无积分明细" />
           </view>
         </scroll-view>
-      </swiper-item>
 
-      <!-- 滑块 2：积分规则 -->
-      <swiper-item class="box-border">
+        <!-- 滑块 2：积分规则 -->
         <scroll-view
+          v-else-if="option === '积分规则'"
           scroll-y
           :show-scrollbar="false"
           class="hide-scrollbar box-border h-full w-full"
         >
           <view class="bottom-space px-3 pt-2.5">
             <view v-if="rulesData?.content" class="border-y border-tx-brown px-1 pb-3 pt-2">
-              <!-- 不带字号/颜色 class（同 help/弹窗/通知详情）：H5 端 rich-text 内容继承容器样式会改字号，小程序端不继承，两端需一致 -->
               <rich-text :nodes="rulesData.content" class="block break-words" />
             </view>
             <view v-else class="py-16">
@@ -228,7 +201,7 @@ function handleLogTap(item: ScoreLogVM) {
             </view>
           </view>
         </scroll-view>
-      </swiper-item>
-    </swiper>
+      </template>
+    </StatusTabSwiper>
   </view>
 </template>

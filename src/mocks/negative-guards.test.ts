@@ -139,9 +139,9 @@ describe('契约变更负向守卫', () => {
       },
       { file: 'src/subPages/mall/index.vue', needles: ['verifyCode'], why: '兑换记录要出核销码' },
       {
-        file: 'src/subPages/mall/index.vue',
+        file: 'src/features/mall/components/good-detail-popup.vue',
         needles: ['originUrl'],
-        why: '契约把高清图放进列表就是为了免详情请求，不消费等于白给',
+        why: '列表接口已下发 origin_url，详情弹层必须直接消费它——重新发一次详情请求等于白给',
       },
       {
         file: 'src/features/photo/components/photo-card.vue',

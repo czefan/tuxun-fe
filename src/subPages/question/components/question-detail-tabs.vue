@@ -41,7 +41,10 @@ watch(
   },
 )
 
-const currentTabIndex = computed(() => detailTabsList.indexOf(activeTab.value))
+const currentTabIndex = computed(() => {
+  const idx = detailTabsList.indexOf(activeTab.value)
+  return idx >= 0 ? idx : 0
+})
 
 type CommentSortType = 'hottest' | 'latest'
 const commentSortType = ref<CommentSortType>('hottest')

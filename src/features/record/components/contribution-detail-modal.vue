@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import ProgressiveImage from '@/components/progressive-image/progressive-image.vue'
 import StatusTag from '@/components/status-tag/status-tag.vue'
 import { normalizeToGcj02 } from '@/composables/use-map'
 import { useMyPhotoDetail } from '@/features/record/query'
@@ -33,7 +34,7 @@ function handleResubmit() {
   const refillData = {
     title: detailData.value.title,
     description: detailData.value.description || '',
-    filePath: detailData.value.image.originUrl || detailData.value.image.url,
+    filePath: detailData.value.image.originUrl,
     latitude: detailData.value.location?.latitude || 0,
     longitude: detailData.value.location?.longitude || 0,
     coordType: detailData.value.location?.coord_type || 'gcj02',
@@ -44,7 +45,7 @@ function handleResubmit() {
 }
 
 function handlePreviewDetailImage() {
-  const url = detailData.value?.image?.originUrl || detailData.value?.image?.url
+  const url = detailData.value?.image?.originUrl
   if (url) {
     previewImage(url)
   }
@@ -92,25 +93,12 @@ function handleOpenLocation() {
       <!-- 内容滚动区：图片 + 状态/描述/驳回原因 -->
       <view class="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2.5 space-y-3">
         <!-- 投稿图片区（点击放大预览，右下角悬浮【查看位置】胶囊按钮） -->
-        <view
-          class="relative w-full flex overflow-hidden border border-tx-border/50 rounded-xl bg-tx-brown/10"
-          :style="
-            detailData.image?.width && detailData.image?.height
-              ? { aspectRatio: `${detailData.image.width} / ${detailData.image.height}` }
-              : {}
-          "
+        <ProgressiveImage
+          :image="detailData.image"
+          mode="aspectFill"
+          custom-class="border border-tx-border/50 rounded-xl"
+          @click="handlePreviewDetailImage"
         >
-          <wd-img
-            :key="`contrib-modal-${detailData.id}`"
-            custom-class="shadow-2xs !block w-full cursor-pointer transition-opacity active:opacity-90"
-            :custom-style="`display: block; vertical-align: top; width: 100%;${detailData.image?.width && detailData.image?.height ? ` aspect-ratio: ${detailData.image.width} / ${detailData.image.height};` : ''}`"
-            lazy-load
-            :src="detailData.image.originUrl || detailData.image.url"
-            mode="widthFix"
-            width="100%"
-            @click="handlePreviewDetailImage"
-          />
-
           <!-- 图片右下角悬浮【查看位置】毛玻璃胶囊按钮 -->
           <view
             v-if="detailData.location?.latitude"
@@ -120,7 +108,7 @@ function handleOpenLocation() {
             <text class="i-carbon:location text-sm text-tx-accent" />
             <text>查看位置</text>
           </view>
-        </view>
+        </ProgressiveImage>
 
         <view class="space-y-2.5">
           <!-- 状态（靠左）+ 投稿时间（靠右）合为一行 -->

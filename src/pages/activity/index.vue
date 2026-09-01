@@ -278,7 +278,7 @@ function handleModalGoActivity() {
               :key="`activity-modal-${selectedActivity.id}`"
               custom-class="w-full !block"
               :custom-style="`display: block; vertical-align: top; width: 100%;${selectedActivity.coverImage?.width && selectedActivity.coverImage?.height ? ` aspect-ratio: ${selectedActivity.coverImage.width} / ${selectedActivity.coverImage.height};` : ''}`"
-              :src="selectedActivity.coverImage.originUrl || selectedActivity.coverImage.url"
+              :src="selectedActivity.coverImage.originUrl"
               lazy-load
               mode="widthFix"
               width="100%"

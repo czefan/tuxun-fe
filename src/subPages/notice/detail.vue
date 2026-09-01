@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import ProgressiveImage from '@/components/progressive-image/progressive-image.vue'
 import { useAnnouncementDetail } from '@/features/notification/query'
 import { useInfiniteActivityList } from '@/features/activity/query'
 import { previewImage } from '@/utils/image-preview'
@@ -57,26 +58,14 @@ onLoad((query) => {
         <rich-text :nodes="detail.content" />
       </view>
 
-      <!-- 通知配图 (居中展示) -->
-      <view
-        v-if="detail.image?.originUrl || detail.image?.url"
-        class="relative mt-2 w-full flex overflow-hidden rounded-2xl bg-tx-brown/10"
-        :style="
-          detail.image?.width && detail.image?.height
-            ? { aspectRatio: `${detail.image.width} / ${detail.image.height}` }
-            : {}
-        "
-      >
-        <wd-img
-          custom-class="shadow-xs !block w-full cursor-pointer"
-          :custom-style="`display: block; vertical-align: top; width: 100%;${detail.image?.width && detail.image?.height ? ` aspect-ratio: ${detail.image.width} / ${detail.image.height};` : ''}`"
-          :src="detail.image.originUrl || detail.image.url"
-          lazy-load
-          mode="widthFix"
-          width="100%"
-          @click="previewImage(detail.image.originUrl || detail.image.url)"
-        />
-      </view>
+      <!-- 通知配图 (渐进式展示) -->
+      <ProgressiveImage
+        v-if="detail.image?.originUrl"
+        :image="detail.image"
+        mode="aspectFill"
+        custom-class="mt-2 rounded-2xl shadow-xs"
+        @click="previewImage(detail.image.originUrl)"
+      />
     </view>
 
     <view v-else class="min-h-[65vh] flex flex-col items-center justify-center -mt-8">
