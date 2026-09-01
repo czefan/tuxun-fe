@@ -26,7 +26,7 @@ const statusMap: Record<StatusOption, undefined | 'pending' | 'approved' | 'reje
   未通过: 'rejected',
 }
 
-const selectedId = ref<number | null>(null)
+const selectedItem = ref<UserPhotoVM | null>(null)
 
 function openDetail(item: UserPhotoVM) {
   const statusStr = String(item.status || '').toLowerCase()
@@ -34,7 +34,7 @@ function openDetail(item: UserPhotoVM) {
     uni.navigateTo({ url: withQuery(AppRoute.QuestionDetail, { id: item.id }) })
     return
   }
-  selectedId.value = item.id
+  selectedItem.value = item
 }
 </script>
 
@@ -51,6 +51,6 @@ function openDetail(item: UserPhotoVM) {
       </template>
     </StatusTabSwiper>
 
-    <ContributionDetailModal v-model:id="selectedId" />
+    <ContributionDetailModal v-model:item="selectedItem" />
   </view>
 </template>

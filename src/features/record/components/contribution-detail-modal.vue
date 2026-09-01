@@ -4,40 +4,45 @@ import ProgressiveImage from '@/components/progressive-image/progressive-image.v
 import StatusTag from '@/components/status-tag/status-tag.vue'
 import { normalizeToGcj02 } from '@/composables/use-map'
 import { useMyPhotoDetail } from '@/features/record/query'
+import type { UserPhotoVM } from '@/features/record/types'
 import { AppRoute, withQuery } from '@/router/routes'
 import { previewImage } from '@/utils/image-preview'
 
-interface Props {
-  id: number | null
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<{
-  (e: 'update:id', val: number | null): void
+const props = defineProps<{
+  item: UserPhotoVM | null
 }>()
 
-const { data: detailData } = useMyPhotoDetail(computed(() => props.id))
+const emit = defineEmits<{
+  (e: 'update:item', val: UserPhotoVM | null): void
+}>()
+
+const { data: detailData } = useMyPhotoDetail(computed(() => props.item?.id))
 
 const detailVisible = computed({
-  get: () => Boolean(props.id && detailData.value),
+  get: () => Boolean(props.item),
   set: (val) => {
-    if (!val) emit('update:id', null)
+    if (!val) emit('update:item', null)
   },
 })
 
 function closeDetail() {
-  emit('update:id', null)
+  emit('update:item', null)
 }
 
+const displayData = computed(() => detailData.value ?? props.item)
+
 function handleResubmit() {
-  if (!detailData.value) return
+  const current = displayData.value
+  if (!current) return
+  const loc = detailData.value?.location
+  const desc = detailData.value?.description || ''
   const refillData = {
-    title: detailData.value.title,
-    description: detailData.value.description || '',
-    filePath: detailData.value.image.originUrl,
-    latitude: detailData.value.location?.latitude || 0,
-    longitude: detailData.value.location?.longitude || 0,
-    coordType: detailData.value.location?.coord_type || 'gcj02',
+    title: current.title,
+    description: desc,
+    filePath: current.image.originUrl || current.image.url,
+    latitude: loc?.latitude || 0,
+    longitude: loc?.longitude || 0,
+    coordType: loc?.coord_type || 'gcj02',
   }
   const encoded = encodeURIComponent(JSON.stringify(refillData))
   closeDetail()
@@ -45,20 +50,20 @@ function handleResubmit() {
 }
 
 function handlePreviewDetailImage() {
-  const url = detailData.value?.image?.originUrl
+  const url = displayData.value?.image?.originUrl || displayData.value?.image?.url
   if (url) {
     previewImage(url)
   }
 }
 
 function handleOpenLocation() {
-  if (!detailData.value?.location?.latitude) return
-  const loc = detailData.value.location
+  const loc = detailData.value?.location
+  if (!loc?.latitude) return
   const gcj = normalizeToGcj02(loc.latitude, loc.longitude, loc.coord_type || 'gcj02')
   uni.openLocation({
     latitude: gcj.latitude,
     longitude: gcj.longitude,
-    name: detailData.value.title || '投稿机位',
+    name: displayData.value?.title || '投稿机位',
     scale: 16,
   })
 }
@@ -74,14 +79,14 @@ function handleOpenLocation() {
     @close="closeDetail"
   >
     <view
-      v-if="detailData"
+      v-if="displayData"
       class="box-border max-h-[82vh] w-full flex flex-col overflow-hidden border border-tx-border rounded-[24px] bg-tx-main shadow-2xl"
     >
       <!-- 头部固定标题 -->
       <view
         class="flex flex-shrink-0 items-center justify-between border-b border-tx-border/40 px-5 pb-2.5 pt-4"
       >
-        <text class="u-title-lg">{{ detailData.title }}</text>
+        <text class="u-title-lg">{{ displayData.title }}</text>
         <wd-icon
           name="close"
           size="20px"
@@ -94,14 +99,14 @@ function handleOpenLocation() {
       <view class="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2.5 space-y-3">
         <!-- 投稿图片区（点击放大预览，右下角悬浮【查看位置】胶囊按钮） -->
         <ProgressiveImage
-          :image="detailData.image"
+          :image="displayData.image"
           mode="aspectFill"
           custom-class="border border-tx-border/50 rounded-xl"
           @click="handlePreviewDetailImage"
         >
           <!-- 图片右下角悬浮【查看位置】毛玻璃胶囊按钮 -->
           <view
-            v-if="detailData.location?.latitude"
+            v-if="detailData?.location?.latitude"
             class="absolute bottom-2.5 right-2.5 z-10 flex cursor-pointer items-center gap-1.5 border border-white/20 rounded-full bg-black/50 px-3 py-1 text-xs text-white font-bold shadow-md backdrop-blur-md transition-transform active:scale-95"
             @click.stop="handleOpenLocation"
           >
@@ -113,29 +118,29 @@ function handleOpenLocation() {
         <view class="space-y-2.5">
           <!-- 状态（靠左）+ 投稿时间（靠右）合为一行 -->
           <view class="flex items-center justify-between">
-            <StatusTag :status="detailData.status" />
-            <text class="u-meta-time">{{ detailData.createdAt }}</text>
+            <StatusTag :status="displayData.status" />
+            <text class="u-meta-time">{{ displayData.createdAt }}</text>
           </view>
 
           <!-- 题目描述展示（融入背景） -->
-          <view v-if="detailData.description" class="space-y-0.5">
+          <view v-if="detailData?.description" class="space-y-0.5">
             <text class="block u-title-base font-bold">描述：</text>
             <text class="block u-body-sub">{{ detailData.description }}</text>
           </view>
 
           <view
-            v-if="detailData.rejectReason"
+            v-if="displayData.rejectReason"
             class="u-body-alert border border-red-200 rounded-xl bg-red-500/10 p-3"
           >
             <text class="font-bold">驳回原因：</text>
-            {{ detailData.rejectReason }}
+            {{ displayData.rejectReason }}
           </view>
         </view>
       </view>
 
       <!-- 底部固定操作栏（仅驳回状态展示） -->
       <view
-        v-if="detailData.status === 'rejected'"
+        v-if="displayData.status === 'rejected'"
         class="flex-shrink-0 border-t border-tx-border/30 p-4"
       >
         <wd-button
