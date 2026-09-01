@@ -1,22 +1,22 @@
 /**
- * 按需图片压缩。
+ * 按需图片压缩与合法性校验。
  *
  * 策略：
- * 1. ≤ 10MB 直接上传，绝不无谓降质；
- * 2. > 10MB 才在质量档位上二分，取「能压到 9.5MB 以内的最高画质」；
- * 3. 超高像素大图（单边 > 4096px）自动等比缩放，彻底消除极端超大图无法压进 10MB 的风险。
+ * 1. > 20MB 防爆拦截，避免移动端/H5 解码超大图导致 OOM 崩溃；
+ * 2. ≤ 2MB 直接上传，0 耗时 0 损耗保留原图最高画质；
+ * 3. > 2MB 触发智能压缩：长边约束至 2.5K (2560px)，并在高质量档位二分查找「≤ 2MB 以内的最高画质」；
+ * 4. 宽高比限制在 1:3 ~ 3:1 之间，拦截极端畸形长截图/全景横幅。
  *
- * 平台差异：`uni.compressImage` 在 H5 运行时里根本不存在
- * （@dcloudio/uni-h5 未实现），直接调用会抛 TypeError 并让调用方的
- * await 静默失败。所以 H5 走 canvas 重编码兜底。
+ * 平台差异：`uni.compressImage` 在 H5 运行时里未实现，走 canvas 重编码兜底。
  */
 
-const MAX_DIRECT_UPLOAD_SIZE = 10 * 1024 * 1024
-const TARGET_COMPRESSED_SIZE = 9.5 * 1024 * 1024
-const MAX_DIMENSION = 4096
+const MAX_INPUT_FILE_SIZE = 20 * 1024 * 1024 // 20MB 硬上限防爆拦截
+const MAX_DIRECT_UPLOAD_SIZE = 2 * 1024 * 1024 // 2MB 原图直传阈值
+const TARGET_COMPRESSED_SIZE = 2 * 1024 * 1024 // 2MB 压缩目标体积
+const MAX_DIMENSION = 2560 // 2.5K 分辨率上限
 
-/** 质量档位，从低到高。用离散档位而非 1~100 连续区间，二分最多 4 轮，避免大图上反复重编码 */
-const QUALITY_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90]
+/** 质量档位，从低到高。二分查找 ≤ 2MB 的最高画质档位 */
+const QUALITY_STEPS = [40, 50, 60, 70, 78, 85, 90, 95]
 
 /** canvas 兜底的超时保护，单位毫秒 */
 const CANVAS_COMPRESS_TIMEOUT = 10_000
@@ -153,6 +153,7 @@ async function compressWithQuality(
 }
 
 /**
+ * 按需智能压缩图片，寻找 ≤ 2MB 的最高画质
  * @param filePath 待上传的本地图片路径
  * @returns 可直接上传的图片路径
  */
@@ -163,19 +164,24 @@ export async function smartCompressImage(filePath: string): Promise<string> {
 
   const size = await getFileSize(filePath)
 
-  // 体积未知或本来就不超限，一律原图直传
+  // > 20MB 防爆拦截
+  if (size > MAX_INPUT_FILE_SIZE) {
+    uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
+    throw new Error('图片大小超过 20MB 限制')
+  }
+
+  // 体积未知或本来就不超限（≤ 2MB），一律原图直传
   if (size === 0 || size <= MAX_DIRECT_UPLOAD_SIZE) {
     return filePath
   }
 
-  uni.showLoading({ title: '正在压缩图片…', mask: true })
+  uni.showLoading({ title: '正在优化图片…', mask: true })
   try {
     const sourceSize = await getImageSize(filePath)
     let low = 0
     let high = QUALITY_STEPS.length - 1
     let bestPath = ''
-    // 兜底：所有档位都压不进目标时，用压得最小的那个，
-    // 绝不能把超限的原图交回去——那必然被后端拒绝
+    // 兜底：所有档位都压不进目标时，用压得最小的那个，绝不能把超限的原图交回去
     let smallestPath = ''
     let smallestSize = Number.POSITIVE_INFINITY
 
@@ -206,13 +212,13 @@ export async function smartCompressImage(filePath: string): Promise<string> {
 /**
  * 校验图片宽高比是否在合理范围内（防极端畸形长截图/长条横幅）
  * @param filePath 本地图片路径
- * @param minRatio 最小宽高比（默认 1 / 3.5 ≈ 0.285，即高度最多为宽度的 3.5 倍）
- * @param maxRatio 最大宽高比（默认 3.5，即宽度最多为高度的 3.5 倍）
+ * @param minRatio 最小宽高比（默认 1 / 3 ≈ 0.333，即高度最多为宽度的 3 倍）
+ * @param maxRatio 最大宽高比（默认 3.0，即宽度最多为高度的 3 倍）
  */
 export async function validateImageAspectRatio(
   filePath: string,
-  minRatio = 0.285,
-  maxRatio = 3.5,
+  minRatio = 1 / 3,
+  maxRatio = 3,
 ): Promise<{ valid: boolean; width?: number; height?: number; message?: string }> {
   if (!filePath) {
     return { valid: true }
@@ -242,4 +248,49 @@ export async function validateImageAspectRatio(
   }
 
   return { valid: true, width, height }
+}
+
+/**
+ * 综合校验图片合法性（体积防爆 + 宽高比）
+ */
+export async function validateImageFile(
+  filePath: string,
+  options?: {
+    maxSizeBytes?: number
+    minRatio?: number
+    maxRatio?: number
+  },
+): Promise<{ valid: boolean; width?: number; height?: number; size?: number; message?: string }> {
+  if (!filePath) {
+    return { valid: true }
+  }
+
+  const maxSizeBytes = options?.maxSizeBytes ?? MAX_INPUT_FILE_SIZE
+  const minRatio = options?.minRatio ?? 1 / 3
+  const maxRatio = options?.maxRatio ?? 3
+
+  const size = await getFileSize(filePath)
+  if (size > 0 && size > maxSizeBytes) {
+    const limitMB = Math.round(maxSizeBytes / (1024 * 1024))
+    return {
+      valid: false,
+      size,
+      message: `图片大小不能超过 ${limitMB}MB`,
+    }
+  }
+
+  const ratioCheck = await validateImageAspectRatio(filePath, minRatio, maxRatio)
+  if (!ratioCheck.valid) {
+    return {
+      ...ratioCheck,
+      size,
+    }
+  }
+
+  return {
+    valid: true,
+    size,
+    width: ratioCheck.width,
+    height: ratioCheck.height,
+  }
 }

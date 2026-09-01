@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { useSubmitFeedback } from '@/features/feedback/query'
 import { useAuth } from '@/features/user/composables/use-auth'
-import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
+import { smartCompressImage, validateImageFile } from '@/utils/image-compress'
 import { TX_BG_BROWN } from '@/styles/constants'
 
 definePage({
@@ -50,13 +50,17 @@ function chooseMedia() {
       mediaType.value = 'video'
     } else if (file.type.startsWith('image/')) {
       const rawUrl = URL.createObjectURL(file)
-      const check = await validateImageAspectRatio(rawUrl)
+      const check = await validateImageFile(rawUrl)
       if (!check.valid) {
-        uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+        uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
         return
       }
-      mediaPath.value = await smartCompressImage(rawUrl)
-      mediaType.value = 'image'
+      try {
+        mediaPath.value = await smartCompressImage(rawUrl)
+        mediaType.value = 'image'
+      } catch {
+        // 被拦截
+      }
     } else {
       // accept 是软限制，用户可切到「所有文件」选任意类型，兜底拦截非图片/视频
       uni.showToast({ title: '请选择图片或视频文件', icon: 'none' })
@@ -74,13 +78,17 @@ function chooseMedia() {
       const type = res.type as 'image' | 'video'
       const sizeMB = file.size / (1024 * 1024)
       if (type === 'image') {
-        const check = await validateImageAspectRatio(file.tempFilePath)
+        const check = await validateImageFile(file.tempFilePath)
         if (!check.valid) {
-          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+          uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
           return
         }
-        mediaPath.value = await smartCompressImage(file.tempFilePath)
-        mediaType.value = 'image'
+        try {
+          mediaPath.value = await smartCompressImage(file.tempFilePath)
+          mediaType.value = 'image'
+        } catch {
+          // 被拦截
+        }
       } else if (type === 'video') {
         if (sizeMB > 50) {
           uni.showToast({ title: '视频大小不能超过 50MB', icon: 'none' })

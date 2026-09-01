@@ -5,7 +5,7 @@ import FormLocationPicker from '@/components/form-location-picker/form-location-
 import { useSubmitAttempt } from '@/features/attempt/query'
 import { useAuth } from '@/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
-import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
+import { smartCompressImage, validateImageFile } from '@/utils/image-compress'
 import { TX_BG_BROWN } from '@/styles/constants'
 
 import { DEFAULT_COORD_TYPE, isSubmittableLocation } from '@/composables/use-map'
@@ -98,12 +98,16 @@ function choosePhoto() {
     success: async (res) => {
       if (res.tempFilePaths && res.tempFilePaths.length > 0) {
         const rawPath = res.tempFilePaths[0]
-        const check = await validateImageAspectRatio(rawPath)
+        const check = await validateImageFile(rawPath)
         if (!check.valid) {
-          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+          uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
           return
         }
-        formData.filePath = await smartCompressImage(rawPath)
+        try {
+          formData.filePath = await smartCompressImage(rawPath)
+        } catch {
+          // 被拦截
+        }
       }
     },
   })

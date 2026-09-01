@@ -4,7 +4,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import FormLocationPicker from '@/components/form-location-picker/form-location-picker.vue'
 import { useCreatePhoto } from '@/features/photo/query'
 import { useActiveActivities } from '@/features/activity/query'
-import { smartCompressImage, validateImageAspectRatio } from '@/utils/image-compress'
+import { smartCompressImage, validateImageFile } from '@/utils/image-compress'
 import { AppRoute } from '@/router/routes'
 import { TX_BG_BROWN } from '@/styles/constants'
 
@@ -113,12 +113,16 @@ function choosePhoto() {
     success: async (res) => {
       if (res.tempFilePaths && res.tempFilePaths.length > 0) {
         const rawPath = res.tempFilePaths[0]
-        const check = await validateImageAspectRatio(rawPath)
+        const check = await validateImageFile(rawPath)
         if (!check.valid) {
-          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+          uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
           return
         }
-        form.filePath = await smartCompressImage(rawPath)
+        try {
+          form.filePath = await smartCompressImage(rawPath)
+        } catch {
+          // 被拦截
+        }
       }
     },
   })
@@ -132,12 +136,16 @@ function handleFileDrop(e: any) {
     const file = files[0]
     if (file.type.startsWith('image/')) {
       const url = URL.createObjectURL(file)
-      void validateImageAspectRatio(url).then(async (check) => {
+      void validateImageFile(url).then(async (check) => {
         if (!check.valid) {
-          uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
+          uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
           return
         }
-        form.filePath = await smartCompressImage(url)
+        try {
+          form.filePath = await smartCompressImage(url)
+        } catch {
+          // 被拦截
+        }
       })
     } else {
       uni.showToast({ title: '请拖拽图片文件', icon: 'none' })

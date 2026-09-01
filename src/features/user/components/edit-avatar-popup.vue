@@ -65,7 +65,12 @@ async function confirmUpdateAvatar() {
     return uni.showToast({ title: '请先选择新头像', icon: 'none' })
   }
 
-  const compressedPath = await smartCompressImage(selectedAvatarPath.value)
+  let compressedPath = selectedAvatarPath.value
+  try {
+    compressedPath = await smartCompressImage(selectedAvatarPath.value)
+  } catch {
+    return
+  }
   avatarMutation.mutate(compressedPath, {
     onSuccess: (res) => {
       userStore.updateUserInfo({
