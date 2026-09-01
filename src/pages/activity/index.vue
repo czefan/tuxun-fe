@@ -172,7 +172,7 @@ function handleModalGoActivity() {
           @tap="openDetailModal(item)"
         >
           <!-- 图片卡片主视图 -->
-          <view class="relative h-44 w-full overflow-hidden bg-tx-brown/10">
+          <view class="relative h-48 w-full overflow-hidden bg-tx-brown/10">
             <wd-img
               custom-class="h-full w-full object-cover"
               lazy-load
@@ -234,21 +234,21 @@ function handleModalGoActivity() {
         <wd-skeleton
           animation="gradient"
           :row-col="[
-            { width: '100%', height: '96px' },
-            { width: '100%', height: '96px' },
+            { width: '100%', height: '192px' },
+            { width: '100%', height: '192px' },
           ]"
         />
       </view>
 
       <view
         v-else-if="isError"
-        class="min-h-[50vh] flex flex-col items-center justify-center gap-3 py-12"
+        class="min-h-[65vh] flex flex-col items-center justify-center gap-3 -mt-8"
       >
         <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
         <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
       </view>
 
-      <view v-else class="min-h-[50vh] flex flex-col items-center justify-center py-12">
+      <view v-else class="min-h-[65vh] flex flex-col items-center justify-center -mt-8">
         <wd-empty icon="no-result" :tip="emptyTip" />
       </view>
 

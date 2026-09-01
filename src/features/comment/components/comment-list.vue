@@ -4,6 +4,7 @@ import LikeButton from '@/components/like-button/like-button.vue'
 import { useDeleteComment, useInfiniteCommentList, useSetCommentLike } from '../query'
 import type { CommentVM } from '../types'
 import { useAuth } from '@/composables/use-auth'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 const props = withDefaults(
   defineProps<{
@@ -103,10 +104,16 @@ function confirmDelete(id: number) {
       class="hide-scrollbar box-border min-h-0 w-full flex-1 pt-0"
       @tap="activeMenuCommentId = null"
     >
-      <view v-if="isLoading" class="px-4 pt-2.5 space-y-3">
-        <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '50px' }]" />
+      <view
+        v-if="isLoading"
+        class="h-full min-h-[45vh] flex flex-col items-center justify-center -mt-4"
+      >
+        <wd-loading type="circular" :color="TX_BG_BROWN" size="32px" />
       </view>
-      <view v-else-if="isError" class="flex flex-col items-center justify-center gap-3 py-16">
+      <view
+        v-else-if="isError"
+        class="h-full min-h-[45vh] flex flex-col items-center justify-center gap-3 -mt-4"
+      >
         <wd-empty icon="network-error" tip="加载失败，请检查网络后重试" />
         <wd-button size="small" plain round @click="refetch"> 重新加载 </wd-button>
       </view>

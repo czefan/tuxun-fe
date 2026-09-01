@@ -14,14 +14,14 @@ definePage({
 const { isLoggedIn, loginDirectly, requireLogin } = useAuth()
 
 const feedbackTypes = [
-  { label: '内容问题', value: 1 },
-  { label: '玩法建议', value: 2 },
-  { label: '功能异常', value: 3 },
-  { label: '其他问题', value: 4 },
-]
+  { label: '内容问题', value: 1 as const },
+  { label: '玩法建议', value: 2 as const },
+  { label: '功能异常', value: 3 as const },
+  { label: '其他问题', value: 4 as const },
+] as const
 
 const formData = reactive({
-  type: 1 as 1 | 2 | 3 | 4,
+  type: 1 as (typeof feedbackTypes)[number]['value'],
   title: '',
   content: '',
   phone: '',
@@ -49,10 +49,6 @@ function chooseMedia() {
       mediaPath.value = URL.createObjectURL(file)
       mediaType.value = 'video'
     } else if (file.type.startsWith('image/')) {
-      if (sizeMB > 20) {
-        uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
-        return
-      }
       const rawUrl = URL.createObjectURL(file)
       const check = await validateImageAspectRatio(rawUrl)
       if (!check.valid) {
@@ -78,10 +74,6 @@ function chooseMedia() {
       const type = res.type as 'image' | 'video'
       const sizeMB = file.size / (1024 * 1024)
       if (type === 'image') {
-        if (sizeMB > 20) {
-          uni.showToast({ title: '图片大小不能超过 20MB', icon: 'none' })
-          return
-        }
         const check = await validateImageAspectRatio(file.tempFilePath)
         if (!check.valid) {
           uni.showToast({ title: check.message || '图片比例过于悬殊', icon: 'none' })
@@ -232,7 +224,7 @@ function handleSubmit() {
                 ? 'border-tx-border bg-tx-accent text-tx-ink shadow-2xs'
                 : 'border-tx-border/40 bg-tx-brown/5 text-tx-ink-2',
             ]"
-            @click="formData.type = item.value as any"
+            @click="formData.type = item.value"
           >
             {{ item.label }}
           </view>

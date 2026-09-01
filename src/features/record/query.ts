@@ -3,6 +3,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import type { PageResult } from '@/service/contract/types'
 import { nextPageByLoadedCount } from '@/service/query/pagination'
+import { resolveEnabled } from '@/service/query/enabled'
 import { qk } from '@/service/query/keys'
 import { useAuthStore } from '@/store/auth'
 import { getMyAttemptRecords, getMyPhotoDetail, getMyPhotos } from './api'
@@ -24,10 +25,7 @@ export function useInfiniteMyPhotos(
       getMyPhotos({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(
-      () =>
-        authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled)),
-    ),
+    enabled: resolveEnabled(() => authStore.isLoggedIn, options?.enabled),
   })
 }
 
@@ -39,11 +37,9 @@ export function useMyPhotoDetail(
   return useQuery({
     queryKey: computed(() => qk.record.photoDetail(toValue(id) || 0)),
     queryFn: () => getMyPhotoDetail(toValue(id)!),
-    enabled: computed(
-      () =>
-        authStore.isLoggedIn &&
-        Boolean(toValue(id) && toValue(id)! > 0) &&
-        (options?.enabled === undefined ? true : toValue(options.enabled)),
+    enabled: resolveEnabled(
+      () => authStore.isLoggedIn && Boolean(toValue(id) && toValue(id)! > 0),
+      options?.enabled,
     ),
   })
 }
@@ -59,9 +55,6 @@ export function useInfiniteMyAttemptRecords(
       getMyAttemptRecords({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(
-      () =>
-        authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled)),
-    ),
+    enabled: resolveEnabled(() => authStore.isLoggedIn, options?.enabled),
   })
 }

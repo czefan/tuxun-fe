@@ -1,14 +1,12 @@
 /**
  * mock 图片地址与 Media 构造。
  *
- * 用 picsum.photos 的免费测试图，方便直观验证瀑布流、头像、封面的真实观感。
+ * 使用 loremflickr 的免费实景测试图（支持 lock 锁定 seed），方便直观验证瀑布流、头像、封面的真实观感。
  * 集中在这里而不是散在 db.ts 里，是为了以后换图床/换成本地图只改一处。
  *
  * 注意：这些是**远程**地址，只在 mock 模式下用。生产代码里的兜底头像一律走
  * 本地 /static/images/default-avatar.png，不要把第三方地址写进业务组件。
  */
-
-const BASE = 'https://picsum.photos'
 
 export interface MockMediaObj {
   origin_url?: string
@@ -20,10 +18,10 @@ export interface MockMediaObj {
 /**
  * 标章 URL 字段用（契约里 `avatar` 仍是 string）。
  *
- * @param seed picsum 的图片 id，同一 seed 图片稳定
+ * @param seed 图片 seed，同一 seed 图片稳定
  */
 export function mockImageString(seed: number | string, width: number, height: number): string {
-  return `${BASE}/seed/${seed}/${width}/${height}`
+  return `https://loremflickr.com/${width}/${height}/scenery,city?lock=${seed}`
 }
 
 /**

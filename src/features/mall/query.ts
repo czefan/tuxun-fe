@@ -4,6 +4,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import type { PageParams, PageResult } from '@/service/contract/types'
 import { nextPageByLoadedCount } from '@/service/query/pagination'
+import { resolveEnabled } from '@/service/query/enabled'
 import { qk } from '@/service/query/keys'
 import { useAuthStore } from '@/store/auth'
 import { exchangeGood, getExchanges, getGoods } from './api'
@@ -21,7 +22,7 @@ export function useInfiniteGoodsList(
     getNextPageParam: nextPageByLoadedCount,
     refetchInterval: options?.refetchInterval ?? 15000,
     staleTime: 5000,
-    enabled: computed(() => (options?.enabled === undefined ? true : toValue(options.enabled))),
+    enabled: resolveEnabled(true, options?.enabled),
   })
 }
 
@@ -36,10 +37,7 @@ export function useInfiniteExchangeList(
       getExchanges({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(
-      () =>
-        authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled)),
-    ),
+    enabled: resolveEnabled(() => authStore.isLoggedIn, options?.enabled),
   })
 }
 

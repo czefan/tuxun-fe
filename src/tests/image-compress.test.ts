@@ -30,53 +30,53 @@ describe('按需图片压缩', () => {
     ;(uni as any).getFileInfo = vi.fn()
     ;(uni as any).showLoading = vi.fn()
     ;(uni as any).hideLoading = vi.fn()
-    ;(uni as any).getImageInfo = vi.fn()
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => opts?.fail?.({ errMsg: 'fail' }))
   })
 
-  it('≤ 20MB 原图直接返回，不做任何降质', async () => {
-    stubSizes({ '/tmp/10mb.jpg': 10 * MB })
+  it('≤ 10MB 原图直接返回，不做任何降质', async () => {
+    stubSizes({ '/tmp/8mb.jpg': 8 * MB })
     const compress = vi.fn()
     ;(uni as any).compressImage = compress
 
-    await expect(smartCompressImage('/tmp/10mb.jpg')).resolves.toBe('/tmp/10mb.jpg')
+    await expect(smartCompressImage('/tmp/8mb.jpg')).resolves.toBe('/tmp/8mb.jpg')
     expect(compress, '未超限却调用了压缩，会无谓降质').not.toHaveBeenCalled()
   })
 
-  it('> 20MB 时取「能压进 19MB 的最高画质」，而不是压到最狠', async () => {
-    const sizes: Record<string, number> = { '/tmp/25mb.jpg': 25 * MB }
+  it('> 10MB 时取「能压进 9.5MB 的最高画质」，而不是压到最狠', async () => {
+    const sizes: Record<string, number> = { '/tmp/15mb.jpg': 15 * MB }
     stubSizes(sizes)
-    // 质量 ≤ 60 能压进 19MB，70 以上压不动
+    // 质量 ≤ 60 能压进 9.5MB，70 以上压不动
     const sizeByQuality = {
-      10: 5 * MB,
-      20: 7 * MB,
-      30: 9 * MB,
-      40: 12 * MB,
-      50: 15 * MB,
-      60: 18 * MB,
-      70: 21 * MB,
-      80: 23 * MB,
-      90: 24 * MB,
+      10: 2 * MB,
+      20: 4 * MB,
+      30: 5 * MB,
+      40: 6.5 * MB,
+      50: 8 * MB,
+      60: 9.2 * MB,
+      70: 10.5 * MB,
+      80: 12 * MB,
+      90: 13.5 * MB,
     }
     ;(uni as any).compressImage = stubCompress(sizeByQuality, sizes)
 
-    const result = await smartCompressImage('/tmp/25mb.jpg')
+    const result = await smartCompressImage('/tmp/15mb.jpg')
     expect(result, '应选中满足体积上限的最高画质档（60）').toBe('/tmp/q60.jpg')
   })
 
   it('所有档位都压不进目标时，必须返回压得最小的那个，绝不能把超限原图交回去', async () => {
     const sizes: Record<string, number> = { '/tmp/huge.jpg': 400 * MB }
     stubSizes(sizes)
-    // 每一档都仍然超过 19MB
+    // 每一档都仍然超过 9.5MB
     const sizeByQuality = {
-      10: 22 * MB,
-      20: 25 * MB,
-      30: 30 * MB,
-      40: 40 * MB,
-      50: 55 * MB,
-      60: 70 * MB,
-      70: 90 * MB,
-      80: 120 * MB,
-      90: 200 * MB,
+      10: 10 * MB,
+      20: 12 * MB,
+      30: 15 * MB,
+      40: 20 * MB,
+      50: 30 * MB,
+      60: 45 * MB,
+      70: 60 * MB,
+      80: 80 * MB,
+      90: 120 * MB,
     }
     ;(uni as any).compressImage = stubCompress(sizeByQuality, sizes)
 
@@ -97,7 +97,7 @@ describe('按需图片压缩', () => {
   it('h5 没有 uni.compressImage 时走 canvas 兜底，且图片加载不了也必须 settle', async () => {
     vi.useFakeTimers()
     try {
-      stubSizes({ '/tmp/h5.jpg': 25 * MB })
+      stubSizes({ '/tmp/h5.jpg': 15 * MB })
       delete (uni as any).compressImage
 
       const pending = smartCompressImage('/tmp/h5.jpg')
@@ -110,6 +110,44 @@ describe('按需图片压缩', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('图片未超过 4096px 时不得传 compressedWidth / compressedHeight —— 否则会被放大', async () => {
+    const sizes: Record<string, number> = { '/tmp/15mb.jpg': 15 * MB }
+    stubSizes(sizes)
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => {
+      opts.success?.({ width: 2000, height: 3000 })
+    })
+    const compress = vi.fn((options: any) => {
+      options.success({ tempFilePath: '/tmp/q50.jpg' })
+    })
+    ;(uni as any).compressImage = compress
+
+    await smartCompressImage('/tmp/15mb.jpg')
+
+    expect(compress).toHaveBeenCalled()
+    const firstCallArgs = compress.mock.calls[0][0]
+    expect(firstCallArgs.compressedWidth).toBeUndefined()
+    expect(firstCallArgs.compressedHeight).toBeUndefined()
+  })
+
+  it('超长边按长边等比收缩，且宽高同时下传', async () => {
+    const sizes: Record<string, number> = { '/tmp/15mb-huge-dimension.jpg': 15 * MB }
+    stubSizes(sizes)
+    ;(uni as any).getImageInfo = vi.fn((opts: any) => {
+      opts.success?.({ width: 6000, height: 4000 })
+    })
+    const compress = vi.fn((options: any) => {
+      options.success({ tempFilePath: '/tmp/q50.jpg' })
+    })
+    ;(uni as any).compressImage = compress
+
+    await smartCompressImage('/tmp/15mb-huge-dimension.jpg')
+
+    expect(compress).toHaveBeenCalled()
+    const firstCallArgs = compress.mock.calls[0][0]
+    expect(firstCallArgs.compressedWidth).toBe(4096)
+    expect(firstCallArgs.compressedHeight).toBe(2731)
   })
 })
 

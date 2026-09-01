@@ -2,16 +2,18 @@
  * 按需图片压缩。
  *
  * 策略：
- * 1. ≤ 20MB 直接上传，绝不无谓降质；
- * 2. > 20MB 才在质量档位上二分，取「能压到 19MB 以内的最高画质」。
+ * 1. ≤ 10MB 直接上传，绝不无谓降质；
+ * 2. > 10MB 才在质量档位上二分，取「能压到 9.5MB 以内的最高画质」；
+ * 3. 超高像素大图（单边 > 4096px）自动等比缩放，彻底消除极端超大图无法压进 10MB 的风险。
  *
  * 平台差异：`uni.compressImage` 在 H5 运行时里根本不存在
  * （@dcloudio/uni-h5 未实现），直接调用会抛 TypeError 并让调用方的
  * await 静默失败。所以 H5 走 canvas 重编码兜底。
  */
 
-const MAX_DIRECT_UPLOAD_SIZE = 20 * 1024 * 1024
-const TARGET_COMPRESSED_SIZE = 19 * 1024 * 1024
+const MAX_DIRECT_UPLOAD_SIZE = 10 * 1024 * 1024
+const TARGET_COMPRESSED_SIZE = 9.5 * 1024 * 1024
+const MAX_DIMENSION = 4096
 
 /** 质量档位，从低到高。用离散档位而非 1~100 连续区间，二分最多 4 轮，避免大图上反复重编码 */
 const QUALITY_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90]
@@ -48,15 +50,22 @@ function compressByCanvas(src: string, quality: number): Promise<string> {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => {
+      let { naturalWidth: width, naturalHeight: height } = img
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+
       const canvas = document.createElement('canvas')
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
+      canvas.width = width
+      canvas.height = height
       const ctx = canvas.getContext('2d')
       if (!ctx) {
         settle(src)
         return
       }
-      ctx.drawImage(img, 0, 0)
+      ctx.drawImage(img, 0, 0, width, height)
       canvas.toBlob(
         (blob) => settle(blob ? URL.createObjectURL(blob) : src),
         'image/jpeg',
@@ -93,15 +102,46 @@ function getFileSize(filePath: string): Promise<number> {
   })
 }
 
-function compressWithQuality(filePath: string, quality: number): Promise<string> {
+function getImageSize(filePath: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    if (typeof (uni as any).getImageInfo === 'function') {
+      uni.getImageInfo({
+        src: filePath,
+        success: (info: any) => {
+          resolve({
+            width: Number(info?.width) || 0,
+            height: Number(info?.height) || 0,
+          })
+        },
+        fail: () => resolve({ width: 0, height: 0 }),
+      })
+      return
+    }
+    resolve({ width: 0, height: 0 })
+  })
+}
+
+async function compressWithQuality(filePath: string, quality: number): Promise<string> {
   if (!canUseUniCompress()) {
     return compressByCanvas(filePath, quality)
   }
+
+  // compressedWidth 是「压缩后的宽度」而非上限，无条件传会把小图放大 —— 必须先量尺寸
+  const { width, height } = await getImageSize(filePath)
+  const needsResize = width > MAX_DIMENSION || height > MAX_DIMENSION
+  const ratio = needsResize ? Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height) : 1
 
   return new Promise((resolve) => {
     uni.compressImage({
       src: filePath,
       quality,
+      // 与 canvas 分支保持同一套「按长边等比收缩」语义；取不到尺寸时不传，退回纯质量压缩
+      ...(needsResize && width
+        ? {
+            compressedWidth: Math.round(width * ratio),
+            compressedHeight: Math.round(height * ratio),
+          }
+        : {}),
       success: (res) => resolve(res.tempFilePath || filePath),
       fail: () => resolve(filePath),
     })
@@ -173,43 +213,28 @@ export async function validateImageAspectRatio(
     return { valid: true }
   }
 
-  return new Promise((resolve) => {
-    uni.getImageInfo({
-      src: filePath,
-      success: (info: any) => {
-        const width = Number(info?.width)
-        const height = Number(info?.height)
-        if (!width || !height) {
-          resolve({ valid: true })
-          return
-        }
+  const { width, height } = await getImageSize(filePath)
+  if (!width || !height) {
+    return { valid: true }
+  }
 
-        const ratio = width / height
-        if (ratio < minRatio) {
-          resolve({
-            valid: false,
-            width,
-            height,
-            message: '图片比例过于细长，请选择标准比例照片',
-          })
-          return
-        }
-        if (ratio > maxRatio) {
-          resolve({
-            valid: false,
-            width,
-            height,
-            message: '图片比例过于扁平，请选择标准比例照片',
-          })
-          return
-        }
+  const ratio = width / height
+  if (ratio < minRatio) {
+    return {
+      valid: false,
+      width,
+      height,
+      message: '图片比例过于细长，请选择标准比例照片',
+    }
+  }
+  if (ratio > maxRatio) {
+    return {
+      valid: false,
+      width,
+      height,
+      message: '图片比例过于扁平，请选择标准比例照片',
+    }
+  }
 
-        resolve({ valid: true, width, height })
-      },
-      fail: () => {
-        // 无法解析时安全放行，由后续流程处理
-        resolve({ valid: true })
-      },
-    })
-  })
+  return { valid: true, width, height }
 }

@@ -63,6 +63,32 @@ uni-scroll-view,
   overscroll-behavior: contain;
 }
 
+/* #ifdef H5 */
+/* Uni-App H5 异步页面/分包加载占位与加载图标全局居中适配 */
+.uni-async-loading {
+  position: fixed !important;
+  top: var(--window-top, 0px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: calc(100vh - var(--window-top, 0px)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  background-color: var(--tx-bg-main, #f1dfc5) !important;
+  box-sizing: border-box !important;
+  z-index: 10 !important; /* 低于底部导航栏 z-50，确保加载期间底栏常驻不被遮挡 */
+}
+
+.uni-async-loading .uni-loading {
+  width: 36px !important;
+  height: 36px !important;
+  margin-top: -40px !important; /* 扣除顶栏与底栏的光学居中微调 */
+}
+/* #endif */
+
 :root,
 page {
   --tx-bg-main: #f1dfc5; /* 全局浅黄底色 */

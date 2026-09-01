@@ -4,9 +4,11 @@ import type { SolveRecordVM } from '../types'
 import { useSetSolveLike } from '../query'
 import { useAuth } from '@/composables/use-auth'
 import { previewImage } from '@/utils/image-preview'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 const props = defineProps<{
   list: SolveRecordVM[]
+  loading?: boolean
   /** 必填：点赞后要按这个 id 失效破解列表，缺了就静默不刷新 */
   photoId: number
   hasNextPage?: boolean
@@ -36,7 +38,15 @@ function handlePreviewImage(url: string) {
 
 <template>
   <view class="solve-list space-y-3.5" :class="list.length ? '' : 'h-full'">
-    <view v-if="list.length" class="px-4 pt-2.5 space-y-3.5">
+    <!-- 加载中动效：避免无数据态误闪 -->
+    <view
+      v-if="loading"
+      class="h-full min-h-[40vh] flex flex-col items-center justify-center -mt-4"
+    >
+      <wd-loading type="circular" :color="TX_BG_BROWN" size="32px" />
+    </view>
+
+    <view v-else-if="list.length" class="px-4 pt-2.5 space-y-3.5">
       <!-- 横向单行紧凑布局：左侧图片 + 右侧作者/时间/点赞 -->
       <view
         v-for="item in list"

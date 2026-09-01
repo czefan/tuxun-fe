@@ -97,6 +97,8 @@ onUnmounted(() => {
   // #endif
 })
 
+let blurTimer: ReturnType<typeof setTimeout> | undefined
+
 function handleInsertEmoji(emoji: string) {
   if (text.value.length + emoji.length > props.maxLength) return
   text.value += emoji
@@ -104,7 +106,19 @@ function handleInsertEmoji(emoji: string) {
   syncEmojis([emoji, ...emojiList.value.filter((item) => item !== emoji)])
 }
 
+function handleBlur() {
+  isFocus.value = false
+  clearTimeout(blurTimer)
+  // 延迟 120ms 关闭，给点击表情栏和发送按钮的触摸事件留出判定时间
+  blurTimer = setTimeout(() => {
+    if (props.visible && !isFocus.value) {
+      handleClose()
+    }
+  }, 120)
+}
+
 function handleClose() {
+  clearTimeout(blurTimer)
   isFocus.value = false
   keyboardHeight.value = 0
   emit('update:visible', false)
@@ -134,9 +148,11 @@ function handleClose() {
           :focus="isFocus"
           auto-height
           :adjust-position="false"
-          :hold-keyboard="true"
+          :hold-keyboard="false"
           :show-confirm-bar="false"
           class="box-border max-h-[140px] min-h-[46px] w-full text-base text-tx-ink leading-relaxed"
+          @focus="isFocus = true"
+          @blur="handleBlur"
           @input="(e: any) => (text = e.detail?.value ?? '')"
           @keyboardheightchange="(e: any) => (keyboardHeight = e.detail?.height ?? 0)"
         />

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
-import { computed, toValue } from 'vue'
+import { resolveEnabled } from '@/service/query/enabled'
 import { qk } from '@/service/query/keys'
 import { getUserInfo, updateAvatar, updateNickname } from './api'
 import type { UserInfo } from './types'
@@ -13,7 +13,7 @@ export function useUserInfo(options?: {
   return useQuery({
     queryKey: qk.user.info(),
     queryFn: () => getUserInfo({ silentAuth: options?.silentAuth }),
-    enabled: computed(() => (options?.enabled === undefined ? true : toValue(options.enabled))),
+    enabled: resolveEnabled(true, options?.enabled),
   })
 }
 

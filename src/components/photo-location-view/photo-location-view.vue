@@ -11,7 +11,7 @@ defineOptions({
 
 const props = withDefaults(defineProps<Props>(), {
   coordType: DEFAULT_COORD_TYPE,
-  title: '答案正确坐标',
+  title: '答案',
 })
 
 interface Props {

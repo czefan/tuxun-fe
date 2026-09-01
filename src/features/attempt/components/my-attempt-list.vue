@@ -3,9 +3,11 @@ import StatusTag from '@/components/status-tag/status-tag.vue'
 import { previewImage } from '@/utils/image-preview'
 import type { MyAttemptVM } from '../types'
 import type { Location } from '@/service/contract/types'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 defineProps<{
   list: MyAttemptVM[]
+  loading?: boolean
   hasNextPage?: boolean
   isFetchingNextPage?: boolean
 }>()
@@ -40,7 +42,15 @@ function handleOpenLocation(location?: Location | null) {
 
 <template>
   <view class="my-attempt-list space-y-3.5" :class="list.length ? '' : 'h-full'">
-    <view v-if="list.length" class="px-4 pt-2.5 space-y-3.5">
+    <!-- 加载中动效：避免无数据态误闪 -->
+    <view
+      v-if="loading"
+      class="h-full min-h-[40vh] flex flex-col items-center justify-center -mt-4"
+    >
+      <wd-loading type="circular" :color="TX_BG_BROWN" size="32px" />
+    </view>
+
+    <view v-else-if="list.length" class="px-4 pt-2.5 space-y-3.5">
       <!-- 单条作答卡片 -->
       <view
         v-for="item in list"

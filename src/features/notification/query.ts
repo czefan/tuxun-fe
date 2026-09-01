@@ -3,6 +3,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import type { PageParams } from '@/service/contract/types'
 import { nextPageByLoadedCount } from '@/service/query/pagination'
+import { resolveEnabled } from '@/service/query/enabled'
 import { qk } from '@/service/query/keys'
 import {
   getAnnouncementDetail,
@@ -28,7 +29,7 @@ export function useInfiniteAnnouncements(
       getAnnouncements({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(() => (options?.enabled !== undefined ? toValue(options.enabled) : true)),
+    enabled: resolveEnabled(true, options?.enabled),
   })
 }
 
@@ -50,7 +51,7 @@ export function useInfiniteInteractions(
       getInteractions({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(() => (options?.enabled !== undefined ? toValue(options.enabled) : true)),
+    enabled: resolveEnabled(true, options?.enabled),
   })
 }
 

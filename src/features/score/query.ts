@@ -3,6 +3,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import type { PageParams } from '@/service/contract/types'
 import { nextPageByLoadedCount } from '@/service/query/pagination'
+import { resolveEnabled } from '@/service/query/enabled'
 import { qk } from '@/service/query/keys'
 import { useAuthStore } from '@/store/auth'
 import { getScoreLogs } from './api'
@@ -19,9 +20,6 @@ export function useInfiniteScoreLogs(
       getScoreLogs({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(
-      () =>
-        authStore.isLoggedIn && (options?.enabled === undefined ? true : toValue(options.enabled)),
-    ),
+    enabled: resolveEnabled(() => authStore.isLoggedIn, options?.enabled),
   })
 }

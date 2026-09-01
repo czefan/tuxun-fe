@@ -13,6 +13,7 @@ import GoodDetailPopup from '@/features/mall/components/good-detail-popup.vue'
 import { useUserStore } from '@/features/user'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { debounce } from '@/utils/debounce'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 definePage({
   style: {
@@ -225,20 +226,26 @@ function handleExchange({ goodId, quantity }: { goodId: number; quantity: number
           class="hide-scrollbar box-border h-full w-full"
           @scrolltolower="() => fetchNextGoods()"
         >
-          <view class="bottom-space--bar px-3 pt-2.5 space-y-4">
-            <view v-if="goodsLoading" class="grid grid-cols-2 gap-3">
+          <!-- 1. 加载态骨架屏 -->
+          <view v-if="goodsLoading" class="bottom-space--bar px-3 pt-2.5 space-y-4">
+            <view class="grid grid-cols-2 gap-3">
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '140px' }]" />
               <wd-skeleton animation="gradient" :row-col="[{ width: '100%', height: '140px' }]" />
             </view>
-            <view
-              v-else-if="goodsError"
-              class="flex flex-col items-center justify-center gap-3 py-20"
-            >
-              <wd-empty icon="network-error" tip="加载失败，请重试" />
-              <wd-button size="small" plain round @click="refetchGoods"> 重新加载 </wd-button>
-            </view>
-            <!-- 2 列网格布局，干净相纸卡片 (包含大图、商品名称、所需积分与库存数量) -->
-            <view v-else-if="goodsList.length" class="grid grid-cols-2 gap-2.5">
+          </view>
+
+          <!-- 2. 失败态：全屏光学居中 -->
+          <view
+            v-else-if="goodsError"
+            class="h-full min-h-[65vh] flex flex-col items-center justify-center gap-3 -mt-8"
+          >
+            <wd-empty icon="network-error" tip="加载失败，请重试" />
+            <wd-button size="small" plain round @click="refetchGoods"> 重新加载 </wd-button>
+          </view>
+
+          <!-- 3. 正常商品网格 -->
+          <view v-else-if="goodsList.length" class="bottom-space--bar px-3 pt-2.5 space-y-4">
+            <view class="grid grid-cols-2 gap-2.5">
               <view
                 v-for="item in goodsList"
                 :key="item.id"
@@ -283,10 +290,12 @@ function handleExchange({ goodId, quantity }: { goodId: number; quantity: number
                 </view>
               </view>
             </view>
-            <view v-else class="py-20">
-              <wd-empty icon="no-result" tip="暂无商品" />
-            </view>
             <wd-loadmore v-if="isFetchingGoods" state="loading" @reload="fetchNextGoods" />
+          </view>
+
+          <!-- 4. 空商品：全屏光学居中 -->
+          <view v-else class="h-full min-h-[65vh] flex flex-col items-center justify-center -mt-8">
+            <wd-empty icon="no-result" tip="暂无商品" />
           </view>
         </scroll-view>
       </swiper-item>
@@ -301,7 +310,7 @@ function handleExchange({ goodId, quantity }: { goodId: number; quantity: number
         >
           <view
             v-if="!isLoggedIn()"
-            class="min-h-full flex flex-col items-center justify-center -mt-6"
+            class="h-full min-h-[65vh] flex flex-col items-center justify-center -mt-8"
           >
             <wd-empty icon="no-result" tip="登录后查看兑换记录" />
             <wd-button
@@ -314,25 +323,27 @@ function handleExchange({ goodId, quantity }: { goodId: number; quantity: number
               去登录
             </wd-button>
           </view>
-          <view v-else class="bottom-space--bar px-3 pt-2.5 space-y-3">
-            <view v-if="exchangeLoading" class="space-y-3">
-              <wd-skeleton
-                animation="gradient"
-                :row-col="[
-                  { width: '100%', height: '70px' },
-                  { width: '100%', height: '70px' },
-                ]"
-              />
-            </view>
-            <view
-              v-else-if="exchangeError"
-              class="flex flex-col items-center justify-center gap-3 py-20"
-            >
-              <wd-empty icon="network-error" tip="加载失败，请重试" />
-              <wd-button size="small" plain round @click="refetchExchanges"> 重新加载 </wd-button>
-            </view>
-            <!-- 兑换记录卡片列表 -->
-            <view v-else-if="exchangeList.length" class="space-y-3">
+
+          <!-- 1. 加载中：全屏光学居中 -->
+          <view
+            v-else-if="exchangeLoading"
+            class="h-full min-h-[65vh] flex flex-col items-center justify-center -mt-8"
+          >
+            <wd-loading type="circular" :color="TX_BG_BROWN" size="36px" />
+          </view>
+
+          <!-- 2. 失败态：全屏光学居中 -->
+          <view
+            v-else-if="exchangeError"
+            class="h-full min-h-[65vh] flex flex-col items-center justify-center gap-3 -mt-8"
+          >
+            <wd-empty icon="network-error" tip="加载失败，请重试" />
+            <wd-button size="small" plain round @click="refetchExchanges"> 重新加载 </wd-button>
+          </view>
+
+          <!-- 3. 兑换记录卡片列表 -->
+          <view v-else-if="exchangeList.length" class="bottom-space--bar px-3 pt-2.5 space-y-3">
+            <view class="space-y-3">
               <view
                 v-for="item in exchangeList"
                 :key="item.id"
@@ -400,10 +411,12 @@ function handleExchange({ goodId, quantity }: { goodId: number; quantity: number
                 </view>
               </view>
             </view>
-            <view v-else class="py-20">
-              <wd-empty icon="no-result" tip="暂无兑换记录" />
-            </view>
             <wd-loadmore v-if="isFetchingExchanges" state="loading" @reload="fetchNextExchanges" />
+          </view>
+
+          <!-- 4. 空兑换记录：全屏光学居中 -->
+          <view v-else class="h-full min-h-[65vh] flex flex-col items-center justify-center -mt-8">
+            <wd-empty icon="no-result" tip="暂无兑换记录" />
           </view>
         </scroll-view>
       </swiper-item>

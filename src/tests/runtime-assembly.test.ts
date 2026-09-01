@@ -151,7 +151,11 @@ describe('装配守卫', () => {
 
   it('详情页必须挂上评论区，个人中心必须走 useUserInfo', () => {
     const detail = read('src/subPages/question/detail.vue')
-    expect(detail, '详情页没有渲染 CommentList：评论区代码写了但没人用').toContain('<CommentList')
+    const detailTabs = read('src/subPages/question/components/question-detail-tabs.vue')
+    expect(
+      detail.includes('<CommentList') || detailTabs.includes('<CommentList'),
+      '详情页没有渲染 CommentList：评论区代码写了但没人用',
+    ).toBe(true)
 
     const my = read('src/pages/my/index.vue')
     expect(my, '个人中心没接 useUserInfo').toContain('useUserInfo(')
@@ -192,6 +196,7 @@ describe('装配守卫', () => {
 
   it('题目详情页必须接上全屏大图预览', () => {
     const detail = read('src/subPages/question/detail.vue')
+    const heroCard = read('src/features/photo/components/question-hero-card.vue')
     expect(detail, '题目详情页没有引入 previewImage：全屏大图预览功能漏接').toContain(
       'previewImage',
     )
@@ -199,7 +204,8 @@ describe('装配守卫', () => {
     // （wd-img 只 emit error / click / load，不 emit tap）。
     // 这里要守的是「预览接上了没」，不是用哪个事件。
     expect(
-      /@(?:tap|click)="handlePreviewImage"/.test(detail),
+      /@(?:tap|click|preview-image)="handlePreviewImage"/.test(detail) &&
+        /@(?:tap|click)="emit\('(?:preview-image|previewImage)'\)"/.test(heroCard),
       '题目详情页图片缺少预览事件绑定',
     ).toBe(true)
   })

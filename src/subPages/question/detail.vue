@@ -1,23 +1,18 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
 import { useQueryClient } from '@tanstack/vue-query'
-import LikeButton from '@/components/like-button/like-button.vue'
 import PhotoLocationView from '@/components/photo-location-view/photo-location-view.vue'
-import SolveList from '@/features/attempt/components/solve-list.vue'
-import MyAttemptList from '@/features/attempt/components/my-attempt-list.vue'
-import CommentList from '@/features/comment/components/comment-list.vue'
 import CommentInputPopup from '@/features/comment/components/comment-input-popup.vue'
-import { useInfiniteCommentList, usePostComment } from '@/features/comment/query'
+import QuestionHeroCard from '@/features/photo/components/question-hero-card.vue'
+import QuestionDetailTabs from './components/question-detail-tabs.vue'
+import { usePostComment } from '@/features/comment/query'
 import { findCachedPhotoCard, usePhotoDetail, useSetPhotoLike } from '@/features/photo/query'
-import { useInfiniteMyAttemptsList, useInfiniteSolvesList } from '@/features/attempt/query'
-import type { MyAttemptVM, SolveRecordVM } from '@/features/attempt/types'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { AppRoute, withQuery } from '@/router/routes'
 import { useStickyTop } from '@/composables/use-sticky-top'
 import { closeActivePreviewImage, previewImage } from '@/utils/image-preview'
 import { serverNow } from '@/utils/server-time'
-import { formatCompactCount } from '@/utils/format-count'
 import { useQuestionSwitcher } from './use-question-switcher'
 
 definePage({
@@ -40,39 +35,12 @@ const {
   initSwitcherFromQuery,
 } = useQuestionSwitcher(questionId)
 
-type CommentSortType = 'hottest' | 'latest'
-const commentSortType = ref<CommentSortType>('hottest') // 默认即最多点赞
-const showCommentSortPopover = ref(false)
-// 映射到后端接口 sort_by：默认即最多点赞 ('likes_count')
-const commentSortBy = computed(() =>
-  commentSortType.value === 'latest' ? 'created_at' : 'likes_count',
-)
-
-const detailTabsList = ['comments', 'solves', 'myAttempts'] as const
-const currentTabIndex = computed(() => detailTabsList.indexOf(activeTab.value))
-
-/** 点击包含评论和图标的整个 Tab 区域 */
-function handleTabClick(tab: (typeof detailTabsList)[number]) {
-  if (tab === 'comments' && activeTab.value === 'comments') {
-    showCommentSortPopover.value = !showCommentSortPopover.value
-  } else {
-    activeTab.value = tab
-    showCommentSortPopover.value = false
-  }
-}
-
-const { isLoggedIn, isMe, loginDirectly, requireLogin } = useAuth()
+const { isMe, requireLogin } = useAuth()
 const { mutate: setLike } = useSetPhotoLike()
 
 const { data: question } = usePhotoDetail(computed(() => questionId.value))
 
 const queryClient = useQueryClient()
-const isOriginLoaded = ref(false)
-
-watch(questionId, () => {
-  isOriginLoaded.value = false
-})
-
 const cachedCard = computed(() => findCachedPhotoCard(queryClient, questionId.value))
 
 const thumbUrl = computed(() => {
@@ -84,12 +52,6 @@ const thumbUrl = computed(() => {
   }
   return null
 })
-
-const { data: commentPagesData } = useInfiniteCommentList(
-  computed(() => questionId.value),
-  computed(() => ({ sort_by: commentSortBy.value })),
-)
-const commentTotal = computed(() => commentPagesData.value?.pages[0]?.total ?? 0)
 
 const commentInputVisible = ref(false)
 const commentText = ref('')
@@ -132,35 +94,6 @@ onUnload(() => {
   closeActivePreviewImage()
 })
 
-// 走 query hooks 而非直接调 api：作答/破解列表要在提交作答、点赞后按
-// features/attempt/query.ts 里声明的失效规则自动刷新
-const listParams = { page_size: 20 }
-const {
-  data: solvesPagesData,
-  fetchNextPage: fetchNextSolves,
-  hasNextPage: hasNextSolves,
-  isFetchingNextPage: isFetchingSolves,
-} = useInfiniteSolvesList(
-  computed(() => questionId.value),
-  listParams,
-)
-
-// 未登录时置 0 使 query 保持 disabled，避免打出必然 401 的请求
-const myAttemptsPhotoId = computed(() => (isLoggedIn() ? questionId.value : 0))
-const {
-  data: myAttemptsPagesData,
-  fetchNextPage: fetchNextMyAttempts,
-  hasNextPage: hasNextMyAttempts,
-  isFetchingNextPage: isFetchingMyAttempts,
-} = useInfiniteMyAttemptsList(myAttemptsPhotoId, listParams)
-
-const solves = computed<SolveRecordVM[]>(
-  () => solvesPagesData.value?.pages.flatMap((page) => page.list) ?? [],
-)
-const myAttempts = computed<MyAttemptVM[]>(
-  () => myAttemptsPagesData.value?.pages.flatMap((page) => page.list) ?? [],
-)
-
 onLoad((query) => {
   if (typeof query?.id === 'string') questionId.value = Number(query.id)
 
@@ -180,7 +113,7 @@ const isEnded = computed(() => {
 
 const buttonState = computed(() => {
   if (!question.value) return { text: '我要答题', disabled: false }
-  if (isEnded.value) return { text: '答题已结束', disabled: false }
+  if (isEnded.value) return { text: '答题已结束', disabled: true }
   if (isMe(question.value.author?.id)) return { text: '作者不可答题', disabled: true }
   if (question.value.userAttemptsCount >= 5) return { text: '次数上限 (5/5)', disabled: true }
   return { text: '我要答题', disabled: false }
@@ -218,14 +151,12 @@ function goSubmit() {
 </script>
 
 <template>
-  <!-- 页面根点击兜底关闭排序气泡 -->
   <view
     class="page-question-detail min-h-screen bg-tx-main transition-all"
     :class="{
       'animate-slide-up-out': isSlideUping,
       'animate-slide-down-out': isSlideDowning,
     }"
-    @click="showCommentSortPopover = false"
   >
     <!-- 误触切题 4 秒内顶部弹出极简浅色撤销提示条 -->
     <view
@@ -245,104 +176,18 @@ function goSubmit() {
         <text>撤销 / 上一题</text>
       </view>
     </view>
+
     <view v-if="question" class="flex flex-col gap-4 px-4 pb-0 pt-4">
-      <!-- 题目核心卡片 (Single-Layer Card) -->
-      <view class="shadow-2xs overflow-hidden border border-tx-border rounded-[18px] bg-white">
-        <view class="relative w-full overflow-hidden">
-          <!-- 缩略图占位层：存在有效缩略图且原图未就绪时直接展示（秒级占位） -->
-          <wd-img
-            v-if="thumbUrl && !isOriginLoaded"
-            custom-class="w-full cursor-pointer block overflow-hidden rounded-t-[18px]"
-            :style="{
-              aspectRatio: `${question.image.width} / ${question.image.height}`,
-            }"
-            :src="thumbUrl"
-            lazy-load
-            mode="widthFix"
-            width="100%"
-            @click="handlePreviewImage"
-          />
-
-          <!-- 高清原图层：有缩略图时在后台静默加载，加载完成（@load）后自然覆盖展示；无缩略图时直接展示走默认 loading 占位 -->
-          <wd-img
-            custom-class="w-full cursor-pointer block overflow-hidden rounded-t-[18px]"
-            :class="[
-              thumbUrl && !isOriginLoaded ? 'absolute inset-0 opacity-0 pointer-events-none' : '',
-            ]"
-            :style="{
-              'view-transition-name': `photo-cover-${question.id}`,
-              aspectRatio: `${question.image.width} / ${question.image.height}`,
-            }"
-            :src="question.image.originUrl"
-            lazy-load
-            mode="widthFix"
-            width="100%"
-            @load="isOriginLoaded = true"
-            @click="handlePreviewImage"
-          />
-        </view>
-
-        <view class="p-5 space-y-3.5">
-          <text class="block u-title-page leading-snug">{{ question.title }}</text>
-          <text v-if="question.description" class="u-body-primary block">
-            {{ question.description }}
-          </text>
-
-          <view v-if="question.activity?.title" class="pt-0.5">
-            <text class="u-action-link text-base">#{{ question.activity.title }}</text>
-          </view>
-
-          <view class="flex items-center justify-between border-t border-tx-border/30 pt-3">
-            <view class="flex items-center gap-2.5">
-              <wd-img
-                custom-class="h-9 w-9 rounded-full ring-2 ring-tx-border"
-                :src="question.author.avatar || '/static/images/default-avatar.png'"
-                lazy-load
-                mode="aspectFill"
-                round
-                width="72rpx"
-                height="72rpx"
-              />
-              <view class="flex flex-col">
-                <view class="min-w-0 flex items-center">
-                  <text class="truncate u-user-name font-bold">{{ question.author.nickname }}</text>
-                  <text
-                    v-if="isMe(question.author.id)"
-                    class="ml-1 flex-shrink-0 rounded bg-tx-brown/15 px-1 py-0.2 text-[10px] text-tx-brown font-bold leading-none"
-                  >
-                    我
-                  </text>
-                </view>
-                <text v-if="question.createdAt" class="mt-0.5 u-meta-time">
-                  {{ question.createdAt }}
-                </text>
-              </view>
-            </view>
-            <like-button
-              :liked="question.liked"
-              :count="question.likesCount"
-              icon-size="20px"
-              font-size="15px"
-              @click="toggleLike"
-            />
-          </view>
-
-          <!-- 主答题行动入口 (CTA Button) -->
-          <view class="pt-1">
-            <wd-button
-              type="warning"
-              round
-              block
-              size="large"
-              custom-class="!font-black !bg-tx-accent !text-tx-ink !border-0 shadow-2xs active:scale-[0.99] transition-transform"
-              :disabled="buttonState.disabled"
-              @click="handleBottomAction"
-            >
-              {{ buttonState.text }}
-            </wd-button>
-          </view>
-        </view>
-      </view>
+      <!-- 题目核心卡片 -->
+      <QuestionHeroCard
+        :question="question"
+        :thumb-url="thumbUrl"
+        :is-me="isMe(question.author?.id)"
+        :button-state="buttonState"
+        @preview-image="handlePreviewImage"
+        @toggle-like="toggleLike"
+        @action="handleBottomAction"
+      />
 
       <!-- 答案位置地图：在活动/答题已结束(isEnded)或本人投稿(isMe)且有坐标数据时展示答案正确坐标卡片 -->
       <photo-location-view
@@ -352,145 +197,15 @@ function goSubmit() {
         :coord-type="question.location.coord_type"
       />
 
-      <!-- 评论区、已破解与我的作答 3 合 1 可左右滑动相连卡片 -->
-      <view
-        class="shadow-2xs relative overflow-visible border border-tx-border rounded-[18px] bg-white pb-2 pt-3"
-      >
-        <!-- 融入卡片顶部的无缝 Tab 标头：指示线无留白紧贴浅分割线 -->
-        <view
-          class="relative z-30 flex items-center justify-around px-4 pb-0 pt-1"
-          style="border-bottom: 1px solid rgba(211, 186, 159, 0.5)"
-        >
-          <view
-            v-for="tab in [
-              { value: 'comments', label: `评论 ${formatCompactCount(commentTotal)}` },
-              {
-                value: 'solves',
-                label: `已破解 ${formatCompactCount(question?.solvedCount ?? 0)}`,
-              },
-              { value: 'myAttempts', label: `我的作答 ${question?.userAttemptsCount ?? 0}` },
-            ]"
-            :key="tab.value"
-            class="relative flex cursor-pointer items-center gap-1.5 pb-2.5 transition-colors active:opacity-75"
-            :class="activeTab === tab.value ? 'u-tab-active' : 'u-tab-inactive'"
-            @click.stop="handleTabClick(tab.value as any)"
-          >
-            <text>{{ tab.label }}</text>
-            <!-- 评论右侧：上宽下窄 3 条横线图标 -->
-            <view
-              v-if="tab.value === 'comments'"
-              class="ml-0.5 w-3.5 flex flex-col items-start justify-center gap-0.75"
-            >
-              <view class="h-[2px] w-full rounded-full bg-tx-ink-2" />
-              <view class="h-[2px] w-[70%] rounded-full bg-tx-ink-2" />
-              <view class="h-[2px] w-[40%] rounded-full bg-tx-ink-2" />
-            </view>
-
-            <!-- 切换指示线：紧贴压在标头底部的浅分割线上 (-bottom-[1px])，无任何留白 -->
-            <view
-              v-if="activeTab === tab.value"
-              class="absolute left-0 right-0 h-[2.5px] rounded-full bg-tx-brown -bottom-[1px]"
-            />
-          </view>
-        </view>
-
-        <!-- 评论排序下拉气泡 -->
-        <view
-          v-if="activeTab === 'comments' && showCommentSortPopover"
-          class="absolute left-4 top-[52px] z-50 min-w-[132px] border border-tx-border/40 rounded-2xl bg-white p-2 text-left font-normal shadow-2xl space-y-1"
-          @click.stop
-        >
-          <view
-            v-for="opt in [
-              { key: 'hottest', label: '最多点赞' },
-              { key: 'latest', label: '最新' },
-            ] as const"
-            :key="opt.key"
-            class="flex cursor-pointer items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-colors active:bg-tx-surface"
-            :class="commentSortType === opt.key ? 'font-bold text-tx-ink' : 'text-[#555555]'"
-            @click="
-              () => {
-                commentSortType = opt.key
-                showCommentSortPopover = false
-              }
-            "
-          >
-            <text>{{ opt.label }}</text>
-            <text
-              v-if="commentSortType === opt.key"
-              class="i-carbon:checkmark text-base text-tx-brown font-bold"
-            />
-          </view>
-        </view>
-
-        <!-- Swiper 面板 -->
-        <swiper
-          class="h-[420px] w-full"
-          :current="currentTabIndex"
-          :duration="300"
-          @change="
-            (e: any) => {
-              activeTab = detailTabsList[e.detail.current] as any
-              showCommentSortPopover = false
-            }
-          "
-        >
-          <swiper-item class="box-border">
-            <CommentList
-              v-if="questionId > 0"
-              :photo-id="questionId"
-              :sort-by="commentSortBy"
-              :comment-text="commentText"
-              @open-input="handleOpenCommentInput"
-            />
-          </swiper-item>
-          <swiper-item class="box-border">
-            <scroll-view
-              scroll-y
-              :show-scrollbar="false"
-              class="hide-scrollbar box-border h-full w-full"
-            >
-              <SolveList
-                :list="solves"
-                :photo-id="questionId"
-                :has-next-page="hasNextSolves"
-                :is-fetching-next-page="isFetchingSolves"
-                @fetch-next-page="fetchNextSolves"
-              />
-            </scroll-view>
-          </swiper-item>
-          <swiper-item class="box-border">
-            <view
-              v-if="!isLoggedIn()"
-              class="h-full flex flex-col items-center justify-center -mt-6"
-            >
-              <wd-empty icon="no-result" tip="登录后查看我的作答" />
-              <wd-button
-                size="small"
-                round
-                type="warning"
-                custom-class="!mt-4 !font-bold shadow-md"
-                @click="loginDirectly"
-              >
-                去登录
-              </wd-button>
-            </view>
-            <scroll-view
-              v-else
-              scroll-y
-              :show-scrollbar="false"
-              class="hide-scrollbar box-border h-full w-full"
-            >
-              <MyAttemptList
-                :list="myAttempts"
-                :has-next-page="hasNextMyAttempts"
-                :is-fetching-next-page="isFetchingMyAttempts"
-                @load-more="fetchNextMyAttempts"
-              />
-            </scroll-view>
-          </swiper-item>
-        </swiper>
-      </view>
+      <!-- 评论区、已破解与我的作答 3 合 1 Tab 卡片 -->
+      <QuestionDetailTabs
+        :question-id="questionId"
+        :solved-count="question.solvedCount"
+        :user-attempts-count="question.userAttemptsCount"
+        :initial-tab="activeTab"
+        :comment-text="commentText"
+        @open-comment-input="handleOpenCommentInput"
+      />
 
       <!-- 融入背景的全宽下部切题热区 -->
       <view

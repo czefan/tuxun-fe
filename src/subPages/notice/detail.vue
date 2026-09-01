@@ -4,6 +4,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useAnnouncementDetail } from '@/features/notification/query'
 import { useInfiniteActivityList } from '@/features/activity/query'
 import { previewImage } from '@/utils/image-preview'
+import { TX_BG_BROWN } from '@/styles/constants'
 
 definePage({
   style: {
@@ -30,8 +31,13 @@ onLoad((query) => {
 
 <template>
   <view class="page-notice-detail safe-bottom-page box-border bg-tx-main px-4 pt-6">
+    <!-- 加载中动效：避免首屏白屏 -->
+    <view v-if="loading" class="min-h-[65vh] flex flex-col items-center justify-center -mt-8">
+      <wd-loading type="circular" :color="TX_BG_BROWN" size="36px" />
+    </view>
+
     <!-- 公告详情：版心居中排版 -->
-    <view v-if="detail" class="mx-auto max-w-xl space-y-3">
+    <view v-else-if="detail" class="mx-auto max-w-xl space-y-3">
       <!-- 标题与时间 / 关联活动 -->
       <view class="border-b border-tx-brown/40 pb-2.5 space-y-2.5">
         <text class="block text-2xl text-tx-ink font-extrabold leading-snug tracking-tight">
@@ -73,7 +79,7 @@ onLoad((query) => {
       </view>
     </view>
 
-    <view v-else-if="!loading" class="py-20">
+    <view v-else class="min-h-[65vh] flex flex-col items-center justify-center -mt-8">
       <wd-empty icon="no-result" tip="未找到相关通知" />
     </view>
   </view>
