@@ -23,8 +23,8 @@ const emit = defineEmits<{
 
 const groupedAnnouncements = computed(() => groupItemsByTime(props.items))
 
-function isAnnouncementRead(id: number): boolean {
-  return props.readIds.includes(id)
+function isAnnouncementRead(item: AnnouncementVM): boolean {
+  return item.isRead || props.readIds.includes(item.id)
 }
 </script>
 
@@ -85,7 +85,7 @@ function isAnnouncementRead(id: number): boolean {
             class="flex cursor-pointer items-center justify-between py-3.5 transition-colors active:opacity-70"
             :class="[
               { 'border-t border-tx-brown': index > 0 },
-              !isAnnouncementRead(item.id) ? 'bg-tx-accent/20 -mx-3 px-3' : '',
+              !isAnnouncementRead(item) ? 'bg-tx-accent/20 -mx-3 px-3' : '',
             ]"
             @tap="emit('select', item.id)"
           >
@@ -93,14 +93,14 @@ function isAnnouncementRead(id: number): boolean {
               <!-- 顶栏：标题 + 未读红点 + 格式化时间 -->
               <view class="flex items-center justify-between gap-2">
                 <view class="min-w-0 flex flex-1 items-center gap-1.5">
+                  <!-- 未读红点：标题左侧 -->
+                  <view
+                    v-if="!isAnnouncementRead(item)"
+                    class="h-2 w-2 flex-shrink-0 rounded-full bg-rose-500"
+                  />
                   <text class="truncate text-base text-tx-ink font-bold leading-tight">
                     {{ item.title }}
                   </text>
-                  <!-- 未读红点：紧贴标题右侧 (精致小巧无白色边框) -->
-                  <view
-                    v-if="!isAnnouncementRead(item.id)"
-                    class="h-2 w-2 flex-shrink-0 rounded-full bg-rose-500"
-                  />
                 </view>
                 <text class="flex-shrink-0 text-sm text-tx-ink-2 font-bold font-numeric">
                   {{ formatRelativeTime(item.rawCreatedAt || item.createdAt, { showTime: false }) }}
@@ -110,7 +110,7 @@ function isAnnouncementRead(id: number): boolean {
               <!-- 内容预览 -->
               <text
                 class="line-clamp-2 mt-1 block text-sm leading-relaxed"
-                :class="!isAnnouncementRead(item.id) ? 'text-[#333333]' : 'text-tx-ink-2'"
+                :class="!isAnnouncementRead(item) ? 'text-[#333333]' : 'text-tx-ink-2'"
               >
                 {{ item.contentPreview }}
               </text>

@@ -147,7 +147,7 @@ function markAnnouncementRead(id: number) {
 const unreadAnnounceCount = computed(() => {
   if (!isLoggedIn() || !announcements.value.length) return 0
   return announcements.value.filter(
-    (a: AnnouncementVM) => !readAnnouncementIds.value.includes(a.id),
+    (a: AnnouncementVM) => !a.isRead && !readAnnouncementIds.value.includes(a.id),
   ).length
 })
 

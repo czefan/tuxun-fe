@@ -47,7 +47,7 @@ function handleSwiperChange(opt?: T) {
 </script>
 
 <template>
-  <view class="h-full w-full flex flex-1 flex-col overflow-hidden" :class="customClass">
+  <view class="min-h-0 w-full flex flex-1 flex-col" :class="customClass">
     <!-- 融入页面的顶栏 Seamless Sub Tab 切换器 -->
     <view
       class="flex flex-shrink-0 items-end justify-between px-1 pb-0"

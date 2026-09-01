@@ -98,10 +98,10 @@ const groupedInteractions = computed(() => groupItemsByTime(props.items))
                   width="88rpx"
                   height="88rpx"
                 />
-                <!-- 未读红点：挂在头像右上角 (精致小巧无白色边框) -->
+                <!-- 未读红点：贴合头像右上圆周 (东北 45° 边界) -->
                 <view
                   v-if="!item.isRead"
-                  class="absolute right-0 top-0 z-1 h-2 w-2 rounded-full bg-rose-500"
+                  class="absolute right-[2rpx] top-[2rpx] z-1 h-2 w-2 rounded-full bg-rose-500"
                 />
               </view>
 
