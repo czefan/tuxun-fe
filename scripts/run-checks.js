@@ -1,11 +1,13 @@
 import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
+import fs from 'node:fs'
 import os from 'node:os'
+import path from 'node:path'
 import process from 'node:process'
 import pc from 'picocolors'
 
 /**
- * 任务并发权重画像（总预算 CAPACITY = 4 Tokens）
+ * 任务并发权重画像
  * LIGHT (1): 静态检查、契约、knip、eslint
  * HEAVY (2): 编译、单进程测试
  */
@@ -21,13 +23,36 @@ const TASK_WEIGHTS = {
   test: 2,
 }
 
+const PROJECT_ROOT = process.cwd()
+let pkgScripts = {}
+try {
+  const pkgContent = fs.readFileSync(path.join(PROJECT_ROOT, 'package.json'), 'utf8')
+  pkgScripts = JSON.parse(pkgContent).scripts || {}
+} catch {}
+
+const binDir = path.join(PROJECT_ROOT, 'node_modules', '.bin')
+const pathEnvKey = Object.keys(process.env).find((k) => k.toUpperCase() === 'PATH') || 'PATH'
+const existingPath = process.env[pathEnvKey] || ''
+const childEnv = {
+  ...process.env,
+  [pathEnvKey]: `${binDir}${path.delimiter}${existingPath}`,
+  FORCE_COLOR: process.env.FORCE_COLOR ?? '1',
+}
+
 function getCapacity() {
   if (process.env.CHECK_CAPACITY) {
     const val = Number.parseInt(process.env.CHECK_CAPACITY, 10)
     if (Number.isInteger(val) && val > 0) return val
   }
-  const usableGb = Math.min(os.totalmem(), os.freemem() * 1.5) / 1024 ** 3
-  return usableGb < 4 ? 2 : 4
+  const cpus = os.cpus()?.length || 4
+  const totalGb = os.totalmem() / 1024 ** 3
+
+  // 极低配环境（< 2.5GB 内存 或 单/双核）：保守限制
+  if (totalGb < 2.5 || cpus <= 2) return 2
+  // 中低配环境（< 4GB 内存）：适度并发
+  if (totalGb < 4 || cpus <= 4) return 4
+  // 标准及以上开发机/多核环境（>= 4GB 内存 & > 4 核）：允许充足并发
+  return 10
 }
 
 const scripts = process.argv.slice(2)
@@ -36,7 +61,6 @@ if (scripts.length === 0) {
   process.exit(1)
 }
 
-const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 const activeProcesses = new Map()
 let isAborting = false
 const CAPACITY = getCapacity()
@@ -49,6 +73,7 @@ function stopAllProcesses() {
   isAborting = true
   for (const [child] of activeProcesses.entries()) {
     try {
+      if (!child?.pid) continue
       if (process.platform === 'win32') {
         spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
       } else {
@@ -78,12 +103,25 @@ function runScript(script) {
     const startTime = Date.now()
     const weight = TASK_WEIGHTS[script] ?? 2
     const outputChunks = []
+    let isSettled = false
 
-    const child = spawn(pnpm, ['run', script], {
-      stdio: ['inherit', 'pipe', 'pipe'],
-      detached: process.platform !== 'win32',
-      env: { ...process.env, FORCE_COLOR: process.env.FORCE_COLOR ?? '1' },
-    })
+    const rawCommand = pkgScripts[script]
+    let child
+    if (rawCommand) {
+      child = spawn(rawCommand, {
+        shell: true,
+        stdio: ['inherit', 'pipe', 'pipe'],
+        detached: process.platform !== 'win32',
+        env: childEnv,
+      })
+    } else {
+      const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+      child = spawn(pnpm, ['run', script], {
+        stdio: ['inherit', 'pipe', 'pipe'],
+        detached: process.platform !== 'win32',
+        env: childEnv,
+      })
+    }
 
     activeProcesses.set(child, { script, startTime, weight })
 
@@ -91,6 +129,8 @@ function runScript(script) {
     child.stderr?.on('data', (c) => outputChunks.push(c))
 
     child.on('error', (error) => {
+      if (isSettled) return
+      isSettled = true
       activeProcesses.delete(child)
       completedCounter += 1
       const duration = Date.now() - startTime
@@ -101,6 +141,8 @@ function runScript(script) {
     })
 
     child.on('close', (code, signal) => {
+      if (isSettled) return
+      isSettled = true
       activeProcesses.delete(child)
       completedCounter += 1
       const duration = Date.now() - startTime
