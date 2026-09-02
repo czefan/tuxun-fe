@@ -32,10 +32,6 @@ jobs:
           node-version: 22 # 适配 package.json 中的 node >=22.13.0
           cache: pnpm # 自动开启 pnpm 缓存，大幅缩短 CI 执行耗时
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        # check:contract / check:boundaries 是 `uv run python`，runner 默认没有 uv
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

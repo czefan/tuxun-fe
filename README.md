@@ -19,7 +19,6 @@
 
 - **Node.js**：`>= v22.13.0`
 - **pnpm**：`>= v11.0.0` (强制要求，配有 `only-allow pnpm`)
-- **uv (Python)**：用于运行契约与依赖边界自动化校验脚本 (`scripts/check-*.py`)
 
 ---
 

@@ -10,7 +10,7 @@
    - `apifox-import.json`（OpenAPI 3.0 机器可读标准，用于代码生成与自动化校验）
    - `api.md`（人工阅读与业务语义说明）
 2. **TypeScript 强类型**：`src/service/contract/schema.d.ts` 由 `openapi-typescript` 命令（`pnpm gen:api-types`）根据 `apifox-import.json` 自动生成，**禁止直接手改**。
-3. **契约对齐校验**：`scripts/check-contract.py`（命令 `pnpm check:contract`）自动核对两份契约定义是否一致。
+3. **契约对齐校验**：`scripts/check-contract.js`（命令 `pnpm check:contract`）自动核对两份契约定义是否一致。
 
 ---
 

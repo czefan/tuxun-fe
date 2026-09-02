@@ -51,8 +51,8 @@ src/
 
 1. **oxlint (`.oxlintrc.json`)**：亚秒级拦截分层与跨域依赖违规。
 2. **ESLint (`eslint.config.mjs`)**：`boundaries/dependencies` 解析模块依赖图兜底相对路径。
-3. **Python 边界脚本 (`scripts/check-boundaries.py`)**：执行 `pnpm check:boundaries` 独立检测分层关系。
-4. **契约一致性校验 (`scripts/check-contract.py`)**：执行 `pnpm check:contract` 校验 API 路径与 operationId。
+3. **分层边界校验 (`scripts/check-boundaries.js`)**：执行 `pnpm check:boundaries` 独立检测分层关系。
+4. **契约一致性校验 (`scripts/check-contract.js`)**：执行 `pnpm check:contract` 校验 API 路径与 operationId。
 5. **运行时装配守卫 (`src/tests/runtime-assembly.test.ts`)**：验证组件装配与状态响应性。
 
 ---
