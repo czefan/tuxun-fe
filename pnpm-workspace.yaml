@@ -24,13 +24,21 @@ allowBuilds:
   unrs-resolver: true
   vue-demi: true
 
+# 仅覆盖已确认可兼容的补丁/次版本；编译器绑定的大版本随 UniApp 升级。
+overrides:
+  '@babel/core@>=7.0.0 <7.29.1': 7.29.7
+  fast-uri@>=3.0.0 <3.1.6: 3.1.6
+  js-yaml@>=3.0.0 <3.15.2: 3.15.2
+  js-yaml@>=4.0.0 <4.3.2: 4.3.2
+  postcss-selector-parser@>=6.1.0 <6.1.3: 6.1.3
+  postcss@>=8.0.0 <8.5.26: 8.5.26
+  ws@>=8.0.0 <8.21.0: 8.21.0
 catalog:
   '@antfu/eslint-config': 9.1.0
   '@commitlint/cli': ^21.2.1
   '@commitlint/config-conventional': ^21.2.2
   '@dcloudio/types': ^3.4.32
   '@dcloudio/uni-app': 3.0.0-5020420260813003
-  '@dcloudio/uni-automator': 3.0.0-5020420260813003
   '@dcloudio/uni-cli-shared': 3.0.0-5020420260813003
   '@dcloudio/uni-components': 3.0.0-5020420260813003
   '@dcloudio/uni-h5': 3.0.0-5020420260813003

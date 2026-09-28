@@ -92,7 +92,6 @@
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
     "@dcloudio/types": "catalog:",
-    "@dcloudio/uni-automator": "catalog:",
     "@dcloudio/uni-cli-shared": "catalog:",
     "@dcloudio/uni-stacktracey": "catalog:",
     "@dcloudio/vite-plugin-uni": "catalog:",

@@ -129,7 +129,6 @@ export function createVitePlugins(options: PluginConfigOptions): PluginOption[] 
       },
     },
     bundleAnalyze &&
-      mode === 'production' &&
       visualizer({
         filename: `./node_modules/.cache/visualizer/${bundleAnalyzePlatform}-stats.html`,
         open: bundleAnalyzeOpen,

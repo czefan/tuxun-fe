@@ -18,7 +18,7 @@
   ],
   "project": ["src/**/*.{ts,vue,css}", "build/**/*.ts"],
   "ignore": ["src/env.d.ts"],
-  "ignoreDependencies": ["@dcloudio/.*", "postcss", "@tanstack/query-core"],
+  "ignoreDependencies": ["@dcloudio/.*", "postcss"],
   "vite": false,
   "ignoreBinaries": ["git-cliff"]
 }
