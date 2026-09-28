@@ -2,6 +2,17 @@
 
 本文档定义 `tuxun-fe` 项目的依赖倒置架构（Domain-collected / Layered Architecture）、目录职责划分与分层约束。
 
+## 维护与精简原则
+
+- 保留 `pages / subPages → features → service / 公共层`。页面数量、分包要求和业务边界决定目录，避免为了减少文件数把接口、缓存和页面堆进同一个文件。
+- 首页与活动题目页共用 `features/photo/components/photo-feed.vue`；页面只声明路由、导航标题和活动范围。搜索、筛选、分页、转场在同一处维护。
+- 基础 `composables/use-auth.ts` 统一身份判断，用户域扩展登录回调、退出和资料；精确导入具体文件，不增加只转发导出的业务 `index.ts`。
+- 网络监听只由 `service/query/client.ts` 管理；应用生命周期同步焦点与网络，页面横幅只显示状态。会话失效时使用 `resetQueries` 保留活跃页面订阅，不能直接删除全部查询。
+- Query Key 工厂不传筛选参数时返回前缀，用于失效该域所有筛选缓存；不得在前缀末尾添加 `undefined`。
+- Vue / UniApp、Pinia、TanStack Query、UnoCSS 与 Wot UI 继续各自负责渲染、会话、服务端缓存、样式和组件，不增加另一套同职责库。测试使用 Vitest，未使用的 Uni Automator 已移除。
+
+本次问题、验证范围和依赖升级限制见 [项目检查记录](./project-review.md)。
+
 ---
 
 ## 📂 目录结构与职责划分
