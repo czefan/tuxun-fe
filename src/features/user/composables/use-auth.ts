@@ -1,15 +1,13 @@
-import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { loginDirectly, requireLogin } from '@/service/auth/login'
+import { useAuth as useSessionAuth } from '@/composables/use-auth'
 import { useAuthStore } from '@/store/auth'
 import { useUserStore } from '../store/user'
 import { getUserInfo, loginCallback, logout as logoutApi } from '../api'
 
 export function useAuth() {
   const userStore = useUserStore()
-  const { userInfo, token } = storeToRefs(userStore)
-
-  const isLoggedIn = computed(() => Boolean(userStore.isLoggedIn()))
+  const { userInfo } = storeToRefs(userStore)
+  const sessionAuth = useSessionAuth()
 
   async function handleCallback(code: string, redirectUri: string) {
     const loginResult = await loginCallback(code, redirectUri)
@@ -34,25 +32,9 @@ export function useAuth() {
     return { serverCleared }
   }
 
-  /**
-   * 判断目标用户 ID 是否为当前登录用户。
-   *
-   * 注意：业务域的 useAuth 读取 userStore.userInfo?.id 以拿到完整的用户实体；
-   * 基础设施层的 useAuth 则读取 authStore.userId（避免基础设施反向依赖 features/user）。
-   */
-  function isMe(authorId?: number | null): boolean {
-    if (!userStore.isLoggedIn() || !userStore.userInfo?.id || !authorId) return false
-    return userStore.userInfo.id === authorId
-  }
-
   return {
-    isLoggedIn: () => isLoggedIn.value,
-    isLoggedInRef: isLoggedIn,
+    ...sessionAuth,
     userInfo,
-    token,
-    isMe,
-    requireLogin,
-    loginDirectly,
     handleCallback,
     logout,
   }

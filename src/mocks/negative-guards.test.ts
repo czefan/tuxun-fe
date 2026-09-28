@@ -158,7 +158,11 @@ describe('契约变更负向守卫', () => {
         needles: ['originUrl'],
         why: '作答记录要能看高清原图',
       },
-      { file: 'src/pages/index/index.vue', needles: ['solved'], why: '首页要有「只看未破解」筛选' },
+      {
+        file: 'src/features/photo/components/photo-feed.vue',
+        needles: ['solved'],
+        why: '首页要有「只看未破解」筛选',
+      },
     ]
 
     const missing = cases

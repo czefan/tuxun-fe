@@ -1,4 +1,5 @@
 import { updateServerTimeOffset } from '@/utils/server-time'
+import { useAuthStore } from '@/store/auth'
 import { ApiRequestError } from './error'
 import { handleResponseError, showToastDeduplicated } from './error-code'
 import type { ContractResponse } from './error-code'
@@ -11,6 +12,7 @@ export async function http<T>(options: CustomRequestOptions) {
     await ensureMockReady()
   }
 
+  const sessionVersion = useAuthStore().sessionVersion
   return new Promise<T>((resolve, reject) => {
     uni.request({
       ...options,
@@ -48,6 +50,7 @@ export async function http<T>(options: CustomRequestOptions) {
           dataObj,
           options.hideErrorToast,
           options.silentAuth,
+          sessionVersion,
         )
 
         return reject(

@@ -10,6 +10,8 @@ export function nextPageByLoadedCount<T>(
   lastPage: PageResult<T>,
   allPages: PageResult<T>[],
 ): number | undefined {
+  // total 可能因缓存或删除而滞后，空页必须终止，避免无限请求空的下一页。
+  if (lastPage.list.length === 0) return undefined
   const loadedCount = allPages.reduce((sum, page) => sum + page.list.length, 0)
   return loadedCount < lastPage.total ? allPages.length + 1 : undefined
 }

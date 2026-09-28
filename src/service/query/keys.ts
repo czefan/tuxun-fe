@@ -8,11 +8,15 @@ export const qk = {
   activity: {
     all: () => ['activity'] as const,
     active: () => ['activity', 'active'] as const,
-    list: (params?: unknown) => ['activity', 'list', params] as const,
+    list: (params?: unknown) =>
+      params === undefined
+        ? (['activity', 'list'] as const)
+        : (['activity', 'list', params] as const),
   },
   photo: {
     all: () => ['photo'] as const,
-    list: (params?: unknown) => ['photo', 'list', params] as const,
+    list: (params?: unknown) =>
+      params === undefined ? (['photo', 'list'] as const) : (['photo', 'list', params] as const),
     detail: (id: number) => ['photo', 'detail', id] as const,
   },
   attempt: {
@@ -32,21 +36,38 @@ export const qk = {
         : (['comment', 'list', photoId] as const),
   },
   record: {
-    photos: (params?: unknown) => ['record', 'photos', params] as const,
+    photos: (params?: unknown) =>
+      params === undefined
+        ? (['record', 'photos'] as const)
+        : (['record', 'photos', params] as const),
     photoDetail: (id: number) => ['record', 'photoDetail', id] as const,
-    attempts: (params?: unknown) => ['record', 'attempts', params] as const,
+    attempts: (params?: unknown) =>
+      params === undefined
+        ? (['record', 'attempts'] as const)
+        : (['record', 'attempts', params] as const),
   },
   score: {
-    logs: (params?: unknown) => ['score', 'logs', params] as const,
+    logs: (params?: unknown) =>
+      params === undefined ? (['score', 'logs'] as const) : (['score', 'logs', params] as const),
   },
   mall: {
-    goods: (params?: unknown) => ['mall', 'goods', params] as const,
-    exchanges: (params?: unknown) => ['mall', 'exchanges', params] as const,
+    goods: (params?: unknown) =>
+      params === undefined ? (['mall', 'goods'] as const) : (['mall', 'goods', params] as const),
+    exchanges: (params?: unknown) =>
+      params === undefined
+        ? (['mall', 'exchanges'] as const)
+        : (['mall', 'exchanges', params] as const),
   },
   notification: {
-    announcements: (params?: unknown) => ['notification', 'announcements', params] as const,
+    announcements: (params?: unknown) =>
+      params === undefined
+        ? (['notification', 'announcements'] as const)
+        : (['notification', 'announcements', params] as const),
     announcementDetail: (id: number) => ['notification', 'announcementDetail', id] as const,
-    interactions: (params?: unknown) => ['notification', 'interactions', params] as const,
+    interactions: (params?: unknown) =>
+      params === undefined
+        ? (['notification', 'interactions'] as const)
+        : (['notification', 'interactions', params] as const),
   },
   content: {
     detail: (key: string) => ['content', 'detail', key] as const,

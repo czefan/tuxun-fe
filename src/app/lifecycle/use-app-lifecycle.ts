@@ -1,50 +1,44 @@
 /**
  * App 根生命周期治理与底层安全防护。
  */
-import { onLaunch, onShow } from '@dcloudio/uni-app'
-import { useUserStore } from '@/features/user'
+import { onHide, onShow } from '@dcloudio/uni-app'
+import { focusManager } from '@tanstack/vue-query'
+import { useUserStore } from '@/features/user/store/user'
 import { getUserInfo } from '@/features/user/api'
+import { useAuthStore } from '@/store/auth'
+import { refreshNetworkStatus } from '@/service/query/client'
 
 export function useAppLifecycle() {
-  onLaunch(() => {
-    registerH5UnhandledRejectionFilter()
-    void validateStoredSession()
-  })
+  const userStore = useUserStore()
+  const authStore = useAuthStore()
+  let validation: { version: number; promise: Promise<void> } | undefined
 
   onShow(() => {
-    // 应用回到前台时可静默刷新用户信息
+    refreshNetworkStatus()
+    focusManager.setFocused(true)
     void validateStoredSession()
   })
-}
+  onHide(() => focusManager.setFocused(false))
 
-/** 修复在 H5 环境下未登录拦截吐出的全局 unhandledrejection */
-function registerH5UnhandledRejectionFilter() {
-  // #ifdef H5
-  if (typeof window !== 'undefined') {
-    window.addEventListener('unhandledrejection', (event) => {
-      const reason = event.reason
-      if (isUnauthorizedSessionError(reason)) {
-        event.preventDefault() // 过滤静默 401 报错弹框
-      }
-    })
-  }
-  // #endif
-}
+  function validateStoredSession() {
+    if (!userStore.isLoggedIn()) return
+    const version = authStore.sessionVersion
+    if (validation?.version === version) return validation.promise
 
-async function validateStoredSession() {
-  const userStore = useUserStore()
-
-  if (!userStore.isLoggedIn()) {
-    return
-  }
-
-  try {
-    const info = await getUserInfo({ silentAuth: true })
-    userStore.setUserInfo(info)
-  } catch (error) {
-    if (isUnauthorizedSessionError(error)) {
-      userStore.logout()
-    }
+    const promise = getUserInfo({ silentAuth: true })
+      .then((info) => {
+        if (authStore.sessionVersion === version) userStore.setUserInfo(info)
+      })
+      .catch((error: unknown) => {
+        if (authStore.sessionVersion === version && isUnauthorizedSessionError(error)) {
+          userStore.logout()
+        }
+      })
+      .finally(() => {
+        if (validation?.promise === promise) validation = undefined
+      })
+    validation = { version, promise }
+    return promise
   }
 }
 
@@ -53,6 +47,6 @@ function isUnauthorizedSessionError(error: unknown) {
     !!error &&
     typeof error === 'object' &&
     ((error as { statusCode?: number }).statusCode === 401 ||
-      (error as { code?: number }).code === 401)
+      (error as { code?: number }).code === 6)
   )
 }

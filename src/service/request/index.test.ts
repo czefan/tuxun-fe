@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiRequestError, request, upload, uploadFile } from './index'
+import { useAuthStore } from '@/store/auth'
 
 // @uni-helper/uni-env 的 isH5 在模块加载时从 process.env.UNI_PLATFORM 固化成了常量，
 // 用例内无法直接改写。这里用 getter 让每次访问都取当前状态，从而可控地测两条平台分支。
@@ -40,6 +41,30 @@ function mockUploadSuccess(res: UniApp.UploadFileSuccessCallbackResult) {
     return {} as ReturnType<typeof uni.uploadFile>
   })
 }
+
+describe('延迟的鉴权错误', () => {
+  it.each([401, 403])('旧请求的 %i 不得清除新会话', async (statusCode) => {
+    const auth = useAuthStore()
+    auth.setSessionId('old-session')
+    let complete!: NonNullable<UniApp.RequestOptions['success']>
+    vi.mocked(uni.request).mockImplementation((options) => {
+      complete = options.success!
+      return {} as ReturnType<typeof uni.request>
+    })
+    const result = request({ url: '/photos' })
+    auth.setSessionId('new-session')
+    complete({
+      statusCode,
+      data: { code: statusCode === 401 ? 6 : 7 },
+      header: {},
+      cookies: [],
+      errMsg: 'request:ok',
+    })
+    await expect(result).rejects.toBeInstanceOf(ApiRequestError)
+    expect(auth.sessionId).toBe('new-session')
+    expect(uni.showModal).not.toHaveBeenCalled()
+  })
+})
 
 describe('request URL resolution', () => {
   beforeEach(() => {

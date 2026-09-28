@@ -22,7 +22,7 @@ export function useInfiniteSolvesList(
       getSolves(toValue(photoId), { ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(() => toValue(photoId) > 0),
+    enabled: computed(() => authStore.isLoggedIn && toValue(photoId) > 0),
   })
 }
 
@@ -44,7 +44,7 @@ export function useInfiniteMyAttemptsList(
       }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: computed(() => toValue(photoId) > 0),
+    enabled: computed(() => authStore.isLoggedIn && toValue(photoId) > 0),
   })
 }
 
@@ -59,7 +59,9 @@ export function useSubmitAttempt(photoId: MaybeRefOrGetter<number>) {
       // 精确热更新全站所有 photo 缓存中的 solved 状态与已破解数
       const matchPhotoQuery = (query: { queryKey: readonly unknown[] }) =>
         Array.isArray(query.queryKey) &&
-        (query.queryKey[0] === 'photo' || query.queryKey[0] === 'record')
+        (query.queryKey[0] === 'photo' ||
+          (query.queryKey[0] === 'record' &&
+            (query.queryKey[1] === 'photos' || query.queryKey[1] === 'photoDetail')))
 
       queryClient.setQueriesData<any>({ predicate: matchPhotoQuery }, (old: any) => {
         if (!old) return old
@@ -99,6 +101,7 @@ export function useSubmitAttempt(photoId: MaybeRefOrGetter<number>) {
       queryClient.invalidateQueries({ queryKey: qk.photo.detail(targetPhotoId) })
       queryClient.invalidateQueries({ queryKey: qk.photo.all() })
       queryClient.invalidateQueries({ queryKey: qk.user.info() })
+      queryClient.invalidateQueries({ queryKey: qk.record.attempts() })
     },
   })
 }
@@ -111,7 +114,9 @@ export function useSetSolveLike(_photoId?: MaybeRefOrGetter<number>) {
     // 乐观热更新：点击瞬间立即翻转按钮状态与点赞数字
     onMutate: async ({ solveId, liked }) => {
       const matchAttemptQuery = (query: { queryKey: readonly unknown[] }) =>
-        Array.isArray(query.queryKey) && query.queryKey[0] === 'attempt'
+        Array.isArray(query.queryKey) &&
+        query.queryKey[0] === 'attempt' &&
+        query.queryKey[1] === 'solves'
 
       await queryClient.cancelQueries({ predicate: matchAttemptQuery })
       const prev = queryClient.getQueriesData<unknown>({ predicate: matchAttemptQuery })

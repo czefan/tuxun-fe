@@ -1,13 +1,17 @@
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
 import type { Ref } from 'vue'
 
 export interface UseInfiniteListPageOptions {
   hasNextPage?: Ref<boolean | undefined>
   isFetchingNextPage?: Ref<boolean | undefined>
+  isFetching?: Ref<boolean>
+  isStale?: Ref<boolean>
   fetchNextPage: () => unknown
   refetch: () => Promise<unknown>
   enabled?: () => boolean
 }
+
+let pendingRefreshes = 0
 
 /**
  * 列表页标准分页与下拉刷新管理。
@@ -16,17 +20,31 @@ export interface UseInfiniteListPageOptions {
  * 支持通过 enabled 谓词按 Tab 分流，确保多 Tab 页面独立刷新与触底加载。
  */
 export function useInfiniteListPage(options: UseInfiniteListPageOptions) {
-  onReachBottom(() => {
+  function loadMore() {
     if (options.enabled && !options.enabled()) return
-    if (options.hasNextPage?.value && !options.isFetchingNextPage?.value) options.fetchNextPage()
+    if (options.isFetching?.value || options.isFetchingNextPage?.value) return
+    if (options.hasNextPage?.value) return options.fetchNextPage()
+  }
+
+  onReachBottom(loadMore)
+
+  onShow(() => {
+    if (options.enabled && !options.enabled()) return
+    if (options.isStale?.value && !options.isFetching?.value) void options.refetch()
   })
 
   onPullDownRefresh(async () => {
+    pendingRefreshes++
     try {
-      // 未激活的 Tab 实例不发起请求，但仍需在 finally 中结束下拉动画
+      // 同页多个 Tab 的生命周期会依次触发，让它们先全部进入本轮刷新。
+      await Promise.resolve()
       if (!options.enabled || options.enabled()) await options.refetch()
+    } catch {
+      // 请求层和列表错误态负责反馈，避免页面生命周期产生未处理的 rejection。
     } finally {
-      uni.stopPullDownRefresh()
+      if (--pendingRefreshes === 0) uni.stopPullDownRefresh()
     }
   })
+
+  return { loadMore }
 }

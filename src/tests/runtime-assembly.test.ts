@@ -188,10 +188,11 @@ describe('装配守卫', () => {
 
   it('跳转详情页必须走带转场的导航', () => {
     for (const page of ['src/pages/index/index.vue', 'src/subPages/activity/index.vue']) {
-      expect(read(page), `${page} 没有使用 navigateWithTransition：转场工具做了但没接上`).toContain(
-        'navigateWithTransition(',
-      )
+      expect(read(page), `${page} 必须接入共用题目列表`).toContain('<PhotoFeed')
     }
+    expect(read('src/features/photo/components/photo-feed.vue')).toContain(
+      'navigateWithTransition(',
+    )
   })
 
   it('题目详情页必须接上全屏大图预览', () => {

@@ -68,6 +68,7 @@ export async function getUserInfo(options?: { silentAuth?: boolean }): Promise<U
     url: '/user/info',
     method: 'GET',
     silentAuth: options?.silentAuth,
+    hideErrorToast: options?.silentAuth,
   })
 
   return {

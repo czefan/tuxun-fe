@@ -1,6 +1,7 @@
 import { buildFullUrl } from './url'
 import { ApiRequestError } from './error'
 import { handleResponseError, showToastDeduplicated } from './error-code'
+import { useAuthStore } from '@/store/auth'
 
 export interface UploadOptions {
   url: string
@@ -36,6 +37,7 @@ export function upload<T>(options: UploadOptions): Promise<T> {
   }
 
   const fullUrl = buildFullUrl(url)
+  const sessionVersion = useAuthStore().sessionVersion
 
   const headers: Record<string, string> = { ...header }
   if (method === 'PUT') {
@@ -70,6 +72,8 @@ export function upload<T>(options: UploadOptions): Promise<T> {
                 statusCode,
                 resObj,
                 hideErrorToast,
+                false,
+                sessionVersion,
               )
               return reject(new ApiRequestError(message, { code: errCode, statusCode, data }))
             }
@@ -81,7 +85,13 @@ export function upload<T>(options: UploadOptions): Promise<T> {
           return resolve(data as T)
         }
 
-        const { message, code } = handleResponseError(statusCode, data as any, hideErrorToast)
+        const { message, code } = handleResponseError(
+          statusCode,
+          data as any,
+          hideErrorToast,
+          false,
+          sessionVersion,
+        )
         reject(new ApiRequestError(message, { code, statusCode, data }))
       },
       fail: (err) => {

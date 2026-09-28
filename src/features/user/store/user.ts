@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { AuthCleanupStorageKeys, SubmitDraftKeyPrefix } from '@/constants'
 import { queryClient } from '@/service/query/client'
 import { useAuthStore } from '@/store/auth'
-import { useAnswerRecordLikeStore, useQuestionLikeStore } from '@/store/question-like'
 import type { UserInfo } from '../types'
 
 export const useUserStore = defineStore(
@@ -13,6 +12,21 @@ export const useUserStore = defineStore(
 
     /* ---- State ---- */
     const userInfo = ref<UserInfo | null>(null)
+
+    // 手动登出和请求层的 401/封禁都经过同一条清理路径。
+    watch(
+      () => [authStore.isLoggedIn, authStore.userId] as const,
+      ([loggedIn, id], [wasLoggedIn, previousId]) => {
+        if (
+          (wasLoggedIn && !loggedIn) ||
+          (previousId !== null && id !== null && previousId !== id)
+        ) {
+          userInfo.value = null
+          clearClientSessionState()
+        }
+      },
+      { flush: 'sync' },
+    )
 
     /* ---- Getters ---- */
     const token = computed(() => authStore.token)
@@ -30,17 +44,17 @@ export const useUserStore = defineStore(
 
     /** 设置用户信息。cookie 会话下没有 token，拿到个人信息即视为已登录 */
     function setUserInfo(info: UserInfo) {
-      userInfo.value = info
       authStore.setUserId(info.id)
       authStore.setSession(true)
+      userInfo.value = info
     }
 
     /** 退出登录 */
     function logout() {
+      const wasLoggedIn = authStore.isLoggedIn
       authStore.clearToken()
-      authStore.setUserId(null)
       userInfo.value = null
-      clearClientSessionState()
+      if (!wasLoggedIn) clearClientSessionState()
     }
 
     /** 局部更新用户信息 */
@@ -68,9 +82,10 @@ export const useUserStore = defineStore(
 )
 
 function clearClientSessionState() {
-  useQuestionLikeStore().clearQuestionLiked()
-  useAnswerRecordLikeStore().clearAnswerRecordLiked()
-  queryClient.removeQueries()
+  // removeQueries 会销毁仍被页面订阅的查询，导致列表停在加载态直至手动刷新。
+  // 先取消旧请求，等登录态 / enabled / queryKey 更新后重置并重拉活跃查询。
+  void queryClient.cancelQueries()
+  void nextTick().then(() => queryClient.resetQueries())
 
   const keysToRemove: string[] = [...AuthCleanupStorageKeys]
 

@@ -45,13 +45,16 @@ export function handleResponseError(
   responseData?: Partial<ContractResponse>,
   hideErrorToast?: boolean,
   silentAuth?: boolean,
+  sessionVersion?: number,
 ): { message: string; code: number } {
   const code = responseData?.code ?? -1
   const serverMessage = responseData?.message || ''
+  const isCurrentSession =
+    sessionVersion === undefined || sessionVersion === useAuthStore().sessionVersion
 
   // 1. HTTP 401 或 业务 code 6（未登录）
   if (statusCode === 401 || code === 6) {
-    if (!silentAuth) {
+    if (!silentAuth && isCurrentSession) {
       handleUnauthorized()
     }
     // 未登录静默引导，不弹 Toast
@@ -60,9 +63,10 @@ export function handleResponseError(
 
   // 2. HTTP 403 或 业务 code 7（账号已被封禁）
   if (statusCode === 403 || code === 7) {
+    const msg = serverMessage || '账号已被封禁'
+    if (!isCurrentSession) return { message: msg, code: 7 }
     const authStore = useAuthStore()
     authStore.clearToken()
-    const msg = serverMessage || '账号已被封禁'
     uni.showModal({
       title: '账号已被封禁',
       content: msg,

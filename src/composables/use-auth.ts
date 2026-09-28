@@ -11,9 +11,7 @@ export function useAuth() {
   /**
    * 判断目标用户 ID 是否为当前登录用户。
    *
-   * 注意：基础设施层的 useAuth 优先读取 authStore.userId。
-   * 业务域（features/user）的 useAuth 则读取 userStore.userInfo?.id。
-   * 两者在登录成功后由 setUserId/setUserInfo 保持同步。
+   * 登录态与身份判断统一读取 authStore；业务域扩展此 composable 提供用户资料与登录回调。
    */
   function isMe(authorId?: number | null): boolean {
     if (!authStore.isLoggedIn || !authStore.userId || !authorId) return false

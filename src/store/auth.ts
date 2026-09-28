@@ -26,6 +26,8 @@ export const useAuthStore = defineStore(
     const userId = ref<number | null>(null)
     /** 全局登录/调试确认弹窗显隐状态 */
     const showLoginModal = ref(false)
+    /** 只在当前运行期递增，用于丢弃旧会话的延迟响应。 */
+    const sessionVersion = ref(0)
 
     const isLoggedIn = computed(() => !!token.value || hasSession.value || !!sessionId.value)
 
@@ -38,6 +40,7 @@ export const useAuthStore = defineStore(
     }
 
     function setToken(newToken: string) {
+      if (token.value !== newToken) sessionVersion.value++
       token.value = newToken
       if (newToken) {
         hasSession.value = true
@@ -45,25 +48,29 @@ export const useAuthStore = defineStore(
     }
 
     function setUserId(id: number | null) {
+      if (userId.value !== id) sessionVersion.value++
       userId.value = id
     }
 
     /** 设置跨端 Session ID */
     function setSessionId(newSessionId: string) {
+      if (sessionId.value !== newSessionId) sessionVersion.value++
       sessionId.value = newSessionId
       hasSession.value = Boolean(newSessionId)
     }
 
     /** 由 features/user 在写入/清空个人信息时调用 */
     function setSession(active: boolean) {
-      hasSession.value = active
       if (!active) {
-        sessionId.value = ''
-        userId.value = null
+        clearToken()
+        return
       }
+      if (hasSession.value !== active) sessionVersion.value++
+      hasSession.value = active
     }
 
     function clearToken() {
+      sessionVersion.value++
       token.value = ''
       sessionId.value = ''
       hasSession.value = false
@@ -77,6 +84,7 @@ export const useAuthStore = defineStore(
       sessionId,
       userId,
       showLoginModal,
+      sessionVersion,
       isLoggedIn,
       openLoginModal,
       closeLoginModal,
@@ -89,7 +97,7 @@ export const useAuthStore = defineStore(
   },
   {
     persist: {
-      omit: ['showLoginModal'],
+      omit: ['showLoginModal', 'sessionVersion'],
     },
   },
 )

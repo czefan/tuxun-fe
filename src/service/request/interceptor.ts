@@ -11,7 +11,7 @@ const httpInterceptor = {
       options.url = withQuery(options.url, options.query)
     }
     // 1. 请求超时
-    options.timeout = 60000 // 60s
+    options.timeout ??= 15000
     // 2. 跨端 Session/Cookie 鉴权
     const authStore = useAuthStore()
     const headers: Record<string, string> = { ...options.header }
@@ -31,6 +31,12 @@ export const requestInterceptor = {
     // 拦截 request 请求
     uni.addInterceptor('request', httpInterceptor)
     // 拦截 uploadFile 文件上传
-    uni.addInterceptor('uploadFile', httpInterceptor)
+    uni.addInterceptor('uploadFile', {
+      invoke(options: CustomRequestOptions) {
+        // 图片上传允许更长等待，普通请求尽早返回可重试的错误态。
+        options.timeout ??= 60000
+        return httpInterceptor.invoke(options)
+      },
+    })
   },
 }

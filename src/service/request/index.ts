@@ -10,7 +10,17 @@ export type { RequestOptions } from './types'
 
 /** 业务请求入口，统一适配底层 http 请求 */
 export function request<T = unknown>(options: RequestOptions): Promise<T> {
-  const { url, method = 'GET', data, query, header, auth, silentAuth, hideErrorToast } = options
+  const {
+    url,
+    method = 'GET',
+    data,
+    query,
+    header,
+    auth,
+    silentAuth,
+    hideErrorToast,
+    timeout,
+  } = options
   return http<T>({
     url: buildFullUrl(url),
     method,
@@ -20,5 +30,6 @@ export function request<T = unknown>(options: RequestOptions): Promise<T> {
     auth,
     silentAuth,
     hideErrorToast,
+    timeout,
   })
 }

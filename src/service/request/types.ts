@@ -15,6 +15,8 @@ export interface RequestOptions {
   silentAuth?: boolean
   /** 出错时是否隐藏错误提示 */
   hideErrorToast?: boolean
+  /** 请求超时（毫秒），默认 15 秒。 */
+  timeout?: number
 }
 
 /**

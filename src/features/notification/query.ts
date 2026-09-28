@@ -5,6 +5,7 @@ import type { PageParams } from '@/service/contract/types'
 import { nextPageByLoadedCount } from '@/service/query/pagination'
 import { resolveEnabled } from '@/service/query/enabled'
 import { qk } from '@/service/query/keys'
+import { useAuthStore } from '@/store/auth'
 import {
   getAnnouncementDetail,
   getAnnouncements,
@@ -23,21 +24,23 @@ export function useInfiniteAnnouncements(
   params?: MaybeRefOrGetter<AnnouncementQueryParams | undefined>,
   options?: { enabled?: MaybeRefOrGetter<boolean> },
 ) {
+  const authStore = useAuthStore()
   return useInfiniteQuery<NotificationPageResult<AnnouncementVM>>({
     queryKey: computed(() => qk.notification.announcements(toValue(params))),
     queryFn: ({ pageParam = 1 }) =>
       getAnnouncements({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: resolveEnabled(true, options?.enabled),
+    enabled: resolveEnabled(() => authStore.isLoggedIn, options?.enabled),
   })
 }
 
 export function useAnnouncementDetail(id: MaybeRefOrGetter<number>) {
+  const authStore = useAuthStore()
   return useQuery({
     queryKey: computed(() => qk.notification.announcementDetail(toValue(id))),
     queryFn: () => getAnnouncementDetail(toValue(id)),
-    enabled: computed(() => toValue(id) > 0),
+    enabled: computed(() => authStore.isLoggedIn && toValue(id) > 0),
   })
 }
 
@@ -45,13 +48,14 @@ export function useInfiniteInteractions(
   params?: MaybeRefOrGetter<(PageParams & { type?: ('like' | 'comment')[] }) | undefined>,
   options?: { enabled?: MaybeRefOrGetter<boolean> },
 ) {
+  const authStore = useAuthStore()
   return useInfiniteQuery<NotificationPageResult<InteractionMessageVM>>({
     queryKey: computed(() => qk.notification.interactions(toValue(params))),
     queryFn: ({ pageParam = 1 }) =>
       getInteractions({ ...toValue(params), page: pageParam as number, page_size: 20 }),
     initialPageParam: 1,
     getNextPageParam: nextPageByLoadedCount,
-    enabled: resolveEnabled(true, options?.enabled),
+    enabled: resolveEnabled(() => authStore.isLoggedIn, options?.enabled),
   })
 }
 

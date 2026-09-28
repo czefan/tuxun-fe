@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { nextPageByLoadedCount } from './pagination'
 
 describe('nextPageByLoadedCount', () => {
+  it('total 滞后但服务端已返回空页时停止翻页', () => {
+    const first = { list: [1, 2], total: 99 }
+    const empty = { list: [], total: 99 }
+    expect(nextPageByLoadedCount(empty, [first, empty])).toBeUndefined()
+  })
   it('当实际累计加载条数小于 total 时，应该返回下一页页码', () => {
     const page1 = { list: [1, 2, 3], total: 10 }
     const page2 = { list: [4, 5, 6], total: 10 }

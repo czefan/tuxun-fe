@@ -112,7 +112,9 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
     mutationFn: (commentId: number) => deleteComment(commentId),
     onMutate: async (commentId: number) => {
       const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
-        Array.isArray(query.queryKey) && query.queryKey[0] === 'comment'
+        Array.isArray(query.queryKey) &&
+        query.queryKey[0] === 'comment' &&
+        query.queryKey[2] === toValue(photoId)
 
       await queryClient.cancelQueries({ predicate: matchCommentQuery })
       const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
