@@ -42,7 +42,7 @@ const groupedInteractions = computed(() => groupItemsByTime(props.items))
     <ListStateView
       :needs-login="!isLoggedIn"
       :loading="loading"
-      :error="error"
+      :error="error && !items.length"
       :empty="!items.length"
       login-tip="登录后查看互动消息"
       empty-tip="暂无互动消息"

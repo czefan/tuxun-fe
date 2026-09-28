@@ -4,7 +4,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { getTranslatedTabBarList } from './i18n'
 import { useTabBarStore } from './store'
 import type { CustomTabBarItem } from './types'
-import { useUserStore } from '@/features/user'
+import { useUserStore } from '@/features/user/store/user'
 import { AppRoute } from '@/router/routes'
 import { TX_BG_ACCENT, TX_TAB_INACTIVE } from '@/styles/constants'
 

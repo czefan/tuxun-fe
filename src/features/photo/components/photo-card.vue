@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import LikeButton from '@/components/like-button/like-button.vue'
 import type { PhotoCardVM } from '../types'
 import { useSetPhotoLike } from '../query'
@@ -18,11 +18,17 @@ const { requireLogin, isMe } = useAuth()
 const { mutate: setLike } = useSetPhotoLike()
 
 const loadedRatio = ref<number | null>(null)
+watch(
+  () => props.item.image.url,
+  () => {
+    loadedRatio.value = null
+  },
+)
 
 // 瀑布流单列宽度约为 345rpx，根据图片宽高比例计算精确 rpx 高度，保证 wd-img 在跨端均能稳定渲染
 const displayHeight = computed(() => {
   if (loadedRatio.value) {
-    return `${Math.round(345 * loadedRatio.value)}rpx`
+    return `${Math.round(345 * Math.min(Math.max(loadedRatio.value, 0.5), 1.6))}rpx`
   }
   if (props.item.image && props.item.image.width > 0 && props.item.image.height > 0) {
     const ratio = props.item.image.height / props.item.image.width

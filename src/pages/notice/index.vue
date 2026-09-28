@@ -23,7 +23,7 @@ definePage({
   },
 })
 
-const { isLoggedIn, loginDirectly } = useAuth()
+const { isLoggedIn, userInfo, loginDirectly } = useAuth()
 const tabOptions = ['系统通知', '互动消息'] as const
 type TabOption = (typeof tabOptions)[number]
 const activeTab = ref<TabOption>('系统通知')
@@ -46,6 +46,8 @@ watch(activeTab, () => {
 
 const {
   data: announcePagesData,
+  isFetching: isRefreshingAnnouncements,
+  isStale: announcementsStale,
   isLoading: announceLoading,
   isError: announceError,
   fetchNextPage: fetchNextAnnounce,
@@ -63,6 +65,8 @@ const {
 
 const {
   data: interactPagesData,
+  isFetching: isRefreshingInteractions,
+  isStale: interactionsStale,
   isLoading: interactLoading,
   isError: interactError,
   fetchNextPage: fetchNextInteract,
@@ -88,20 +92,24 @@ const interactions = computed<InteractionMessageVM[]>(
 
 const unreadInteractCount = computed(() => interactPagesData.value?.pages[0]?.unreadCount ?? 0)
 
-useInfiniteListPage({
+const { loadMore: loadMoreAnnouncements } = useInfiniteListPage({
+  isFetching: isRefreshingAnnouncements,
+  isStale: announcementsStale,
   hasNextPage: hasNextAnnounce,
   isFetchingNextPage: isFetchingAnnounce,
   fetchNextPage: fetchNextAnnounce,
   refetch: refetchAnnounce,
-  enabled: () => activeTab.value === '系统通知',
+  enabled: () => isLoggedIn() && activeTab.value === '系统通知',
 })
 
-useInfiniteListPage({
+const { loadMore: loadMoreInteractions } = useInfiniteListPage({
+  isFetching: isRefreshingInteractions,
+  isStale: interactionsStale,
   hasNextPage: hasNextInteract,
   isFetchingNextPage: isFetchingInteract,
   fetchNextPage: fetchNextInteract,
   refetch: refetchInteract,
-  enabled: () => activeTab.value === '互动消息',
+  enabled: () => isLoggedIn() && activeTab.value === '互动消息',
 })
 
 function handleInteractionTap(item: InteractionMessageVM) {
@@ -127,11 +135,18 @@ function handleReadAllInteractions() {
 }
 
 const readAnnouncementIds = ref<number[]>(loadReadAnnouncementIds())
+watch(
+  () => userInfo.value?.id,
+  () => {
+    readAnnouncementIds.value = loadReadAnnouncementIds()
+  },
+)
 
 function loadReadAnnouncementIds(): number[] {
   try {
     const data = uni.getStorageSync(StorageKey.ReadNoticeIds)
-    return data ? JSON.parse(data) : []
+    const ids: unknown = data ? JSON.parse(data) : []
+    return Array.isArray(ids) ? ids.filter((id) => Number.isSafeInteger(id) && id > 0) : []
   } catch {
     return []
   }
@@ -234,7 +249,7 @@ function goAnnouncementDetail(id: number) {
           :read-ids="readAnnouncementIds"
           @login="loginDirectly"
           @reload="refetchAnnounce"
-          @load-more="fetchNextAnnounce"
+          @load-more="loadMoreAnnouncements"
           @select="goAnnouncementDetail"
         />
       </swiper-item>
@@ -249,7 +264,7 @@ function goAnnouncementDetail(id: number) {
           :is-logged-in="isLoggedIn()"
           @login="loginDirectly"
           @reload="refetchInteract"
-          @load-more="fetchNextInteract"
+          @load-more="loadMoreInteractions"
           @select="handleInteractionTap"
         />
       </swiper-item>

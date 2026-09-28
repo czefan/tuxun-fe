@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useUserStore } from '@/features/user'
+import { useUserStore } from '@/features/user/store/user'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUpdateAvatar } from '@/features/user/query'
 import { smartCompressImage } from '@/utils/image-compress'

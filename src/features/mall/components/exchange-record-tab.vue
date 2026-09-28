@@ -36,6 +36,8 @@ watch(
 )
 
 const {
+  isFetching,
+  isStale,
   data: exchangeData,
   isLoading: exchangeLoading,
   isError: exchangeError,
@@ -51,7 +53,9 @@ const exchangeList = computed<ExchangeRecordVM[]>(
   () => exchangeData.value?.pages.flatMap((p) => p.list) ?? [],
 )
 
-useInfiniteListPage({
+const { loadMore } = useInfiniteListPage({
+  isFetching,
+  isStale,
   hasNextPage: hasNextExchanges,
   isFetchingNextPage: isFetchingExchanges,
   fetchNextPage: fetchNextExchanges,
@@ -89,12 +93,12 @@ defineExpose({
     scroll-y
     :show-scrollbar="false"
     class="hide-scrollbar box-border h-full w-full"
-    @scrolltolower="() => fetchNextExchanges()"
+    @scrolltolower="loadMore"
   >
     <ListStateView
       :needs-login="!isLoggedIn()"
       :loading="exchangeLoading || !hasActivated"
-      :error="exchangeError"
+      :error="exchangeError && !exchangeList.length"
       :empty="!exchangeList.length"
       login-tip="登录后查看兑换记录"
       empty-tip="暂无兑换记录"

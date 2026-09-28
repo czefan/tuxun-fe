@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { MENU_GROUPS } from './menu-groups'
-import { useUserStore } from '@/features/user'
+import { useUserStore } from '@/features/user/store/user'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUserInfo } from '@/features/user/query'
 import EditNicknamePopup from '@/features/user/components/edit-nickname-popup.vue'

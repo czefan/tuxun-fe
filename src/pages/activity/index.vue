@@ -31,20 +31,31 @@ const filterOptions = [
 type FilterValue = (typeof filterOptions)[number]['value']
 const activeFilter = ref<FilterValue>(undefined)
 
-const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-  useInfiniteActivityList(
-    computed(() => ({
-      status: activeFilter.value as ActivityQueryParams['status'],
-      keyword: searchKeyword.value.trim() || undefined,
-      page_size: 20,
-    })),
-  )
+const {
+  data,
+  isFetching,
+  isStale,
+  isLoading,
+  isError,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  refetch,
+} = useInfiniteActivityList(
+  computed(() => ({
+    status: activeFilter.value as ActivityQueryParams['status'],
+    keyword: searchKeyword.value.trim() || undefined,
+    page_size: 20,
+  })),
+)
 
 const activities = computed<ActivityVM[]>(
   () => data.value?.pages.flatMap((page) => page.list) ?? [],
 )
 
 useInfiniteListPage({
+  isFetching,
+  isStale,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
@@ -167,7 +178,7 @@ function handleModalGoActivity() {
       <!-- 活动列表状态视图 -->
       <ListStateView
         :loading="isLoading"
-        :error="isError"
+        :error="isError && activities.length === 0"
         :empty="activities.length === 0"
         :empty-tip="emptyTip"
         loading-variant="skeleton"

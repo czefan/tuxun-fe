@@ -27,6 +27,8 @@ const emit = defineEmits<{
 }>()
 
 const {
+  isFetching,
+  isStale,
   data: goodsData,
   isLoading: goodsLoading,
   isError: goodsError,
@@ -38,6 +40,7 @@ const {
   computed(() => ({
     keyword: props.keyword.trim() || undefined,
   })),
+  { enabled: () => props.active },
 )
 
 const goodsList = computed<GoodsVM[]>(() => goodsData.value?.pages.flatMap((p) => p.list) ?? [])
@@ -50,7 +53,9 @@ watch(
   { immediate: true },
 )
 
-useInfiniteListPage({
+const { loadMore } = useInfiniteListPage({
+  isFetching,
+  isStale,
   hasNextPage: hasNextGoods,
   isFetchingNextPage: isFetchingGoods,
   fetchNextPage: fetchNextGoods,
@@ -69,11 +74,11 @@ defineExpose({
     scroll-y
     :show-scrollbar="false"
     class="hide-scrollbar box-border h-full w-full"
-    @scrolltolower="() => fetchNextGoods()"
+    @scrolltolower="loadMore"
   >
     <ListStateView
       :loading="goodsLoading"
-      :error="goodsError"
+      :error="goodsError && !goodsList.length"
       :empty="!goodsList.length"
       loading-variant="skeleton"
       empty-tip="暂无商品"

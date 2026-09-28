@@ -8,7 +8,7 @@ import VerifyCodeQr from '@/features/mall/components/verify-code-qr.vue'
 import GoodDetailPopup from '@/features/mall/components/good-detail-popup.vue'
 import { useExchangeGood } from '@/features/mall/query'
 import type { ExchangeRecordVM, GoodsVM } from '@/features/mall/types'
-import { useUserStore } from '@/features/user'
+import { useUserStore } from '@/features/user/store/user'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { debounce } from '@/utils/debounce'
 

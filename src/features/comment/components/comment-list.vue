@@ -112,7 +112,7 @@ function confirmDelete(id: number) {
     >
       <ListStateView
         :loading="isLoading"
-        :error="isError"
+        :error="isError && !commentsList.length"
         :empty="!commentsList.length"
         empty-tip="暂无评论，快来抢沙发吧！"
         loading-variant="spinner"

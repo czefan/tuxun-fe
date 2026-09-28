@@ -108,7 +108,7 @@ const splitColumns = computed(() => {
   <view class="photo-waterfall">
     <ListStateView
       :loading="loading"
-      :error="error"
+      :error="error && list.length === 0"
       :empty="list.length === 0"
       :empty-tip="emptyText"
       loading-variant="skeleton"

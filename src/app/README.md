@@ -8,9 +8,9 @@
 
 - **`components/`**：应用全局外壳 UI 组件
   - `app-global-provider/`：根级全局 Provider 容器，包裹全局状态横幅与根组件挂载点。
-  - `network-bar/`：全局网络离线检测与状态提醒横幅。
+  - `network-bar/`：订阅统一网络状态的离线提醒横幅，不注册平台网络事件，也不主动刷新查询。
 - **`lifecycle/`**：应用全局生命周期逻辑
-  - `init.ts`：应用启动初始化（设备状态、服务器时间同步偏移、网络监听等）。
+  - `use-app-lifecycle.ts`：前后台焦点同步、网络状态重新探测、去重的会话校验，以及旧会话响应隔离。
 - **`tab-bar/`**：主包页面自定义底部导航栏
   - `main-tab-bar.vue`：自定义 TabBar UI 渲染与安全区适配。
   - `config.ts`：TabBar 页面路由映射与图标配置。

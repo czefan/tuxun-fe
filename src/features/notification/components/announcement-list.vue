@@ -44,7 +44,7 @@ function isAnnouncementRead(item: AnnouncementVM): boolean {
     <ListStateView
       :needs-login="!isLoggedIn"
       :loading="loading"
-      :error="error"
+      :error="error && !items.length"
       :empty="!items.length"
       login-tip="登录后查看系统通知"
       empty-tip="暂无系统通知"

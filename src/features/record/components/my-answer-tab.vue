@@ -40,6 +40,8 @@ const queryParams = computed(() => ({
 }))
 
 const {
+  isFetching,
+  isStale,
   data: attemptsPagesData,
   isLoading,
   isError,
@@ -56,7 +58,9 @@ const list = computed<UserAttemptRecordVM[]>(
 )
 
 // 绑定下拉刷新与触底加载（仅在当前 Tab 处于 active 时响应）
-useInfiniteListPage({
+const { loadMore } = useInfiniteListPage({
+  isFetching,
+  isStale,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
@@ -76,12 +80,12 @@ function goPhotoDetail(photoId: number) {
     scroll-y
     :show-scrollbar="false"
     class="hide-scrollbar box-border h-full w-full"
-    @scrolltolower="() => fetchNextPage()"
+    @scrolltolower="loadMore"
   >
     <ListStateView
       :needs-login="!isLoggedIn()"
       :loading="isLoading || !hasActivated"
-      :error="isError"
+      :error="isError && list.length === 0"
       :empty="list.length === 0"
       login-tip="登录后查看作答记录"
       empty-tip="暂无作答记录"

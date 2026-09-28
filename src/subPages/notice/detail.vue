@@ -14,7 +14,12 @@ definePage({
 })
 
 const announcementId = ref(0)
-const { data: detail, isLoading: loading } = useAnnouncementDetail(() => announcementId.value)
+const {
+  data: detail,
+  isLoading: loading,
+  isError,
+  refetch,
+} = useAnnouncementDetail(() => announcementId.value)
 const { data: activityData } = useInfiniteActivityList()
 
 const relatedActivity = computed(() => {
@@ -32,7 +37,13 @@ onLoad((query) => {
 
 <template>
   <view class="page-notice-detail safe-bottom-page box-border bg-tx-main px-4 pt-6">
-    <ListStateView :loading="loading" :empty="!detail" empty-tip="未找到相关通知">
+    <ListStateView
+      :loading="loading"
+      :error="isError && !detail"
+      :empty="!detail"
+      empty-tip="未找到相关通知"
+      @retry="refetch"
+    >
       <!-- 公告详情：版心居中排版 -->
       <view class="mx-auto max-w-xl space-y-3">
         <!-- 标题与时间 / 关联活动 -->

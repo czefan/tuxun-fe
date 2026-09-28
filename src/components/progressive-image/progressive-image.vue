@@ -44,13 +44,11 @@ const emit = defineEmits<{
 }>()
 
 const isOriginLoaded = ref(false)
+const mainImageUrl = computed(() => props.image?.originUrl || props.image?.url || props.thumbUrl)
 
-watch(
-  () => [props.image?.originUrl, props.image?.url],
-  () => {
-    isOriginLoaded.value = false
-  },
-)
+watch(mainImageUrl, () => {
+  isOriginLoaded.value = false
+})
 
 /**
  * 严格守卫：
@@ -59,7 +57,7 @@ watch(
  */
 const effectiveThumbUrl = computed(() => {
   const candidate = props.thumbUrl ?? props.image?.url
-  if (candidate && props.image?.originUrl && candidate !== props.image.originUrl) {
+  if (candidate && mainImageUrl.value && candidate !== mainImageUrl.value) {
     return candidate
   }
   return null
@@ -95,14 +93,14 @@ const aspectRatioStyle = computed(() => {
 
     <!-- 2. 顶层：高清原图层（加载完毕瞬间直接覆盖显示，瞬时清晰无等待动画） -->
     <image
-      v-if="image?.originUrl"
+      v-if="mainImageUrl"
       class="block h-full w-full cursor-pointer"
       :class="[
         isOriginLoaded || !effectiveThumbUrl ? 'opacity-100' : 'opacity-0 pointer-events-none',
         effectiveThumbUrl ? 'absolute inset-0' : '',
       ]"
       :style="viewTransitionName ? { 'view-transition-name': viewTransitionName } : undefined"
-      :src="image.originUrl"
+      :src="mainImageUrl"
       :mode="mode"
       @load="isOriginLoaded = true"
       @click="emit('click')"

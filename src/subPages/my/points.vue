@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import TabHeader from '@/components/tab-header/tab-header.vue'
 import { useContent } from '@/features/content/query'
-import { useUserStore } from '@/features/user'
+import { useUserStore } from '@/features/user/store/user'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useInfiniteScoreLogs } from '@/features/score/query'
 import { useInfiniteListPage } from '@/composables/use-infinite-list-page'
@@ -28,6 +28,8 @@ const userStore = useUserStore()
 const { data: rulesData } = useContent('score_rules')
 
 const {
+  isFetching,
+  isStale,
   data: logsPagesData,
   isLoading: logsLoading,
   isError: logsError,
@@ -44,7 +46,9 @@ const logsList = computed<ScoreLogVM[]>(
 const totalIncome = computed(() => logsPagesData.value?.pages?.[0]?.totalIncome ?? 0)
 const totalExpense = computed(() => logsPagesData.value?.pages?.[0]?.totalExpense ?? 0)
 
-useInfiniteListPage({
+const { loadMore } = useInfiniteListPage({
+  isFetching,
+  isStale,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
@@ -107,12 +111,12 @@ function handleLogTap(item: ScoreLogVM) {
           scroll-y
           :show-scrollbar="false"
           class="hide-scrollbar box-border h-full w-full"
-          @scrolltolower="() => fetchNextPage()"
+          @scrolltolower="loadMore"
         >
           <ListStateView
             :needs-login="!isLoggedIn()"
             :loading="logsLoading"
-            :error="logsError"
+            :error="logsError && !logsList.length"
             :empty="!logsList.length"
             login-tip="登录后查看积分明细"
             empty-tip="暂无积分明细"
