@@ -17,7 +17,7 @@
     "unibestUpdateTime": "2026-05-22",
     "createdAt": "2026-06-28 14:20:32"
   },
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@12.6.0",
   "description": "图寻 UniApp 前端项目",
   "author": "czefan",
   "license": "MIT",
@@ -30,12 +30,11 @@
     "url": "https://github.com/czefan/tuxun-fe/issues"
   },
   "engines": {
-    "node": ">=22.13.0",
-    "pnpm": ">=11"
+    "node": ">=24",
+    "pnpm": ">=12"
   },
   "scripts": {
     "prepare": "pnpm init-baseFiles",
-    "preinstall": "pnpm dlx only-allow pnpm",
     "init-baseFiles": "node ./scripts/create-base-files.js",
     "gen:api-types": "openapi-typescript contract/apifox-import.json -o src/service/contract/schema.d.ts",
     "dev": "uni --mode dev",

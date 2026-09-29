@@ -17,8 +17,8 @@
 
 ## ⚙️ 环境要求
 
-- **Node.js**：`>= v22.13.0`
-- **pnpm**：`>= v11.0.0` (强制要求，配有 `only-allow pnpm`)
+- **Node.js**：`>=24`
+- **pnpm**：`>=12`
 
 ---
 
@@ -27,7 +27,7 @@
 ### 1. 安装依赖
 
 ```bash
-pnpm i
+pnpm install --frozen-lockfile
 ```
 
 ### 2. 本地开发

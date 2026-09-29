@@ -27,6 +27,7 @@ server {
 
     # 静态资源强缓存
     location /assets/ {
+        try_files $uri =404;
         expires 1y;
         add_header Cache-Control "public, immutable";
     }

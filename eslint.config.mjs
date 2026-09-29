@@ -51,6 +51,8 @@ export default uniHelper(
       '**/uni_modules/',
       '**/nativeplugins/',
       'dist',
+      '**/*.timestamp-*.mjs',
+      '**/*.timestamp-*.cjs',
       'auto-import.d.ts',
       'uni-pages.d.ts',
       'src/pages.json',
