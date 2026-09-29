@@ -55,7 +55,7 @@ const thumbUrl = computed(() => {
 
 const commentInputVisible = ref(false)
 const commentText = ref('')
-const postCommentMutation = usePostComment(() => questionId.value)
+const postCommentMutation = usePostComment()
 
 function handleOpenCommentInput() {
   if (!requireLogin()) {
@@ -65,6 +65,7 @@ function handleOpenCommentInput() {
 }
 
 function handlePostComment() {
+  if (postCommentMutation.isPending.value) return
   if (!requireLogin()) {
     return
   }
@@ -72,13 +73,16 @@ function handlePostComment() {
     uni.showToast({ title: '请输入评论内容', icon: 'none' })
     return
   }
-  postCommentMutation.mutate(commentText.value.trim(), {
-    onSuccess: () => {
-      commentText.value = ''
-      commentInputVisible.value = false
-      uni.showToast({ title: '评论成功，等待审核', icon: 'none' })
+  postCommentMutation.mutate(
+    { photoId: questionId.value, content: commentText.value.trim() },
+    {
+      onSuccess: () => {
+        commentText.value = ''
+        commentInputVisible.value = false
+        uni.showToast({ title: '评论成功，等待审核', icon: 'none' })
+      },
     },
-  })
+  )
 }
 
 function handlePreviewImage() {

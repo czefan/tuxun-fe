@@ -1,3 +1,4 @@
+import { beginOptimisticUpdate } from '@/service/query/optimistic'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { resolveEnabled } from '@/service/query/enabled'
@@ -24,18 +25,18 @@ export function useUpdateNickname() {
   return useMutation({
     mutationFn: (nickname: string) => updateNickname(nickname),
     onMutate: async (nickname: string) => {
-      await queryClient.cancelQueries({ queryKey: qk.user.info() })
-      const prev = queryClient.getQueryData<UserInfo>(qk.user.info())
+      const finishUpdate = await beginOptimisticUpdate(queryClient, { queryKey: qk.user.info() })
       queryClient.setQueryData<UserInfo>(qk.user.info(), (old) => {
         if (!old) return old
         return { ...old, nickname }
       })
-      return { prev }
+      return finishUpdate()
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(qk.user.info(), ctx.prev)
+      ctx?.rollback()
     },
-    onSuccess: () => {
+    onSuccess: (_data, _variables, ctx) => {
+      if (!ctx?.isCurrent()) return
       queryClient.invalidateQueries({ queryKey: qk.user.info() })
     },
   })
@@ -46,18 +47,18 @@ export function useUpdateAvatar() {
   return useMutation({
     mutationFn: (filePath: string) => updateAvatar(filePath),
     onMutate: async (filePath: string) => {
-      await queryClient.cancelQueries({ queryKey: qk.user.info() })
-      const prev = queryClient.getQueryData<UserInfo>(qk.user.info())
+      const finishUpdate = await beginOptimisticUpdate(queryClient, { queryKey: qk.user.info() })
       queryClient.setQueryData<UserInfo>(qk.user.info(), (old) => {
         if (!old) return old
         return { ...old, avatar: filePath }
       })
-      return { prev }
+      return finishUpdate()
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(qk.user.info(), ctx.prev)
+      ctx?.rollback()
     },
-    onSuccess: () => {
+    onSuccess: (_data, _variables, ctx) => {
+      if (!ctx?.isCurrent()) return
       queryClient.invalidateQueries({ queryKey: qk.user.info() })
     },
   })

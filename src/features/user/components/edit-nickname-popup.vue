@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/store/auth'
 import { computed, ref, watch } from 'vue'
 import { useUserStore } from '@/features/user/store/user'
 import { useAuth } from '@/features/user/composables/use-auth'
@@ -43,11 +44,14 @@ function handleClose() {
 }
 
 function confirmNickname() {
+  if (nicknameMutation.isPending.value) return
+  const sessionVersion = useAuthStore().sessionVersion
   if (!requireLogin()) return
   if (!canSaveNickname.value) return
 
   nicknameMutation.mutate(newNickname.value.trim(), {
     onSuccess: (res) => {
+      if (sessionVersion !== useAuthStore().sessionVersion) return
       userStore.updateUserInfo({
         nickname: res.nickname,
         nicknameEditsRemaining: res.nicknameEditsRemaining,

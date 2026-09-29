@@ -1,3 +1,4 @@
+import { beginOptimisticUpdate } from '@/service/query/optimistic'
 import type { InfiniteData } from '@tanstack/vue-query'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
@@ -31,20 +32,21 @@ export function useInfiniteCommentList(
   })
 }
 
-export function usePostComment(photoId: MaybeRefOrGetter<number>) {
+export function usePostComment() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (content: string) => postComment(toValue(photoId), content),
-    onMutate: async (content: string) => {
-      const pid = toValue(photoId)
+    mutationFn: ({ photoId, content }: { photoId: number; content: string }) =>
+      postComment(photoId, content),
+    onMutate: async ({ photoId: pid, content }) => {
       const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
         Array.isArray(query.queryKey) &&
         query.queryKey[0] === 'comment' &&
         query.queryKey[2] === pid
 
-      await queryClient.cancelQueries({ predicate: matchCommentQuery })
-      const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
+      const finishUpdate = await beginOptimisticUpdate(queryClient, {
+        predicate: matchCommentQuery,
+      })
 
       const currentUser = queryClient.getQueryData<{
         id?: number
@@ -91,17 +93,14 @@ export function usePostComment(photoId: MaybeRefOrGetter<number>) {
           return old
         },
       )
-      return { prev }
+      return finishUpdate()
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        for (const [key, data] of ctx.prev) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      ctx?.rollback()
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: qk.comment.list(toValue(photoId)) })
+    onSuccess: (_data, _variables, ctx) => {
+      if (!ctx?.isCurrent()) return
+      queryClient.invalidateQueries({ queryKey: qk.comment.list(_variables.photoId) })
     },
   })
 }
@@ -111,13 +110,15 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
   return useMutation({
     mutationFn: (commentId: number) => deleteComment(commentId),
     onMutate: async (commentId: number) => {
+      const targetPhotoId = toValue(photoId)
       const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
         Array.isArray(query.queryKey) &&
         query.queryKey[0] === 'comment' &&
-        query.queryKey[2] === toValue(photoId)
+        query.queryKey[2] === targetPhotoId
 
-      await queryClient.cancelQueries({ predicate: matchCommentQuery })
-      const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
+      const finishUpdate = await beginOptimisticUpdate(queryClient, {
+        predicate: matchCommentQuery,
+      })
 
       queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
@@ -138,17 +139,14 @@ export function useDeleteComment(photoId: MaybeRefOrGetter<number>) {
           return old
         },
       )
-      return { prev }
+      return { ...finishUpdate(), targetPhotoId }
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        for (const [key, data] of ctx.prev) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      ctx?.rollback()
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: qk.comment.list(toValue(photoId)) })
+    onSuccess: (_data, _variables, ctx) => {
+      if (!ctx?.isCurrent()) return
+      queryClient.invalidateQueries({ queryKey: qk.comment.list(ctx.targetPhotoId) })
     },
   })
 }
@@ -163,8 +161,9 @@ export function useSetCommentLike(_photoId?: MaybeRefOrGetter<number>) {
       const matchCommentQuery = (query: { queryKey: readonly unknown[] }) =>
         Array.isArray(query.queryKey) && query.queryKey[0] === 'comment'
 
-      await queryClient.cancelQueries({ predicate: matchCommentQuery })
-      const prev = queryClient.getQueriesData<unknown>({ predicate: matchCommentQuery })
+      const finishUpdate = await beginOptimisticUpdate(queryClient, {
+        predicate: matchCommentQuery,
+      })
 
       queryClient.setQueriesData<InfiniteData<PageResult<CommentVM>>>(
         { predicate: matchCommentQuery },
@@ -192,14 +191,13 @@ export function useSetCommentLike(_photoId?: MaybeRefOrGetter<number>) {
           return old
         },
       )
-      return { prev }
+      return finishUpdate()
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        for (const [key, data] of ctx.prev) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      ctx?.rollback()
+    },
+    onSettled: (_data, _error, _variables, ctx) => {
+      if (ctx?.isCurrent()) void queryClient.invalidateQueries({ queryKey: ['comment'] })
     },
   })
 }

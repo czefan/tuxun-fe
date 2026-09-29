@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { useMediaResource } from '@/composables/use-media-resource'
+import { releaseObjectUrl } from '@/utils/object-url'
+import { parseFormDraft, restoreDraftImage } from '@/utils/form-draft'
+import { useAuthStore } from '@/store/auth'
+import { onScopeDispose, reactive, ref, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import FormLocationPicker from '@/components/form-location-picker/form-location-picker.vue'
 import { useSubmitAttempt } from '@/features/attempt/query'
@@ -40,19 +44,34 @@ onLoad((query) => {
   }
 })
 
-function isSubmitDraftMeaningful(data: any): boolean {
+function isSubmitDraftMeaningful(data: {
+  filePath: string
+  latitude: number
+  longitude: number
+}): boolean {
   if (!data || typeof data !== 'object') return false
   return Boolean(data.filePath || isSubmittableLocation(data.latitude, data.longitude))
 }
 
+let disposed = false
+onScopeDispose(() => {
+  disposed = true
+})
+
 function checkDraft() {
   if (!photoId.value) return
   const key = `${DRAFT_KEY_PREFIX}${photoId.value}`
-  const saved = uni.getStorageSync(key)
+  const sessionVersion = useAuthStore().sessionVersion
+  let saved: unknown
+  try {
+    saved = uni.getStorageSync(key)
+  } catch {
+    return
+  }
   if (!saved) return
 
   try {
-    const parsed = JSON.parse(saved)
+    const parsed = parseFormDraft(saved)
     if (!isSubmitDraftMeaningful(parsed)) {
       uni.removeStorageSync(key)
       return
@@ -63,10 +82,21 @@ function checkDraft() {
       content: '检测到您上次有未提交的作答草稿，是否恢复？',
       confirmText: '恢复',
       cancelText: '放弃',
-      success: (res) => {
+      success: async (res) => {
+        if (disposed || useAuthStore().sessionVersion !== sessionVersion) return
         if (res.confirm) {
-          Object.assign(formData, parsed)
-          uni.showToast({ title: '已恢复草稿', icon: 'success' })
+          const hadImage = Boolean(parsed.filePath)
+          const filePath = await restoreDraftImage(parsed.filePath)
+          if (disposed || useAuthStore().sessionVersion !== sessionVersion) return
+          parsed.filePath = filePath
+          Object.assign(formData, {
+            filePath: parsed.filePath,
+            address: parsed.address,
+            latitude: parsed.latitude,
+            longitude: parsed.longitude,
+            coordType: parsed.coordType,
+          })
+          if (filePath || !hadImage) uni.showToast({ title: '已恢复草稿', icon: 'success' })
         } else {
           uni.removeStorageSync(key)
         }
@@ -82,16 +112,23 @@ watch(
   (newVal) => {
     if (!photoId.value) return
     const key = `${DRAFT_KEY_PREFIX}${photoId.value}`
-    if (isSubmitDraftMeaningful(newVal)) {
-      uni.setStorageSync(key, JSON.stringify(newVal))
-    } else {
-      uni.removeStorageSync(key)
+    try {
+      if (isSubmitDraftMeaningful(newVal)) {
+        uni.setStorageSync(key, JSON.stringify(newVal))
+      } else {
+        uni.removeStorageSync(key)
+      }
+    } catch {
+      /* 存储不可用不阻断编辑和提交。 */
     }
   },
   { deep: true },
 )
 
+const mediaResource = useMediaResource(() => formData.filePath)
+
 function choosePhoto() {
+  const selection = mediaResource.beginSelection()
   uni.chooseImage({
     count: 1,
     sourceType: ['camera', 'album'],
@@ -104,7 +141,9 @@ function choosePhoto() {
           return
         }
         try {
-          formData.filePath = await smartCompressImage(rawPath)
+          const selectedPath = await smartCompressImage(rawPath)
+          if (mediaResource.accept(selectedPath, selection)) formData.filePath = selectedPath
+          if (selectedPath !== rawPath) releaseObjectUrl(rawPath)
         } catch {
           // 被拦截
         }

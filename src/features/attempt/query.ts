@@ -1,3 +1,4 @@
+import { beginOptimisticUpdate } from '@/service/query/optimistic'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
@@ -52,7 +53,9 @@ export function useSubmitAttempt() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: SubmitAttemptPayload) => submitAttempt(payload),
-    onSuccess: (res, payload) => {
+    onMutate: () => ({ sessionVersion: useAuthStore().sessionVersion }),
+    onSuccess: (res, payload, ctx) => {
+      if (ctx.sessionVersion !== useAuthStore().sessionVersion) return
       const targetPhotoId = payload.photoId
       const isSolved = res.status === 'solved'
 
@@ -118,8 +121,9 @@ export function useSetSolveLike(_photoId?: MaybeRefOrGetter<number>) {
         query.queryKey[0] === 'attempt' &&
         query.queryKey[1] === 'solves'
 
-      await queryClient.cancelQueries({ predicate: matchAttemptQuery })
-      const prev = queryClient.getQueriesData<unknown>({ predicate: matchAttemptQuery })
+      const finishUpdate = await beginOptimisticUpdate(queryClient, {
+        predicate: matchAttemptQuery,
+      })
 
       queryClient.setQueriesData<any>({ predicate: matchAttemptQuery }, (old: any) => {
         if (!old) return old
@@ -144,14 +148,13 @@ export function useSetSolveLike(_photoId?: MaybeRefOrGetter<number>) {
         }
         return old
       })
-      return { prev }
+      return finishUpdate()
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        for (const [key, data] of ctx.prev) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      ctx?.rollback()
+    },
+    onSettled: (_data, _error, _variables, ctx) => {
+      if (ctx?.isCurrent()) void queryClient.invalidateQueries({ queryKey: ['attempt', 'solves'] })
     },
   })
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useMediaResource } from '@/composables/use-media-resource'
+import { releaseObjectUrl } from '@/utils/object-url'
 import { reactive, ref } from 'vue'
 import { useSubmitFeedback } from '@/features/feedback/query'
 import { useAuth } from '@/features/user/composables/use-auth'
@@ -31,7 +33,10 @@ const mediaPath = ref<string>('')
 const mediaType = ref<'image' | 'video' | ''>('')
 const submitMutation = useSubmitFeedback()
 
+const mediaResource = useMediaResource(() => mediaPath.value)
+
 function chooseMedia() {
+  const selection = mediaResource.beginSelection()
   // #ifdef H5
   // H5 端动态创建隐藏 input[type=file]，触发系统文件选择器并根据 file.type 自动判断图片/视频。
   const input = document.createElement('input')
@@ -46,19 +51,28 @@ function chooseMedia() {
         uni.showToast({ title: '视频大小不能超过 50MB', icon: 'none' })
         return
       }
-      mediaPath.value = URL.createObjectURL(file)
-      mediaType.value = 'video'
+      const videoPath = URL.createObjectURL(file)
+      if (mediaResource.accept(videoPath, selection)) {
+        mediaPath.value = videoPath
+        mediaType.value = 'video'
+      }
     } else if (file.type.startsWith('image/')) {
       const rawUrl = URL.createObjectURL(file)
       const check = await validateImageFile(rawUrl)
       if (!check.valid) {
+        releaseObjectUrl(rawUrl)
         uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
         return
       }
       try {
-        mediaPath.value = await smartCompressImage(rawUrl)
-        mediaType.value = 'image'
+        const selectedPath = await smartCompressImage(rawUrl)
+        if (mediaResource.accept(selectedPath, selection)) {
+          mediaPath.value = selectedPath
+          mediaType.value = 'image'
+        }
+        if (selectedPath !== rawUrl) releaseObjectUrl(rawUrl)
       } catch {
+        releaseObjectUrl(rawUrl)
         // 被拦截
       }
     } else {
@@ -84,8 +98,12 @@ function chooseMedia() {
           return
         }
         try {
-          mediaPath.value = await smartCompressImage(file.tempFilePath)
-          mediaType.value = 'image'
+          const selectedPath = await smartCompressImage(file.tempFilePath)
+          if (mediaResource.accept(selectedPath, selection)) {
+            mediaPath.value = selectedPath
+            mediaType.value = 'image'
+          }
+          if (selectedPath !== file.tempFilePath) releaseObjectUrl(file.tempFilePath)
         } catch {
           // 被拦截
         }
@@ -94,8 +112,10 @@ function chooseMedia() {
           uni.showToast({ title: '视频大小不能超过 50MB', icon: 'none' })
           return
         }
-        mediaPath.value = file.tempFilePath
-        mediaType.value = 'video'
+        if (mediaResource.accept(file.tempFilePath, selection)) {
+          mediaPath.value = file.tempFilePath
+          mediaType.value = 'video'
+        }
       }
     },
   })
@@ -103,6 +123,7 @@ function chooseMedia() {
 }
 
 function removeMedia() {
+  mediaResource.beginSelection()
   mediaPath.value = ''
   mediaType.value = ''
 }

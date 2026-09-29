@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/store/auth'
 import { computed, ref, watch } from 'vue'
 import { useUserStore } from '@/features/user/store/user'
 import { useAuth } from '@/features/user/composables/use-auth'
@@ -22,6 +23,7 @@ const { requireLogin } = useAuth()
 const avatarMutation = useUpdateAvatar()
 
 const selectedAvatarPath = ref('')
+const preparing = ref(false)
 
 watch(
   () => visible.value,
@@ -57,6 +59,8 @@ function handleChooseAvatar(e: any) {
 }
 
 async function confirmUpdateAvatar() {
+  if (preparing.value || avatarMutation.isPending.value) return
+  const sessionVersion = useAuthStore().sessionVersion
   if (!requireLogin()) return
   if (props.remaining <= 0) {
     return uni.showToast({ title: '头像修改次数已用尽', icon: 'none' })
@@ -65,14 +69,19 @@ async function confirmUpdateAvatar() {
     return uni.showToast({ title: '请先选择新头像', icon: 'none' })
   }
 
+  preparing.value = true
   let compressedPath = selectedAvatarPath.value
   try {
     compressedPath = await smartCompressImage(selectedAvatarPath.value)
   } catch {
     return
+  } finally {
+    preparing.value = false
   }
+  if (sessionVersion !== useAuthStore().sessionVersion) return
   avatarMutation.mutate(compressedPath, {
     onSuccess: (res) => {
+      if (sessionVersion !== useAuthStore().sessionVersion) return
       userStore.updateUserInfo({
         avatar: res.avatarUrl,
         avatarEditsRemaining: res.avatarEditsRemaining,
@@ -176,8 +185,8 @@ async function confirmUpdateAvatar() {
             round
             size="medium"
             custom-class="!bg-tx-accent !text-tx-ink !font-black shadow-xs active:scale-95 transition-transform"
-            :disabled="!selectedAvatarPath || avatarMutation.isPending.value"
-            :loading="avatarMutation.isPending.value"
+            :disabled="!selectedAvatarPath || preparing || avatarMutation.isPending.value"
+            :loading="preparing || avatarMutation.isPending.value"
             @click="confirmUpdateAvatar"
           >
             确认修改

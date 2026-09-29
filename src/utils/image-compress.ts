@@ -1,3 +1,5 @@
+import { releaseObjectUrl } from './object-url'
+
 /**
  * 按需图片压缩与合法性校验。
  *
@@ -67,7 +69,9 @@ function compressByCanvas(src: string, quality: number): Promise<string> {
       }
       ctx.drawImage(img, 0, 0, width, height)
       canvas.toBlob(
-        (blob) => settle(blob ? URL.createObjectURL(blob) : src),
+        (blob) => {
+          if (!settled) settle(blob ? URL.createObjectURL(blob) : src)
+        },
         'image/jpeg',
         quality / 100,
       )
@@ -176,6 +180,8 @@ export async function smartCompressImage(filePath: string): Promise<string> {
   }
 
   uni.showLoading({ title: '正在优化图片…', mask: true })
+  const candidates = new Set<string>()
+  let result = filePath
   try {
     const sourceSize = await getImageSize(filePath)
     let low = 0
@@ -188,6 +194,7 @@ export async function smartCompressImage(filePath: string): Promise<string> {
     while (low <= high) {
       const mid = Math.floor((low + high) / 2)
       const candidate = await compressWithQuality(filePath, QUALITY_STEPS[mid], sourceSize)
+      if (candidate !== filePath) candidates.add(candidate)
       const candidateSize = await getFileSize(candidate)
 
       if (candidateSize > 0 && candidateSize < smallestSize) {
@@ -203,8 +210,12 @@ export async function smartCompressImage(filePath: string): Promise<string> {
       }
     }
 
-    return bestPath || smallestPath || filePath
+    result = bestPath || smallestPath || filePath
+    return result
   } finally {
+    for (const candidate of candidates) {
+      if (candidate !== result) releaseObjectUrl(candidate)
+    }
     uni.hideLoading()
   }
 }

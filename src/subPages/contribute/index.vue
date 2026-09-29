@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { useMediaResource } from '@/composables/use-media-resource'
+import { releaseObjectUrl } from '@/utils/object-url'
+import { parseFormDraft, restoreDraftImage } from '@/utils/form-draft'
+import { useAuthStore } from '@/store/auth'
+import { computed, onScopeDispose, reactive, ref, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import FormLocationPicker from '@/components/form-location-picker/form-location-picker.vue'
 import { useCreatePhoto } from '@/features/photo/query'
@@ -45,7 +49,7 @@ onLoad((options) => {
   // 统一不选：首次进入与刷新后都是空白态「点击选择活动」，由用户显式选择。
   if (options?.refill) {
     try {
-      const refillData = JSON.parse(decodeURIComponent(options.refill))
+      const refillData = parseFormDraft(decodeURIComponent(options.refill))
       Object.assign(form, refillData)
       return
     } catch {}
@@ -53,7 +57,7 @@ onLoad((options) => {
   checkDraft()
 })
 
-function isDraftMeaningful(data: any): boolean {
+function isDraftMeaningful(data: ReturnType<typeof parseFormDraft>): boolean {
   if (!data || typeof data !== 'object') return false
   return Boolean(
     data.title?.trim() ||
@@ -63,12 +67,23 @@ function isDraftMeaningful(data: any): boolean {
   )
 }
 
+let disposed = false
+onScopeDispose(() => {
+  disposed = true
+})
+
 function checkDraft() {
-  const saved = uni.getStorageSync(DRAFT_KEY)
+  const sessionVersion = useAuthStore().sessionVersion
+  let saved: unknown
+  try {
+    saved = uni.getStorageSync(DRAFT_KEY)
+  } catch {
+    return
+  }
   if (!saved) return
 
   try {
-    const parsed = JSON.parse(saved)
+    const parsed = parseFormDraft(saved)
     if (!isDraftMeaningful(parsed)) {
       uni.removeStorageSync(DRAFT_KEY)
       return
@@ -79,10 +94,15 @@ function checkDraft() {
       content: '检测到您上次有未完成的投稿草稿，是否恢复？',
       confirmText: '恢复',
       cancelText: '放弃',
-      success: (res) => {
+      success: async (res) => {
+        if (disposed || useAuthStore().sessionVersion !== sessionVersion) return
         if (res.confirm) {
+          const hadImage = Boolean(parsed.filePath)
+          const filePath = await restoreDraftImage(parsed.filePath)
+          if (disposed || useAuthStore().sessionVersion !== sessionVersion) return
+          parsed.filePath = filePath
           Object.assign(form, parsed)
-          uni.showToast({ title: '已恢复草稿', icon: 'success' })
+          if (filePath || !hadImage) uni.showToast({ title: '已恢复草稿', icon: 'success' })
         } else {
           uni.removeStorageSync(DRAFT_KEY)
         }
@@ -96,16 +116,23 @@ function checkDraft() {
 watch(
   form,
   (newVal) => {
-    if (isDraftMeaningful(newVal)) {
-      uni.setStorageSync(DRAFT_KEY, JSON.stringify(newVal))
-    } else {
-      uni.removeStorageSync(DRAFT_KEY)
+    try {
+      if (isDraftMeaningful(newVal)) {
+        uni.setStorageSync(DRAFT_KEY, JSON.stringify(newVal))
+      } else {
+        uni.removeStorageSync(DRAFT_KEY)
+      }
+    } catch {
+      /* 存储不可用不阻断编辑和提交。 */
     }
   },
   { deep: true },
 )
 
+const mediaResource = useMediaResource(() => form.filePath)
+
 function choosePhoto() {
+  const selection = mediaResource.beginSelection()
   uni.chooseImage({
     count: 1,
     sizeType: ['original', 'compressed'],
@@ -115,11 +142,14 @@ function choosePhoto() {
         const rawPath = res.tempFilePaths[0]
         const check = await validateImageFile(rawPath)
         if (!check.valid) {
+          releaseObjectUrl(rawPath)
           uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
           return
         }
         try {
-          form.filePath = await smartCompressImage(rawPath)
+          const selectedPath = await smartCompressImage(rawPath)
+          if (mediaResource.accept(selectedPath, selection)) form.filePath = selectedPath
+          if (selectedPath !== rawPath) releaseObjectUrl(rawPath)
         } catch {
           // 被拦截
         }
@@ -129,6 +159,7 @@ function choosePhoto() {
 }
 
 function handleFileDrop(e: any) {
+  const selection = mediaResource.beginSelection()
   // #ifdef H5
   e.preventDefault?.()
   const files = e.dataTransfer?.files
@@ -138,12 +169,16 @@ function handleFileDrop(e: any) {
       const url = URL.createObjectURL(file)
       void validateImageFile(url).then(async (check) => {
         if (!check.valid) {
+          releaseObjectUrl(url)
           uni.showToast({ title: check.message || '图片不符合要求', icon: 'none' })
           return
         }
         try {
-          form.filePath = await smartCompressImage(url)
+          const selectedPath = await smartCompressImage(url)
+          if (mediaResource.accept(selectedPath, selection)) form.filePath = selectedPath
+          if (selectedPath !== url) releaseObjectUrl(url)
         } catch {
+          releaseObjectUrl(url)
           // 被拦截
         }
       })

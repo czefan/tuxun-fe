@@ -1,3 +1,4 @@
+import { beginOptimisticUpdate } from '@/service/query/optimistic'
 import type { InfiniteData } from '@tanstack/vue-query'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
@@ -55,10 +56,7 @@ export function useExchangeGood() {
     }) => exchangeGood({ good_id: goodId, quantity: quantity || 1 }, idempotencyKey),
     onMutate: async ({ goodId, quantity = 1 }) => {
       // 1. 取消正在进行的商品列表查询，避免覆盖乐观更新
-      await queryClient.cancelQueries({ queryKey: ['mall', 'goods'] })
-      const prev = queryClient.getQueriesData<InfiniteData<PageResult<GoodsVM>>>({
-        queryKey: ['mall', 'goods'],
-      })
+      const finishUpdate = await beginOptimisticUpdate(queryClient, { queryKey: ['mall', 'goods'] })
 
       // 2. 乐观扣减所有商品列表缓存中的库存，实现 0 延迟即时反馈
       queryClient.setQueriesData<InfiniteData<PageResult<GoodsVM>>>(
@@ -76,16 +74,13 @@ export function useExchangeGood() {
           }
         },
       )
-      return { prev }
+      return finishUpdate()
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        for (const [key, data] of ctx.prev) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      ctx?.rollback()
     },
-    onSuccess: () => {
+    onSuccess: (_data, _variables, ctx) => {
+      if (!ctx?.isCurrent()) return
       // 兑换成功后即时刷新，与后端真实数据精准对齐
       queryClient.invalidateQueries({ queryKey: ['mall', 'goods'] })
       queryClient.invalidateQueries({ queryKey: ['mall', 'exchanges'] })

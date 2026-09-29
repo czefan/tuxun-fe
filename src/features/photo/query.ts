@@ -1,3 +1,4 @@
+import { beginOptimisticUpdate } from '@/service/query/optimistic'
 import type { InfiniteData, QueryClient } from '@tanstack/vue-query'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
@@ -62,8 +63,7 @@ export function useSetPhotoLike() {
       const matchPhotoQuery = (query: { queryKey: readonly unknown[] }) =>
         Array.isArray(query.queryKey) && query.queryKey[0] === 'photo'
 
-      await queryClient.cancelQueries({ predicate: matchPhotoQuery })
-      const prev = queryClient.getQueriesData<unknown>({ predicate: matchPhotoQuery })
+      const finishUpdate = await beginOptimisticUpdate(queryClient, { predicate: matchPhotoQuery })
 
       queryClient.setQueriesData<InfiniteData<PageResult<PhotoCardVM>> | PhotoDetailVM>(
         { predicate: matchPhotoQuery },
@@ -97,17 +97,14 @@ export function useSetPhotoLike() {
           return old
         },
       )
-      return { prev }
+      return finishUpdate()
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        for (const [key, data] of ctx.prev) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      ctx?.rollback()
     },
-    onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: qk.photo.detail(variables.id) })
+    onSettled: (_data, _error, _variables, ctx) => {
+      if (!ctx?.isCurrent()) return
+      queryClient.invalidateQueries({ queryKey: qk.photo.all() })
     },
   })
 }
