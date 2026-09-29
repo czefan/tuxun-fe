@@ -58,3 +58,38 @@ describe('progressive-image 组件行为与守卫', () => {
     expect(wrapper.emitted('click')).toHaveLength(1)
   })
 })
+
+it('单张竖图由独立占位层撑高，图片始终覆盖容器并保留限高', () => {
+  const wrapper = mount(ProgressiveImage, {
+    props: {
+      image: { url: '/portrait.jpg', originUrl: '/portrait.jpg', width: 600, height: 1200 },
+      maxHeight: '60vh',
+    },
+  })
+  expect(wrapper.find('.progressive-image__spacer').attributes('style')).toContain(
+    'padding-bottom: 200%',
+  )
+  expect(wrapper.attributes('style')).toContain('max-height: 60vh')
+  expect(wrapper.find('image').classes()).toEqual(
+    expect.arrayContaining(['absolute', 'h-full', 'w-full']),
+  )
+  expect(wrapper.findAll('image')).toHaveLength(1)
+  wrapper.unmount()
+})
+
+it('原图与缩略图使用同一定位层，切换不改变占位尺寸', async () => {
+  const wrapper = mount(ProgressiveImage, {
+    props: { image: { url: '/thumb.jpg', originUrl: '/full.jpg', width: 1200, height: 600 } },
+  })
+  const images = wrapper.findAll('image')
+  for (const image of images) {
+    expect(image.classes()).toEqual(expect.arrayContaining(['absolute', 'h-full', 'w-full']))
+  }
+  expect(images[1].classes()).toContain('opacity-0')
+  await images[1].trigger('load')
+  expect(images[1].classes()).not.toContain('opacity-0')
+  expect(wrapper.find('.progressive-image__spacer').attributes('style')).toContain(
+    'padding-bottom: 50%',
+  )
+  wrapper.unmount()
+})

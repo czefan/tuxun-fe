@@ -27,6 +27,8 @@ interface Props {
 defineOptions({
   options: {
     virtualHost: true,
+    // 小程序组件接收 app.wxss 中的 UnoCSS 工具类。
+    styleIsolation: 'apply-shared',
   },
 })
 
@@ -63,13 +65,21 @@ const effectiveThumbUrl = computed(() => {
   return null
 })
 
-const aspectRatioStyle = computed(() => {
+// 用独立占位层撑高，避免原图百分比高度与容器 aspect-ratio 相互影响。
+const ratioPadding = computed(() => {
   const w = props.image?.width
   const h = props.image?.height
-  if (w && h && w > 0 && h > 0) {
-    return `${w} / ${h}`
+  if (
+    typeof w === 'number' &&
+    typeof h === 'number' &&
+    Number.isFinite(w) &&
+    Number.isFinite(h) &&
+    w > 0 &&
+    h > 0
+  ) {
+    return `${(h / w) * 100}%`
   }
-  return '4 / 3'
+  return '75%'
 })
 </script>
 
@@ -77,15 +87,17 @@ const aspectRatioStyle = computed(() => {
   <view
     class="relative w-full overflow-hidden bg-tx-brown/10"
     :class="customClass"
-    :style="{
-      aspectRatio: aspectRatioStyle,
-      maxHeight,
-    }"
+    :style="{ maxHeight }"
   >
+    <view
+      class="progressive-image__spacer pointer-events-none h-0"
+      :style="{ paddingBottom: ratioPadding }"
+    />
+
     <!-- 1. 底层：缩略图常驻垫底（秒出，原图加载时绝不卸载，杜绝闪烁） -->
     <image
       v-if="effectiveThumbUrl"
-      class="absolute inset-0 block h-full w-full cursor-pointer"
+      class="absolute left-0 top-0 block h-full w-full cursor-pointer"
       :src="effectiveThumbUrl"
       :mode="mode"
       @click="emit('click')"
@@ -94,11 +106,8 @@ const aspectRatioStyle = computed(() => {
     <!-- 2. 顶层：高清原图层（加载完毕瞬间直接覆盖显示，瞬时清晰无等待动画） -->
     <image
       v-if="mainImageUrl"
-      class="block h-full w-full cursor-pointer"
-      :class="[
-        isOriginLoaded || !effectiveThumbUrl ? 'opacity-100' : 'opacity-0 pointer-events-none',
-        effectiveThumbUrl ? 'absolute inset-0' : '',
-      ]"
+      class="absolute left-0 top-0 block h-full w-full cursor-pointer"
+      :class="{ 'opacity-0 pointer-events-none': !isOriginLoaded && effectiveThumbUrl }"
       :style="viewTransitionName ? { 'view-transition-name': viewTransitionName } : undefined"
       :src="mainImageUrl"
       :mode="mode"
