@@ -66,6 +66,14 @@ pnpm build:mp
 
 ---
 
+## 原生地图选址
+
+`chooseLocation` 报错 `errno: 112` 时，在微信后台「设置 → 服务内容声明 → 用户隐私保护指引」补充 **收集你选择的位置信息**，保存后约 5 分钟生效。该后台声明不能由代码中的 `requiredPrivateInfos` 替代。前端统一显示原始错误，不按错误码定制处理。
+
+参考：[微信官方隐私协议开发指南](https://developers.weixin.qq.com/miniprogram/dev/framework/user-privacy/PrivacyAuthorize.html)。
+
+---
+
 ## 🛠️ 性能与体积分析
 
 开发过程中可通过以下命令分析产物体积分布：

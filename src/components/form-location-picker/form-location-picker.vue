@@ -27,23 +27,30 @@ const emit = defineEmits<{
 }>()
 
 const instance = getCurrentInstance()
+let choosingLocation = false
+let disposed = false
+const mapScale = ref(15)
+let mapRevision = 0
 const DEFAULT_LAT = 34.24623
 const DEFAULT_LNG = 108.98374
 
-const draftLat = ref<number>(props.latitude || DEFAULT_LAT)
-const draftLng = ref<number>(props.longitude || DEFAULT_LNG)
+const hasInitialLocation = isSubmittableLocation(props.latitude, props.longitude)
+const draftLat = ref<number>(hasInitialLocation ? props.latitude : DEFAULT_LAT)
+const draftLng = ref<number>(hasInitialLocation ? props.longitude : DEFAULT_LNG)
 const lastSavedLat = ref<number>(props.latitude || 0)
 const lastSavedLng = ref<number>(props.longitude || 0)
 const isSubmittable = computed(() => isSubmittableLocation(props.latitude, props.longitude))
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
+let moveTimer: ReturnType<typeof setTimeout> | null = null
 
 function getMapCtx(): any {
-  return uni.createMapContext('locationPickerMap', instance as any)
+  return uni.createMapContext('locationPickerMap', instance?.proxy)
 }
 
 function moveTo(lat: number, lng: number) {
-  setTimeout(() => {
+  if (moveTimer) clearTimeout(moveTimer)
+  moveTimer = setTimeout(() => {
+    moveTimer = null
     try {
       getMapCtx()?.moveToLocation?.({ latitude: lat, longitude: lng })
     } catch {}
@@ -59,10 +66,11 @@ function moveTo(lat: number, lng: number) {
 function updateDraft(lat: number, lng: number, options: { shouldMove?: boolean } = {}) {
   const nLat = Number(lat.toFixed(6))
   const nLng = Number(lng.toFixed(6))
-  if (!nLat || !nLng) return
+  if (!isSubmittableLocation(nLat, nLng)) return
 
   const isSameCoord =
     Math.abs(draftLat.value - nLat) < 1e-6 && Math.abs(draftLng.value - nLng) < 1e-6
+  if (!isSameCoord) mapRevision++
   draftLat.value = nLat
   draftLng.value = nLng
 
@@ -80,7 +88,7 @@ watch(
     lastSavedLat.value = nLat
     lastSavedLng.value = nLng
 
-    if (!nLat || !nLng) return
+    if (!isSubmittableLocation(nLat, nLng)) return
 
     // 如果与当前草稿一致（通常是内部 emit 引起的父组件回写），不重复平移地图
     if (Math.abs(draftLat.value - nLat) >= 1e-6 || Math.abs(draftLng.value - nLng) >= 1e-6) {
@@ -94,9 +102,11 @@ watch(
 
 /** 读取当前地图中心并同步（手势拖动结束时调用，不执行 moveTo） */
 function syncFromCenter(mapCtx: any = getMapCtx()) {
+  const revision = mapRevision
   mapCtx?.getCenterLocation?.({
     success: (res: any) => {
-      if (res?.latitude && res?.longitude) {
+      if (revision !== mapRevision) return
+      if (isSubmittableLocation(res?.latitude, res?.longitude)) {
         updateDraft(res.latitude, res.longitude, { shouldMove: false })
       }
     },
@@ -105,10 +115,11 @@ function syncFromCenter(mapCtx: any = getMapCtx()) {
 
 /** 点击地图落点 */
 function handleMapTap(e: any) {
+  if (choosingLocation) return
   const d = e?.detail || {}
   const lat = Number(d.latitude ?? d.lat ?? e?.latitude ?? e?.lat)
   const lng = Number(d.longitude ?? d.lng ?? e?.longitude ?? e?.lng)
-  if (lat && lng) {
+  if (isSubmittableLocation(lat, lng)) {
     updateDraft(lat, lng, { shouldMove: true })
     return
   }
@@ -117,15 +128,19 @@ function handleMapTap(e: any) {
   const mapCtx = getMapCtx()
   const { x, y } = d
   if (typeof mapCtx?.pixelToCoordinate === 'function' && Number.isFinite(x) && Number.isFinite(y)) {
+    const revision = mapRevision
     mapCtx.pixelToCoordinate({
       x,
       y,
       success: (res: any) => {
-        if (res?.latitude && res?.longitude) {
+        if (revision !== mapRevision) return
+        if (isSubmittableLocation(res?.latitude, res?.longitude)) {
           updateDraft(res.latitude, res.longitude, { shouldMove: true })
         }
       },
-      fail: () => syncFromCenter(mapCtx),
+      fail: () => {
+        if (revision === mapRevision) syncFromCenter(mapCtx)
+      },
     })
   } else {
     syncFromCenter(mapCtx)
@@ -137,25 +152,23 @@ function handleMapTap(e: any) {
  * 注意：手势结束时地图中心已在目标位置，千万不可调用 moveToLocation，否则会导致回弹抖动
  */
 function handleRegionChange(e: any) {
+  if (choosingLocation) return
   const d = e?.detail || {}
-  if (d.type && d.type !== 'end') return
+  if (Number.isFinite(d.scale)) mapScale.value = d.scale
+  const type = d.type || e?.type
+  if (type && type !== 'end' && type !== 'regionchange') return
 
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
+  const c = d.centerLocation
+  if (c && isSubmittableLocation(Number(c.latitude), Number(c.longitude))) {
+    updateDraft(Number(c.latitude), Number(c.longitude), { shouldMove: false })
+    return
   }
-
-  debounceTimer = setTimeout(() => {
-    const c = d.centerLocation
-    if (c && Number(c.latitude) && Number(c.longitude)) {
-      updateDraft(c.latitude, c.longitude, { shouldMove: false })
-      return
-    }
-    syncFromCenter()
-  }, 100)
+  syncFromCenter()
 }
 
 /** 右下角对勾：保存确认 */
 function handleConfirm() {
+  clearPendingMapWork()
   const isSame =
     Math.abs(lastSavedLat.value - draftLat.value) < 1e-6 &&
     Math.abs(lastSavedLng.value - draftLng.value) < 1e-6
@@ -171,6 +184,7 @@ function handleConfirm() {
 
 /** 左下角叉号：重置默认坐标 */
 function handleReset() {
+  clearPendingMapWork()
   draftLat.value = DEFAULT_LAT
   draftLng.value = DEFAULT_LNG
   moveTo(DEFAULT_LAT, DEFAULT_LNG)
@@ -184,7 +198,9 @@ function handleReset() {
 
 /** GPS 定位 */
 async function locate_() {
+  const revision = mapRevision
   const coords = await locate()
+  if (revision !== mapRevision) return
   if (coords) {
     updateDraft(coords.latitude, coords.longitude, { shouldMove: true })
   } else {
@@ -192,38 +208,72 @@ async function locate_() {
   }
 }
 
-/** 全屏选点（微信原生选点，支持搜索与列表选择） */
+/** 微信原生腾讯地图选址页；全屏界面完全由微信提供，不渲染本项目组件。 */
 function chooseLocation_() {
-  uni.chooseLocation({
-    latitude: draftLat.value,
-    longitude: draftLng.value,
-    success: (res: any) => {
-      const lat = Number(res?.latitude ?? res?.lat)
-      const lng = Number(res?.longitude ?? res?.lng)
-      if (lat && lng) {
-        const nLat = Number(lat.toFixed(6))
-        const nLng = Number(lng.toFixed(6))
-        const addressName = res?.name || res?.address || props.selectedText
-        updateDraft(nLat, nLng, { shouldMove: true })
-        const isSame =
-          Math.abs(lastSavedLat.value - nLat) < 1e-6 && Math.abs(lastSavedLng.value - nLng) < 1e-6
-        if (!isSame) {
-          lastSavedLat.value = nLat
-          lastSavedLng.value = nLng
-          emit('update:latitude', nLat)
-          emit('update:longitude', nLng)
-          emit('update:address', addressName)
+  if (choosingLocation || disposed) return
+  clearPendingMapWork()
+  choosingLocation = true
+
+  try {
+    uni.chooseLocation({
+      latitude: draftLat.value,
+      longitude: draftLng.value,
+      success: (res) => {
+        if (disposed) return
+        const lat = Number(res.latitude)
+        const lng = Number(res.longitude)
+        if (!isSubmittableLocation(lat, lng)) {
+          uni.showToast({ title: '未获取到有效坐标，请重新选择', icon: 'none' })
+          return
         }
+        updateDraft(lat, lng, { shouldMove: true })
+        const address = res.name || res.address || props.selectedText
+        const changed =
+          Math.abs(lastSavedLat.value - draftLat.value) >= 1e-6 ||
+          Math.abs(lastSavedLng.value - draftLng.value) >= 1e-6
+        lastSavedLat.value = draftLat.value
+        lastSavedLng.value = draftLng.value
+        if (changed) {
+          emit('update:latitude', draftLat.value)
+          emit('update:longitude', draftLng.value)
+        }
+        // 相同坐标也可能选中了不同的地点名称。
+        emit('update:address', address)
         uni.showToast({ title: '已保存坐标', icon: 'success' })
-      }
-    },
+      },
+      fail: handleChooseLocationError,
+      complete: () => {
+        choosingLocation = false
+      },
+    })
+  } catch (error) {
+    choosingLocation = false
+    handleChooseLocationError(error)
+  }
+}
+
+function handleChooseLocationError(error: unknown) {
+  if (disposed) return
+  const message =
+    error instanceof Error ? error.message : String((error as { errMsg?: string })?.errMsg || '')
+  if (/cancel/i.test(message)) return
+  // 原始错误可能很长，用弹窗完整展示，避免 Toast 截断关键信息。
+  uni.showModal({
+    title: '地图打开失败',
+    content: message || '未知错误',
+    showCancel: false,
   })
 }
 
+function clearPendingMapWork() {
+  mapRevision++
+  if (moveTimer) clearTimeout(moveTimer)
+  moveTimer = null
+}
+
 onBeforeUnmount(() => {
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
-  }
+  disposed = true
+  clearPendingMapWork()
 })
 
 defineExpose({ locate: locate_, chooseLocation: chooseLocation_, isSubmittable })
@@ -232,13 +282,13 @@ defineExpose({ locate: locate_, chooseLocation: chooseLocation_, isSubmittable }
 <template>
   <view class="space-y-2">
     <!-- 内嵌小地图 -->
-    <view class="relative overflow-hidden rounded-2xl ring-1 ring-tx-border/60">
+    <view class="relative h-60 overflow-hidden rounded-2xl ring-1 ring-tx-border/60">
       <map
         id="locationPickerMap"
         class="h-60 w-full"
         :latitude="draftLat"
         :longitude="draftLng"
-        :scale="15"
+        :scale="mapScale"
         show-location
         @tap="handleMapTap"
         @click="handleMapTap"

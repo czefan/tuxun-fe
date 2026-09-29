@@ -6,9 +6,9 @@ import FormLocationPicker from './form-location-picker.vue'
 /**
  * 选点同步链路守卫。
  *
- * 回归场景：卡片内选点 → 全屏（chooseLocation）初始位置 = 卡片草稿；
+ * 回归场景：卡片内选点 → 全屏地图初始位置 = 卡片草稿；
  * 全屏改选 → 回卡片地图中心与父组件表单必须同步。
- * 任一入口（全屏 / tap / 拖动结束）落点后都必须 emit update:* 到父组件，
+ * 全屏确认 / 小地图保存后必须 emit update:* 到父组件；取消不写入，
  * 否则提交时用的是旧坐标。
  */
 
@@ -39,7 +39,7 @@ beforeEach(() => {
     ;(uni as any).getLocation = vi.fn()
   }
   vi.mocked(uni.createMapContext).mockReturnValue(mapCtx as any)
-  vi.mocked(uni.chooseLocation).mockClear()
+  vi.mocked(uni.chooseLocation).mockReset()
   vi.mocked(uni.showToast).mockClear()
   vi.mocked(uni.getLocation).mockReset()
 })
@@ -61,8 +61,9 @@ async function pickFromFullScreen(
   lat: number,
   lng: number,
 ) {
-  vi.mocked(uni.chooseLocation).mockImplementation((opts: any) => {
-    opts.success?.({ name: '目标点', address: '测试地址', latitude: lat, longitude: lng })
+  vi.mocked(uni.chooseLocation).mockImplementation((options: any) => {
+    options.success?.({ latitude: lat, longitude: lng, name: '目标点', address: '测试地址' })
+    options.complete?.()
     return undefined as any
   })
   ;(wrapper.vm as any).chooseLocation()
@@ -78,9 +79,11 @@ describe('form-location-picker 选点同步', () => {
       34.250001,
     ])
     expect(wrapper.emitted('update:longitude')?.at(-1)).toEqual([108.990001])
-    expect(wrapper.emitted('update:address')?.at(-1), '优先使用全屏选点的真实地点名称').toEqual([
-      '目标点',
-    ])
+    expect(wrapper.find('#locationPickerMap').attributes('latitude')).toBe('34.250001')
+    expect(wrapper.find('#locationPickerFullscreenMap').exists()).toBe(false)
+    expect(wrapper.emitted('update:address')?.at(-1), '全屏确认使用腾讯地图返回的地点名称').toEqual(
+      ['目标点'],
+    )
   })
 
   it('全屏初始中心等于卡片当前草稿坐标（先卡片选点再跳全屏）', async () => {
@@ -89,14 +92,107 @@ describe('form-location-picker 选点同步', () => {
     await wrapper
       .find('#locationPickerMap')
       .trigger('tap', { detail: { latitude: 34.251, longitude: 108.991 } })
-    // 再触发全屏选点：传给 chooseLocation 的初始中心必须来自草稿
-    vi.mocked(uni.chooseLocation).mockImplementation((opts: any) => {
-      expect(opts.latitude, 'chooseLocation 初始中心 = 卡片草稿纬度').toBe(34.251)
-      expect(opts.longitude, 'chooseLocation 初始中心 = 卡片草稿经度').toBe(108.991)
+    ;(wrapper.vm as any).chooseLocation()
+    await nextTick()
+    expect(uni.chooseLocation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        latitude: 34.251,
+        longitude: 108.991,
+      }),
+    )
+    expect(wrapper.find('wd-popup-stub').exists()).toBe(false)
+  })
+
+  it('取消原生全屏保留进入前的草稿，不覆盖表单坐标、不弹错误提示', async () => {
+    const wrapper = mountPicker({ latitude: 34.2, longitude: 108.9 })
+    await wrapper
+      .find('#locationPickerMap')
+      .trigger('tap', { detail: { latitude: 34.25, longitude: 108.95 } })
+    vi.mocked(uni.chooseLocation).mockImplementation((options: any) => {
+      options.fail?.({ errMsg: 'chooseLocation:fail cancel' })
+      options.complete?.()
       return undefined as any
     })
     ;(wrapper.vm as any).chooseLocation()
     await nextTick()
+    expect(wrapper.find('#locationPickerMap').attributes('latitude')).toBe('34.25')
+    expect(wrapper.emitted('update:latitude')).toBeUndefined()
+    expect(uni.showToast).not.toHaveBeenCalled()
+    expect(uni.showModal).not.toHaveBeenCalled()
+  })
+
+  it('原生全屏选点后保留小地图缩放级别，并可再次打开继续选点', async () => {
+    const wrapper = mountPicker()
+    await wrapper.find('#locationPickerMap').trigger('regionchange', {
+      detail: { type: 'end', scale: 18, centerLocation: { latitude: 34.25, longitude: 108.95 } },
+    })
+    await pickFromFullScreen(wrapper, 34.26, 108.96)
+    expect(wrapper.find('#locationPickerMap').attributes('scale')).toBe('18')
+    await pickFromFullScreen(wrapper, 34.27, 108.97)
+    expect(uni.chooseLocation).toHaveBeenCalledTimes(2)
+    expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.27])
+  })
+
+  it('全屏返回后忽略旧小地图迟到的坐标回调', async () => {
+    const wrapper = mountPicker({ latitude: 34.2, longitude: 108.9 })
+    await wrapper.find('#locationPickerMap').trigger('regionchange', { detail: { type: 'end' } })
+    const callback = mapCtx.getCenterLocation.mock.calls.at(-1)?.[0]
+    await pickFromFullScreen(wrapper, 34.3, 109)
+    callback.success({ latitude: 35, longitude: 110 })
+    await nextTick()
+    expect(wrapper.find('#locationPickerMap').attributes('latitude')).toBe('34.3')
+  })
+
+  it('原生选址打开期间不重复调用接口', () => {
+    const wrapper = mountPicker()
+    ;(wrapper.vm as any).chooseLocation()
+    ;(wrapper.vm as any).chooseLocation()
+    expect(uni.chooseLocation).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    'chooseLocation:fail unavailable',
+    'chooseLocation:fail api scope is not declared in the privacy agreement',
+    'chooseLocation:fail auth deny',
+  ])('完整显示原生错误，保留坐标且允许重试：%s', async (errMsg) => {
+    vi.mocked(uni.chooseLocation).mockImplementation((options: any) => {
+      options.fail?.({ errMsg })
+      options.complete?.()
+      return undefined as any
+    })
+    const wrapper = mountPicker({ latitude: 34.25, longitude: 108.95 })
+    ;(wrapper.vm as any).chooseLocation()
+    expect(uni.showModal).toHaveBeenCalledWith({
+      title: '地图打开失败',
+      content: errMsg,
+      showCancel: false,
+    })
+    expect(wrapper.emitted('update:latitude')).toBeUndefined()
+    await pickFromFullScreen(wrapper, 34.26, 108.96)
+    expect(wrapper.emitted('update:latitude')?.at(-1)).toEqual([34.26])
+  })
+
+  it('同一坐标选择不同地点名称时更新地址', async () => {
+    const wrapper = mountPicker({ latitude: 34.25, longitude: 108.95 })
+    await pickFromFullScreen(wrapper, 34.25, 108.95)
+    expect(wrapper.emitted('update:latitude')).toBeUndefined()
+    expect(wrapper.emitted('update:address')?.at(-1)).toEqual(['目标点'])
+  })
+
+  it('组件销毁后原生选址返回结果不得写入表单', async () => {
+    const wrapper = mountPicker()
+    ;(wrapper.vm as any).chooseLocation()
+    const callback = vi.mocked(uni.chooseLocation).mock.calls[0][0]!
+    wrapper.unmount()
+    callback.success?.({
+      latitude: 34.3,
+      longitude: 109,
+      name: '目标点',
+      address: '测试地址',
+      errMsg: 'chooseLocation:ok',
+    })
+    await nextTick()
+    expect(wrapper.emitted('update:latitude')).toBeUndefined()
   })
 
   it('h5 点选与拖动地图仅更新内部预览草稿，未点击保存时不 emit 给父组件', async () => {
