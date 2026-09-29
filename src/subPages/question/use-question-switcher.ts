@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { onScopeDispose, ref } from 'vue'
 import type { Ref } from 'vue'
 import { onUnload } from '@dcloudio/uni-app'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -27,6 +27,9 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
   const showUndoBanner = ref(false)
   const touchStartY = ref(0)
   let bannerTimer: ReturnType<typeof setTimeout> | null = null
+
+  let navigationTimer: ReturnType<typeof setTimeout> | undefined
+  let disposed = false
 
   const listContext = ref<PhotoFilterParams | null>(null)
 
@@ -67,12 +70,16 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
     }
   }
 
-  onUnload(() => {
+  function dispose() {
+    disposed = true
+    clearTimeout(navigationTimer)
     if (bannerTimer) {
       clearTimeout(bannerTimer)
       bannerTimer = null
     }
-  })
+  }
+  onUnload(dispose)
+  onScopeDispose(dispose)
 
   /** 从缓存列表中推算前一个或后一个题目 ID */
   function getAdjacentPhotoId(offset: 1 | -1): number | null {
@@ -81,7 +88,7 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
 
   /** 统一切题处理（offset: 1 为下一题，-1 为上一题） */
   function switchQuestion(offset: 1 | -1) {
-    if (isSlideUping.value || isSlideDowning.value) return
+    if (disposed || isSlideUping.value || isSlideDowning.value) return
     const targetId = getAdjacentPhotoId(offset)
     if (!targetId) {
       uni.showToast({ title: offset === 1 ? '已是最后一题了' : '已是第一题了', icon: 'none' })
@@ -90,7 +97,8 @@ export function useQuestionSwitcher(questionId: Ref<number>) {
     if (offset === -1) showUndoBanner.value = false
     const isUp = offset === 1
     isUp ? (isSlideUping.value = true) : (isSlideDowning.value = true)
-    setTimeout(() => {
+    navigationTimer = setTimeout(() => {
+      if (disposed) return
       uni.redirectTo({
         url: withQuery(AppRoute.QuestionDetail, {
           id: targetId,

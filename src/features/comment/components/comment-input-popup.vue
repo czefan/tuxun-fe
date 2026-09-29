@@ -48,6 +48,9 @@ const STORAGE_KEY = StorageKey.CommentRecentEmojis
 const emojiList = ref<string[]>([...DEFAULT_EMOJIS])
 const isFocus = ref(false)
 const keyboardHeight = ref(0)
+let focusTimer: ReturnType<typeof setTimeout> | undefined
+let blurTimer: ReturnType<typeof setTimeout> | undefined
+let disposed = false
 
 function syncEmojis(next?: string[]) {
   try {
@@ -57,10 +60,14 @@ function syncEmojis(next?: string[]) {
     } else {
       const saved = uni.getStorageSync(STORAGE_KEY)
       if (Array.isArray(saved) && saved.length) {
-        emojiList.value = Array.from(new Set([...saved, ...DEFAULT_EMOJIS])).slice(
-          0,
-          DEFAULT_EMOJIS.length,
-        )
+        emojiList.value = Array.from(
+          new Set([
+            ...saved.filter(
+              (item): item is string => typeof item === 'string' && DEFAULT_EMOJIS.includes(item),
+            ),
+            ...DEFAULT_EMOJIS,
+          ]),
+        ).slice(0, DEFAULT_EMOJIS.length)
       }
     }
   } catch {
@@ -73,15 +80,17 @@ syncEmojis()
 watch(
   () => props.visible,
   (val) => {
+    clearTimeout(focusTimer)
+    clearTimeout(blurTimer)
     // #ifdef H5
     if (typeof document !== 'undefined') document.body.style.overflow = val ? 'hidden' : ''
     // #endif
 
     if (val) {
       syncEmojis()
-      setTimeout(() => {
+      focusTimer = setTimeout(() => {
         nextTick(() => {
-          isFocus.value = true
+          if (!disposed && props.visible) isFocus.value = true
         })
       }, 80)
     } else {
@@ -92,12 +101,13 @@ watch(
 )
 
 onUnmounted(() => {
+  disposed = true
+  clearTimeout(focusTimer)
+  clearTimeout(blurTimer)
   // #ifdef H5
   if (typeof document !== 'undefined') document.body.style.overflow = ''
   // #endif
 })
-
-let blurTimer: ReturnType<typeof setTimeout> | undefined
 
 function handleInsertEmoji(emoji: string) {
   if (text.value.length + emoji.length > props.maxLength) return
@@ -118,6 +128,7 @@ function handleBlur() {
 }
 
 function handleClose() {
+  clearTimeout(focusTimer)
   clearTimeout(blurTimer)
   isFocus.value = false
   keyboardHeight.value = 0

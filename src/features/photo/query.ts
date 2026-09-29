@@ -140,8 +140,9 @@ export function findAdjacentPhotoId(
         if (match && data?.pages) {
           const list: PhotoCardVM[] = data.pages.flatMap((pg) => pg.list ?? [])
           const idx = list.findIndex((item) => item.id === currentId)
-          if (idx !== -1 && list[idx + offset]) {
-            return list[idx + offset].id
+          if (idx !== -1) {
+            // 已找到来源列表，即使到达边界也不能跳到另一个筛选缓存。
+            return list[idx + offset]?.id ?? null
           }
         }
       }

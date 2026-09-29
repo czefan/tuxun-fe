@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onScopeDispose, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useAuth } from '@/features/user/composables/use-auth'
 import { useUserStore } from '@/features/user/store/user'
@@ -23,6 +23,12 @@ const { handleCallback } = useAuth()
 const userStore = useUserStore()
 const statusText = ref('正在完成登录')
 const isError = ref(false)
+let disposed = false
+let returnTimer: ReturnType<typeof setTimeout> | undefined
+onScopeDispose(() => {
+  disposed = true
+  clearTimeout(returnTimer)
+})
 
 function retryLogin() {
   userStore.logout()
@@ -51,7 +57,7 @@ function extractParam(query: Record<string, any>, keys: string[]): string {
 onLoad(async (query: Record<string, any> = {}) => {
   const casError = extractParam(query, ['error_description', 'error'])
   if (casError) {
-    statusText.value = `统一认证系统返回错误: ${decodeURIComponent(casError).replace(/\+/g, ' ')}`
+    statusText.value = `统一认证系统返回错误: ${casError}`
     isError.value = true
     return
   }
@@ -76,10 +82,12 @@ onLoad(async (query: Record<string, any> = {}) => {
   try {
     const redirectUri = getCallbackUrl()
     await handleCallback(code, redirectUri)
+    if (disposed) return
     statusText.value = '登录成功'
 
     // #ifdef H5
-    setTimeout(() => {
+    returnTimer = setTimeout(() => {
+      if (disposed) return
       const target = takeReturnPath() || AppRoute.Home
       if (typeof window !== 'undefined') {
         window.location.replace(target)
@@ -90,14 +98,15 @@ onLoad(async (query: Record<string, any> = {}) => {
     // #endif
     // #ifndef H5
     // 小程序：webview 宿主页已被中转页 redirectTo 替换，栈里紧邻的就是发起登录的页面
-    setTimeout(() => {
+    returnTimer = setTimeout(() => {
+      if (disposed) return
       uni.navigateBack({
         fail: () => uni.switchTab({ url: AppRoute.Home }),
       })
     }, 500)
     // #endif
   } catch (err: unknown) {
-    userStore.logout()
+    if (disposed) return
     isError.value = true
     // ApiRequestError.code 是契约业务码，判 HTTP 400 看 statusCode。
     // OAuth code 一次性且 ≤5 分钟有效，过期/重放都是 400。

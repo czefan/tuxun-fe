@@ -72,6 +72,18 @@ describe('findAdjacentPhotoId', () => {
     expect(findAdjacentPhotoId(queryClient, { activity_id: 1, sort_by: 'hot' }, 103, 1)).toBeNull()
   })
 
+  it('来源列表已到末尾时不得跳入另一筛选列表', () => {
+    const client = new QueryClient()
+    client.setQueryData(qk.photo.list({ activity_id: 1 }), {
+      pages: [{ list: [{ id: 1 }, { id: 2 }] }],
+    })
+    client.setQueryData(qk.photo.list({ activity_id: 2 }), {
+      pages: [{ list: [{ id: 2 }, { id: 3 }] }],
+    })
+    expect(findAdjacentPhotoId(client, { activity_id: 1 }, 2, 1)).toBeNull()
+    client.clear()
+  })
+
   it('条件未命中时回退到包含当前题目的通用列表缓存', () => {
     const queryClient = new QueryClient()
     const mockPhotos = [

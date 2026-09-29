@@ -52,7 +52,8 @@ function handleLogout() {
       if (!res.confirm) {
         return
       }
-      const { serverCleared } = await logout()
+      const { serverCleared, superseded } = await logout()
+      if (superseded) return
       clearReturnPath()
       if (!serverCleared) {
         uni.showToast({ title: '服务端会话清除失败', icon: 'none' })
