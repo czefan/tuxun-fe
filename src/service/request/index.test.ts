@@ -249,6 +249,16 @@ describe('upload URL resolution and execution', () => {
     expect(uni.showToast).not.toHaveBeenCalled()
   })
 
+  it.each(['<html>Bad gateway</html>', '', 'null', '[]', '{}'])(
+    'rejects invalid upload body %s',
+    async (data) => {
+      mockUploadSuccess({ statusCode: 200, data } as UniApp.UploadFileSuccessCallbackResult)
+      await expect(
+        upload({ url: '/feedback', filePath: '/tmp/image.png', hideErrorToast: true }),
+      ).rejects.toBeInstanceOf(ApiRequestError)
+    },
+  )
+
   it('passes multiple upload files through to uni.uploadFile', async () => {
     mockUploadSuccess({
       statusCode: 200,

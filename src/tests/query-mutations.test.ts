@@ -59,9 +59,17 @@ describe('乐观更新缓存隔离', () => {
   it('提交题目不能按碰巧相同的记录 ID 改写个人作答记录', async () => {
     const records = page({ id: 7, userAttemptsCount: 2 })
     client.setQueryData(qk.record.attempts(), records)
-    await useMutation(() => useSubmitAttempt(7)).mutateAsync({} as SubmitAttemptPayload)
+    await useMutation(() => useSubmitAttempt()).mutateAsync({ photoId: 7 } as SubmitAttemptPayload)
     expect(client.getQueryData(qk.record.attempts())).toEqual(records)
     expect(client.getQueryState(qk.record.attempts())?.isInvalidated).toBe(true)
+  })
+
+  it('提交作答按请求携带的题目更新缓存', async () => {
+    client.setQueryData(qk.photo.detail(7), { id: 7, userAttemptsCount: 0 })
+    client.setQueryData(qk.photo.detail(8), { id: 8, userAttemptsCount: 0 })
+    await useMutation(() => useSubmitAttempt()).mutateAsync({ photoId: 7 } as SubmitAttemptPayload)
+    expect(client.getQueryData(qk.photo.detail(7))).toMatchObject({ userAttemptsCount: 1 })
+    expect(client.getQueryData(qk.photo.detail(8))).toMatchObject({ userAttemptsCount: 0 })
   })
 
   it('公开答案点赞不能修改 ID 相同的个人作答缓存', async () => {

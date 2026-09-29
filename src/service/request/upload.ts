@@ -20,7 +20,11 @@ export interface UploadOptions {
  * 小程序与 H5 统一使用 POST + X-HTTP-Method-Override: PUT 重写传输，
  * 避免原生 XHR 旁路绕过 uni.addInterceptor('uploadFile')。
  */
-export function upload<T>(options: UploadOptions): Promise<T> {
+export async function upload<T>(options: UploadOptions): Promise<T> {
+  if (import.meta.env.VITE_ENABLE_MOCK === 'true') {
+    const { ensureMockReady } = await import('@/mocks')
+    await ensureMockReady()
+  }
   const {
     url,
     filePath,
@@ -63,7 +67,12 @@ export function upload<T>(options: UploadOptions): Promise<T> {
         const statusCode = res.statusCode
         if (statusCode >= 200 && statusCode < 300) {
           const resObj = data as Record<string, any>
-          if (resObj && typeof resObj === 'object') {
+          if (
+            resObj &&
+            typeof resObj === 'object' &&
+            !Array.isArray(resObj) &&
+            Object.keys(resObj).length > 0
+          ) {
             const code = resObj.code
 
             // 契约或旧逻辑成功校验
@@ -82,7 +91,9 @@ export function upload<T>(options: UploadOptions): Promise<T> {
             if (resObj.data !== undefined) return resolve(resObj.data as T)
             return resolve(data as T)
           }
-          return resolve(data as T)
+          const message = '上传响应无效，请稍后重试'
+          if (!hideErrorToast) showToastDeduplicated(message)
+          return reject(new ApiRequestError(message, { statusCode, data }))
         }
 
         const { message, code } = handleResponseError(

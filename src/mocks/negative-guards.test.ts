@@ -361,7 +361,7 @@ describe('契约变更负向守卫', () => {
     // 检测器自身的行为锁死：正则盲区会导致 submit.vue 这类「动词中间名 + mutateAsync」
     // 的写操作文件漏检，而漏检恰恰是上一轮守卫给出假绿灯的成因。
     const writeSamples = [
-      'const submitMutation = useSubmitAttempt(() => photoId.value)',
+      'const submitMutation = useSubmitAttempt()',
       'await submitMutation.mutateAsync({ photoId })',
       'const postMutation = usePostComment(() => props.photoId)',
       'useSetCommentLike', // 动词 Like 在中间，后面还跟 Comment

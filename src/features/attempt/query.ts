@@ -48,12 +48,12 @@ export function useInfiniteMyAttemptsList(
   })
 }
 
-export function useSubmitAttempt(photoId: MaybeRefOrGetter<number>) {
+export function useSubmitAttempt() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: SubmitAttemptPayload) => submitAttempt(payload),
-    onSuccess: (res) => {
-      const targetPhotoId = toValue(photoId)
+    onSuccess: (res, payload) => {
+      const targetPhotoId = payload.photoId
       const isSolved = res.status === 'solved'
 
       // 精确热更新全站所有 photo 缓存中的 solved 状态与已破解数

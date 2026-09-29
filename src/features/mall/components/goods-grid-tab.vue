@@ -35,6 +35,7 @@ const {
   fetchNextPage: fetchNextGoods,
   hasNextPage: hasNextGoods,
   isFetchingNextPage: isFetchingGoods,
+  isFetchNextPageError,
   refetch: refetchGoods,
 } = useInfiniteGoodsList(
   computed(() => ({
@@ -141,7 +142,19 @@ defineExpose({
             </view>
           </view>
         </view>
-        <wd-loadmore v-if="isFetchingGoods" state="loading" @reload="fetchNextGoods" />
+        <view v-if="goodsError" class="flex flex-col items-center gap-2 py-4">
+          <text class="text-sm text-tx-ink-2">加载失败，已保留当前商品</text>
+          <wd-button
+            size="small"
+            plain
+            round
+            @click="isFetchNextPageError ? loadMore() : refetchGoods()"
+          >
+            重试
+          </wd-button>
+        </view>
+        <wd-loadmore v-else-if="isFetchingGoods" state="loading" />
+        <wd-loadmore v-else-if="!hasNextGoods" state="finished" />
       </view>
     </ListStateView>
   </scroll-view>

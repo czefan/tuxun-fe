@@ -31,7 +31,7 @@ const formData = reactive({
 
 const DRAFT_KEY_PREFIX = SubmitDraftKeyPrefix
 
-const submitMutation = useSubmitAttempt(() => photoId.value)
+const submitMutation = useSubmitAttempt()
 
 onLoad((query) => {
   if (typeof query?.id === 'string') {
@@ -121,6 +121,11 @@ function choosePhoto() {
  * wd-form / wd-form-item 在这里只负责标签与排版。
  */
 async function handleSubmit() {
+  if (loading.value) return
+  if (!Number.isSafeInteger(photoId.value) || photoId.value <= 0) {
+    uni.showToast({ title: '题目参数无效，请返回后重新进入', icon: 'none' })
+    return
+  }
   if (!requireLogin()) return
   if (!formData.filePath) {
     uni.showToast({ title: '请先拍摄/选择实地拍照照片', icon: 'none' })

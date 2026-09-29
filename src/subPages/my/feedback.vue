@@ -151,6 +151,7 @@ function getEnvironmentDiagnosticString(): string {
 }
 
 function handleSubmit() {
+  if (submitMutation.isPending.value) return
   if (!requireLogin()) {
     return
   }

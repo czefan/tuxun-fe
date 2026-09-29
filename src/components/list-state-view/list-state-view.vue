@@ -69,7 +69,11 @@ const errorClass = computed(() => `${baseClass.value} gap-3`)
 
   <!-- 2. 加载态 -->
   <template v-else-if="loading">
-    <slot v-if="loadingVariant === 'skeleton'" name="loading" />
+    <slot v-if="loadingVariant === 'skeleton'" name="loading">
+      <view :class="baseClass">
+        <wd-loading type="circular" :color="TX_BG_BROWN" :size="loadingSize" />
+      </view>
+    </slot>
     <view v-else :class="baseClass">
       <wd-loading type="circular" :color="TX_BG_BROWN" :size="loadingSize" />
     </view>

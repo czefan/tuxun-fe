@@ -255,17 +255,17 @@ if (realFailed.length > 0) {
 
   console.log(`\n  ${pc.bold('Tasks:')}   ${parts.join(pc.dim(' | '))}`)
   console.log(`  ${pc.bold('Time:')}    ${pc.dim(formatDuration(totalDuration))}\n`)
-  process.exit(1)
+  process.exitCode = 1
 } else if (aborted.length > 0) {
   console.log(
     `\n  ${pc.bold('Tasks:')}   ${pc.yellow(`${aborted.length} cancelled`)}, ${totalTasks} total`,
   )
   console.log(`  ${pc.bold('Time:')}    ${pc.dim(formatDuration(totalDuration))}\n`)
-  process.exit(143)
+  process.exitCode = 143
 } else {
   console.log(
     `\n  ${pc.bold('Tasks:')}   ${pc.bold(pc.green(`${passed.length} passed`))}, ${totalTasks} total`,
   )
   console.log(`  ${pc.bold('Time:')}    ${pc.dim(formatDuration(totalDuration))}\n`)
-  process.exit(0)
+  process.exitCode = 0
 }

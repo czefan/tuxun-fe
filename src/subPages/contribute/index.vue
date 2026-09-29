@@ -155,6 +155,7 @@ function handleFileDrop(e: any) {
 }
 
 async function handleSubmit() {
+  if (createMutation.isPending.value) return
   if (!requireLogin()) return
   if (!form.activityId) {
     uni.showToast({ title: '请选择关联活动', icon: 'none' })

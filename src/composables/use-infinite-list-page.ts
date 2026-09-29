@@ -28,9 +28,13 @@ export function useInfiniteListPage(options: UseInfiniteListPageOptions) {
 
   onReachBottom(loadMore)
 
-  onShow(() => {
+  onShow(async () => {
     if (options.enabled && !options.enabled()) return
-    if (options.isStale?.value && !options.isFetching?.value) void options.refetch()
+    try {
+      if (options.isStale?.value && !options.isFetching?.value) await options.refetch()
+    } catch {
+      // 保留列表错误态，页面恢复时不向生命周期泄漏异常。
+    }
   })
 
   onPullDownRefresh(async () => {

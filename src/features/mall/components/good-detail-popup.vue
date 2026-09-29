@@ -19,6 +19,7 @@ const emit = defineEmits<{
 
 const visible = defineModel<boolean>('visible', { default: false })
 
+const confirming = ref(false)
 const exchangeCount = ref(1)
 const exchangeInputStr = ref('1')
 
@@ -64,7 +65,7 @@ function setExchangeCount(val: number) {
 }
 
 function handleConfirmExchange() {
-  if (!props.good) return
+  if (!props.good || props.isPending || confirming.value || props.good.stock <= 0) return
 
   if (!props.isLoggedIn) {
     emit('requireLogin')
@@ -81,6 +82,7 @@ function handleConfirmExchange() {
   const count = exchangeCount.value
   const goodId = props.good.id
 
+  confirming.value = true
   uni.showModal({
     title: '确认兑换商品？',
     content: `将消耗 ${totalScore} 积分兑换 ${count} 件“${goodName}”，确认继续？`,
@@ -88,9 +90,27 @@ function handleConfirmExchange() {
     cancelText: '取消',
     confirmColor: TX_BG_BROWN,
     success: (res) => {
-      if (res.confirm) {
-        emit('exchange', { goodId, quantity: count })
+      if (!res.confirm || props.isPending || !visible.value) return
+      if (!props.isLoggedIn) {
+        emit('requireLogin')
+        return
       }
+      if (
+        props.good?.id !== goodId ||
+        props.good.stock < count ||
+        props.good.scorePrice * count !== totalScore
+      ) {
+        uni.showToast({ title: '商品信息已变化，请重新确认', icon: 'none' })
+        return
+      }
+      if (props.userPoints != null && props.userPoints < totalScore) {
+        uni.showToast({ title: '积分不足，无法兑换', icon: 'none' })
+        return
+      }
+      emit('exchange', { goodId, quantity: count })
+    },
+    complete: () => {
+      confirming.value = false
     },
   })
 }
@@ -181,7 +201,8 @@ function handleConfirmExchange() {
             round
             size="medium"
             custom-class="!font-bold !bg-tx-accent !text-tx-ink shadow-xs"
-            :disabled="good.stock <= 0 || isPointsInsufficient || isPending"
+            :loading="isPending"
+            :disabled="good.stock <= 0 || isPointsInsufficient || isPending || confirming"
             @click="handleConfirmExchange"
           >
             {{ good.stock <= 0 ? '暂时缺货' : isPointsInsufficient ? '积分不足' : '确认兑换' }}

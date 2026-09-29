@@ -35,7 +35,11 @@ const debouncedKeyword = ref('')
 const setKeyword = debounce((val: string) => {
   debouncedKeyword.value = val
 }, 300)
-watch(searchKeyword, setKeyword)
+watch(searchKeyword, (value) => {
+  setKeyword.cancel()
+  if (value.trim()) setKeyword(value)
+  else debouncedKeyword.value = ''
+})
 onUnmounted(() => setKeyword.cancel())
 
 const showSearchInput = ref(false)
@@ -82,6 +86,7 @@ function openQrModal(record: ExchangeRecordVM) {
 const exchangeMutation = useExchangeGood()
 
 function handleExchange({ goodId, quantity }: { goodId: number; quantity: number }) {
+  if (exchangeMutation.isPending.value) return
   if (!requireLogin()) {
     return
   }

@@ -5,12 +5,12 @@ import { useInfiniteListPage } from './use-infinite-list-page'
 const hooks = vi.hoisted(() => ({
   refresh: [] as Array<() => Promise<void>>,
   bottom: [] as Array<() => unknown>,
-  show: [] as Array<() => void>,
+  show: [] as Array<() => Promise<void>>,
 }))
 vi.mock('@dcloudio/uni-app', () => ({
   onPullDownRefresh: (fn: () => Promise<void>) => hooks.refresh.push(fn),
   onReachBottom: (fn: () => unknown) => hooks.bottom.push(fn),
-  onShow: (fn: () => void) => hooks.show.push(fn),
+  onShow: (fn: () => Promise<void>) => hooks.show.push(fn),
 }))
 
 beforeEach(() => {
@@ -69,6 +69,15 @@ describe('列表生命周期', () => {
     hasNextPage.value = false
     loadMore()
     expect(fetchNextPage).toHaveBeenCalledTimes(1)
+  })
+
+  it('恢复页面请求失败不会泄漏未处理异常', async () => {
+    useInfiniteListPage({
+      fetchNextPage: vi.fn(),
+      refetch: vi.fn().mockRejectedValue(new Error('offline')),
+      isStale: ref(true),
+    })
+    await expect(hooks.show[0]()).resolves.toBeUndefined()
   })
 
   it('缓存 Tab 再次显示时恢复过期查询，缓存新鲜时不重复请求', () => {
